@@ -14,7 +14,7 @@ public class GoogleSheetsExample : MonoBehaviour
 
     void Start()
     {
-        string jsonPath = Path.Combine("C:\\Users", "angry", "Downloads", "trans-trees-425110-g1-06c684a9a9d4.json");
+        string jsonPath = Path.Combine(Application.streamingAssetsPath, "trans-trees-425110-g1-06c684a9a9d4.json");
 
         GoogleCredential credential;
 
@@ -45,19 +45,19 @@ public class GoogleSheetsExample : MonoBehaviour
 
         FetchAndStoreData(service, spreadsheetId, floatRange, ref floatList, DataType.FloatPercent);
 
-        Debug.Log("String List:");
+        Debug.Log("Skill Name List:");
         foreach (var item in stringList)
         {
             Debug.Log(item);
         }
 
-        Debug.Log("Int List:");
+        Debug.Log("Duration List:");
         foreach (var item in intList)
         {
             Debug.Log(item);
         }
 
-        Debug.Log("Float List:");
+        Debug.Log("Drop Rate List:");
         foreach (var item in floatList)
         {
             Debug.Log(item);
