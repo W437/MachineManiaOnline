@@ -22,7 +22,7 @@ public class AttractionHandler : MonoBehaviour
             var coinAttractor = coinTarget.GetComponent<UIParticleAttractor>();
             if (coinAttractor != null)
             {
-                coinAttractor.onAttracted.AddListener(OnCoinAttracted);
+                //coinAttractor.onAttracted.AddListener(OnCoinAttracted);
             }
         }
 
@@ -32,7 +32,7 @@ public class AttractionHandler : MonoBehaviour
             var crystalAttractor = crystalTarget.GetComponent<UIParticleAttractor>();
             if (crystalAttractor != null)
             {
-                crystalAttractor.onAttracted.AddListener(OnCrystalAttracted);
+                //crystalAttractor.onAttracted.AddListener(OnCrystalAttracted);
             }
         }
     }
