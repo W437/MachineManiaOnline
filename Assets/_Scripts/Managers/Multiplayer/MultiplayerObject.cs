@@ -18,6 +18,6 @@ public class MultiplayerObject : MonoBehaviour
         {
             Destroy(gameObject);
             return;
-        }
+        } // ha
     }
 }
