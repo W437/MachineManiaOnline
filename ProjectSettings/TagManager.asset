@@ -19,7 +19,7 @@ TagManager:
   - GroundObjects
   - Throwables
   - Pickups
-  - 
+  - UIGlow
   - 
   - 
   - 
@@ -43,4 +43,7 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: PlayersUI
+    uniqueID: 7223647
     locked: 0

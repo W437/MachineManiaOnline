@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PickupItem : MonoBehaviour
 {
-    [SerializeField] M_Pickup pickupManager;
+    [SerializeField] PickupManager pickupManager;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {

@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 4002371417453656409}
   - component: {fileID: 103710276436009561}
   - component: {fileID: 3034466501042003342}
+  - component: {fileID: 3069054608672052692}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -64,7 +65,7 @@ Transform:
   m_GameObject: {fileID: 1164856565280815355}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.978, y: -31.784, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -109,9 +110,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 7223647
+  m_SortingLayer: 1
+  m_SortingOrder: 10
   m_Sprite: {fileID: 21300000, guid: 5f7fa9a7940a64e79b5a42d9f661d42c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -162,8 +163,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cae3b18f4f95a9b4d91a625b3f4e3ffc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSpeed: 12
-  acceleration: 30
+  maxSpeed: 15
+  acceleration: 7
   maxSlopeAngle: 70
   downhillSpeedMultiplier: 3
   capsuleCollider: {fileID: 3426490600881329241}
@@ -171,7 +172,7 @@ MonoBehaviour:
   raycastRotatesWithPlayer: 1
   rotateWithGround: 1
   springStrength: 10000
-  springDamping: 807
+  springDamping: 1500
   rideHeight: 1
   rotationDamping: 0.3
   compressionLimit: 2.03
@@ -182,7 +183,7 @@ MonoBehaviour:
   uprightSpringDamping: 156.7
   secondJumpMultiplier: 0.7
   maxJumps: 3
-  jumpForce: 15
+  jumpForce: 25
   jumpDelay: 0.075
   slideDuration: 1.5
   slideCheckDistance: 1
@@ -323,3 +324,20 @@ MonoBehaviour:
     Position: 0.001
     Rotation: 0.01
     Scale: 0.01
+--- !u!114 &3069054608672052692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1164856565280815355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9fd79d79a0fb459ababab9a78f00caa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _physicsAuthority: 2
+  _physicsTiming: 3
+  ClientPhysicsSimulation: 0
+  DeltaTimeMultiplier: 1
+  SetUnityFixedTimestep: 0

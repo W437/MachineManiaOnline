@@ -1,0 +1,58 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class LobbyManiaNews : MonoBehaviour
+{
+    public static LobbyManiaNews Instance;
+    [SerializeField] private GameObject maniaNewsParent;
+    [SerializeField] public float displayDuration = 3f;
+    [SerializeField] public bool randomOrder = true;
+
+    private int currentIndex = 0;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
+
+
+    public void InitializeNews()
+    {
+        if (maniaNewsParent != null)
+        {
+            maniaNewsParent.SetActive(true);
+
+            foreach (Transform child in maniaNewsParent.transform)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    public void ShowNews(int index)
+    {
+        foreach (Transform child in maniaNewsParent.transform)
+        {
+            child.gameObject.SetActive(false);
+        }
+
+        if (index >= 0 && index < maniaNewsParent.transform.childCount)
+        {
+            maniaNewsParent.transform.GetChild(index).gameObject.SetActive(true);
+        }
+    }
+
+    public int GetNewsCount()
+    {
+        return maniaNewsParent.transform.childCount;
+    }
+}

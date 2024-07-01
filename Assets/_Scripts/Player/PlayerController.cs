@@ -79,7 +79,7 @@ public class PlayerController : NetworkBehaviour
     private Vector2 currentGroundNormal;
 
     private PlayerStats playerStats;
-    private N_InputData networkInput;
+    private NetworkInputData networkInput;
     private PickupSystem pickupSystem;
 
 
@@ -94,7 +94,7 @@ public class PlayerController : NetworkBehaviour
 
         pickupSystem = ServiceLocator.GetPickupSystem();
 
-        playerStats = M_Game.Instance.PlayerStats;
+        playerStats = GameManager.Instance.PlayerStats;
 
         if (!Object.HasInputAuthority)
         {
@@ -113,13 +113,12 @@ public class PlayerController : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-
         if (!HasStateAuthority)
         {
             return;
         }
 
-        if (GetInput(out N_InputData data))
+        if (GetInput(out NetworkInputData data))
         {
             networkInput = data;
         }
@@ -154,7 +153,6 @@ public class PlayerController : NetworkBehaviour
         {
             HandleReturningToNormal();
         }
-
     }
 
 
@@ -313,7 +311,6 @@ public class PlayerController : NetworkBehaviour
         playerSpriteRenderer.transform.localScale = originalSpriteScale;
         LeanTween.cancel(gameObject); // Ensure all LeanTween animations are stopped
     }
-
 
     private void ApplySpringForce()
     {

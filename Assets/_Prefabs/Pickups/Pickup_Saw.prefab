@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6932730089705758625}
   - component: {fileID: 4164515824368421471}
   - component: {fileID: -6596726508899111762}
+  - component: {fileID: 8864269459564124327}
   m_Layer: 9
   m_Name: Pickup_Saw
   m_TagString: Untagged
@@ -288,4 +289,28 @@ MonoBehaviour:
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
-  NetworkedBehaviours: []
+  NetworkedBehaviours:
+  - {fileID: 4164515824368421471}
+  - {fileID: 8864269459564124327}
+--- !u!114 &8864269459564124327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8603551576790220712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5e690b5fb1084f5ab1c86457af401d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncScale: 1
+  SyncParent: 1
+  _interpolationTarget: {fileID: 0}
+  UsePreciseRotation: 0
+  UseRenderSleepThresholds: 1
+  RenderThresholds:
+    UseEnergy: 1
+    Position: 0.01
+    Rotation: 0.01
+    Scale: 0.01

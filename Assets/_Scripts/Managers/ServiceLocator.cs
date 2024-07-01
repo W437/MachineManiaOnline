@@ -3,33 +3,31 @@ using UnityEngine;
 // Design pattern to access instances from a single place, neatly
 public static class ServiceLocator
 {
-    private static M_Audio audioManager;
-    private static M_Notification notificationManager;
-    private static M_Game gameManager;
-    private static M_Pickup pickupManager;
+    private static AudioManager audioManager;
+    private static NotificationManager notificationManager;
+    private static GameManager gameManager;
+    private static PickupManager pickupManager;
     private static PlayerStats playerStats;
     private static PickupSystem pickupSystem;
-    private static M_Lobby lobbyManager;
-    private static M_Network networkManager;
-    private static M_Player playerManager;
-    private static UI_Home UI_Home;
+    private static LobbyManager lobbyManager;
+    private static UIHome UIHome;
 
-    public static void RegisterAudioManager(M_Audio manager)
+    public static void RegisterAudioManager(AudioManager manager)
     {
         audioManager = manager;
     }
 
-    public static void RegisterNotificationManager(M_Notification manager)
+    public static void RegisterNotificationManager(NotificationManager manager)
     {
         notificationManager = manager;
     }
 
-    public static void RegisterGameManager(M_Game manager)
+    public static void RegisterGameManager(GameManager manager)
     {
         gameManager = manager;
     }
 
-    public static void RegisterPickupManager(M_Pickup manager)
+    public static void RegisterPickupManager(PickupManager manager)
     {
         pickupManager = manager;
     }
@@ -44,42 +42,33 @@ public static class ServiceLocator
         pickupSystem = manager;
     }
 
-    public static void RegisterLobbyManager(M_Lobby manager)
+    public static void RegisterLobbyManager(LobbyManager manager)
     {
         lobbyManager = manager;
     }
 
-    public static void RegisterNetworkManager(M_Network manager)
+
+    public static void RegisterUI_Home(UIHome manager)
     {
-        networkManager = manager;
+        UIHome = manager;
     }
 
-    public static void RegisterPlayerManager(M_Player manager)
-    {
-        playerManager = manager;
-    }
-
-    public static void RegisterUI_Home(UI_Home manager)
-    {
-        UI_Home = manager;
-    }
-
-    public static M_Audio GetAudioManager()
+    public static AudioManager GetAudioManager()
     {
         return audioManager;
     }
 
-    public static M_Notification GetNotificationManager()
+    public static NotificationManager GetNotificationManager()
     {
         return notificationManager;
     }
 
-    public static M_Game GetGameManager()
+    public static GameManager GetGameManager()
     {
         return gameManager;
     }
 
-    public static M_Pickup GetPickupManager()
+    public static PickupManager GetPickupManager()
     {
         return pickupManager;
     }
@@ -94,23 +83,14 @@ public static class ServiceLocator
         return pickupSystem;
     }
 
-    public static M_Lobby GetLobbyManager()
+    public static LobbyManager GetLobbyManager()
     {
         return lobbyManager;
     }
 
-    public static M_Network GetNetworkManager()
-    {
-        return networkManager;
-    }
 
-    public static UI_Home GetUIHome()
+    public static UIHome GetUIHome()
     {
-        return UI_Home;
-    }
-
-    public static M_Player GetPlayerManager()
-    {
-        return playerManager;
+        return UIHome;
     }
 }

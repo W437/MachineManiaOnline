@@ -1,7 +1,8 @@
+using Fusion;
 using System.Collections;
 using UnityEngine;
 
-public class SawBehavior : MonoBehaviour
+public class SawBehavior : NetworkBehaviour
 {
     private Rigidbody2D rb;
     public float initialForce = 500;
@@ -40,7 +41,7 @@ public class SawBehavior : MonoBehaviour
         LeanTween.delayedCall(lifetime, () => DestroySaw());
     }
 
-    private void Start()
+    public override void Spawned()
     {
         if (!isInitialized)
         {
@@ -50,6 +51,11 @@ public class SawBehavior : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
         rb.AddForce(movementDirection * currentForce);
         rb.angularVelocity = rotationSpeed * (currentForce / initialForce);
         currentForce += acceleration * Time.fixedDeltaTime;
@@ -57,6 +63,11 @@ public class SawBehavior : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
         ContactPoint2D contact = collision.contacts[0];
         if (Mathf.Abs(contact.normal.x) > Mathf.Abs(contact.normal.y))
         {
@@ -70,9 +81,9 @@ public class SawBehavior : MonoBehaviour
     {
         LeanTween.scale(gameObject, originalScale * 1.1f, 0.2f).setEaseOutBounce().setOnComplete(() =>
         {
-            LeanTween.scale(gameObject, Vector3.zero, 0.1f).setEaseInBounce().setOnComplete(() =>
+            LeanTween.scale(gameObject, new Vector3(0.05f, 0.05f, 0.05f), 0.1f).setEaseInBounce().setOnComplete(() =>
             {
-                Destroy(gameObject);
+                Runner.Despawn(Object);
             });
         });
     }
