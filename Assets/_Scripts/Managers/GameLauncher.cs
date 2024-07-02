@@ -53,7 +53,6 @@ public class GameLauncher : MonoBehaviour
         launcher.InitializeNetwork(sessionName, isInitialStart);
     }
 
-    // Unique session name based on guid
     public string GenerateUniqueSessionName()
     {
         return System.Guid.NewGuid().ToString();

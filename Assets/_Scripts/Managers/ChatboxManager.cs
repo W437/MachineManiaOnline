@@ -8,7 +8,7 @@ public class ChatboxManager : MonoBehaviour
 {
     public GameObject messagePrefab;
     public GameObject emojiPrefab;
-    public GameObject categoryPrefab; // Add a reference to the category prefab
+    public GameObject categoryPrefab;
     public Transform messageListParent;
     public Transform emojiListParent;
     public ScrollRect messageScrollRect;
@@ -19,8 +19,9 @@ public class ChatboxManager : MonoBehaviour
 
     private Dictionary<string, List<string>> categorizedMessages = new Dictionary<string, List<string>>()
     {
-        { "Friendly", new List<string> 
         {
+            "Friendly", new List<string> 
+            {
             "<anim:wave>YO WAZZA!?</anim>",
             "<anim:wave>WE CHILLIN'</anim>",
             "GOOD LUCK, EVERYONE! <sprite name=\"ManiaMojis 1_13\">",
@@ -33,10 +34,12 @@ public class ChatboxManager : MonoBehaviour
             "I LOVE  Y'ALL<sprite name=\"ManiaMojis 1_4\">! ",
             "FRIENDS FOREVER! <sprite name=\"ManiaMojis 1_34\">",
             "JK...<sprite name=\"ManiaMojis 1_41\">"
-        }},
+            }   
+        },
 
-        { "Competitive", new List<string> 
-        {
+        { 
+            "Competitive", new List<string> 
+            {
             "BRING IT ON, NOOBS! <sprite name=\"ManiaMojis 1_16\">",
             "JUST <anim:blink>LEAVE</anim> BRO..",
             "<anim:shake>SUCKERS!!!<sprite name=\"ManiaMojis 1_25\"><sprite name=\"ManiaMojis 1_25\"><sprite name=\"ManiaMojis 1_25\"></anim>",
@@ -55,14 +58,14 @@ public class ChatboxManager : MonoBehaviour
             "MOTHERFU&KERS!",
             "NOOB <anim:blink><color=yellow>ALERT!</anim></color> <sprite name=\"ManiaMojis 1_14\">",
             "READY TO LOSE? <sprite name=\"ManiaMojis 1_11\">"
-
-        }}
+            }
+        }
     };
 
     private List<string> emojis = new List<string>
 {
-    "<sprite name=\"ManiaMojis 1_0\">",
-    "<sprite name=\"ManiaMojis 1_1\">",
+    "<size=80><sprite name=\"ManiaMojis 1_0\">",
+    "<size=80><sprite name=\"ManiaMojis 1_1\">",
     "<sprite name=\"ManiaMojis 1_2\">",
     "<sprite name=\"ManiaMojis 1_3\">",
     "<sprite name=\"ManiaMojis 1_4\">",
@@ -137,7 +140,7 @@ public class ChatboxManager : MonoBehaviour
     "<size=86><sprite name=\"ManiaMojis 1_73\">",
     "<size=80><sprite name=\"ManiaMojis 1_74\">",
     "<size=80><sprite name=\"ManiaMojis 1_75\">"
-};
+    };
 
 
     private void UpdateSpriteSizes()
@@ -228,7 +231,6 @@ public class ChatboxManager : MonoBehaviour
         string pattern = @"<size=\d+>";
         return System.Text.RegularExpressions.Regex.Replace(input, pattern, string.Empty);
     }
-
 
     private void UpdateGridContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
     {

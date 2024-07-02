@@ -45,7 +45,6 @@ public class AudioManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern to ensure only one instance of AudioManager exists
         if (Instance == null)
         {
             Instance = this;
@@ -62,7 +61,6 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
-        // Start playing background music
         PlayRandomMusic();
     }
 

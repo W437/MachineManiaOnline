@@ -124,7 +124,7 @@ public class NotificationManager : MonoBehaviour
     {
         RectTransform rectTransform = notification.GetComponent<RectTransform>();
         rectTransform.localPosition = new Vector3(0, -10, 0); // Start 10 units below the center
-        LeanTween.alphaCanvas(notification.canvasGroup, 1, 0.5f); // Fade in
+        LeanTween.alphaCanvas(notification.canvasGroup, 1, 0.5f);
         LeanTween.moveLocalY(notification.gameObject, 0, 0.5f).setEase(LeanTweenType.easeOutBack); // Animate to center
 
         yield return new WaitForSeconds(duration);
@@ -136,13 +136,13 @@ public class NotificationManager : MonoBehaviour
             {
                 notificationsList.Remove(notification.gameObject);
                 Destroy(notification.gameObject);
-            }); // Fade out
+            });
         }
     }
 
     private void AdjustNotificationPositions(List<GameObject> notificationsList)
     {
-        float offset = 150f; // Adjust offset between notifications
+        float offset = 150f;
 
         for (int i = 0; i < notificationsList.Count; i++)
         {

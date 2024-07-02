@@ -63,7 +63,6 @@ public class ButtonHandler : MonoBehaviour
         Transform parentTransform = button.transform.parent;
         originalRotation = parentTransform.localRotation.eulerAngles;
 
-        // Calculate the direction and move the parent accordingly
         Vector2 _localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(buttonTransform as RectTransform, eventData.position, eventData.pressEventCamera, out _localPoint);
         RectTransform buttonRectTransform = buttonTransform as RectTransform;
@@ -126,7 +125,6 @@ public class ButtonHandler : MonoBehaviour
         }
         else if (withinThreshold[button])
         {
-            // If the threshold is exceeded, reset the button immediately
             LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutSine);
             LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
             LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);

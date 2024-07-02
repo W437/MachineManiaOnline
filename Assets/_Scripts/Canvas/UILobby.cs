@@ -92,7 +92,7 @@ public class UILobby : MonoBehaviour
         while (true)
         {
             connectingText.text = baseText + new string('.', dotCount);
-            dotCount = (dotCount + 1) % 4; // Cycle dot count from 0 to 3
+            dotCount = (dotCount + 1) % 4;
             yield return new WaitForSeconds(0.5f);
         }
     }

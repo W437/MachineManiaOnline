@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using Fusion;
 using System.Threading.Tasks;
+using Fusion.Addons.Physics;
+using System.Linq;
 
 // Starts any fusion connection
 public class FusionLauncher : MonoBehaviour
@@ -10,7 +12,10 @@ public class FusionLauncher : MonoBehaviour
     private NetworkRunner _runner;
     private NetworkInputHandler _inputHandler;
     public NetworkPrefabRef lobbyManagerPrefab;
-    public bool enableLoading = true; // Initial launch loading
+    public NetworkPrefabRef playerPrefab;
+    public NetworkObject playerObject;
+    public GameObject cameraPrefab;
+    public bool enableLoading = true;
 
     public enum ConnectionStatus
     {
@@ -103,8 +108,47 @@ public class FusionLauncher : MonoBehaviour
 
         if (_runner.IsRunning && LobbyManager.Instance == null && lobbyManagerPrefab != null && _runner.IsSharedModeMasterClient)
         {
-            NetworkObject lobbyManager = _runner.Spawn(lobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-            Debug.Log($"{_runner.LocalPlayer} spawned {lobbyManager.Name}");
+            _runner.Spawn(lobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+        }
+
+        playerObject = _runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+        _runner.SetPlayerObject(_runner.LocalPlayer, playerObject);
+        DisableMenuComponents(playerObject);
+        playerObject.transform.position += new Vector3(0, 0, 5f);
+        playerObject.transform.localScale = new Vector3(.8f, .8f, .8f);
+    }
+
+    private void DisableMenuComponents(NetworkObject playerObject)
+    {
+        PlayerController playerController = playerObject.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+
+        Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Static;
+        }
+
+        NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
+        if (networkRb != null)
+        {
+            networkRb.enabled = false;
+        }
+
+        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
+        if (runnerSimulate2D != null)
+        {
+            runnerSimulate2D.enabled = false;
+        }
+
+        var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.sortingLayerName = "UI";
+            spriteRenderer.sortingOrder = 10;
         }
     }
 
@@ -128,7 +172,7 @@ public class FusionLauncher : MonoBehaviour
             if (enableLoading)
             {
                 LoadingScreen.Instance.SetLoadingMessage("Finalizing");
-                await Task.Delay(500); // some finalization delay
+                await Task.Delay(500);
             }
         }
 
@@ -140,7 +184,6 @@ public class FusionLauncher : MonoBehaviour
 
     private async Task LoadAssetsWithProgress()
     {
-        // Simulate asset loading with progress
         float totalSteps = 66f;
         for (int i = 1; i <= totalSteps; i++)
         {

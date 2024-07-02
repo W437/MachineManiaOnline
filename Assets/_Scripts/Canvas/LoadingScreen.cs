@@ -69,7 +69,6 @@ public class LoadingScreen : MonoBehaviour
             loadingDotsCoroutine = null;
         }
 
-        // Start the Cutoff Frequency transition when the loading screen is shown
         ServiceLocator.GetAudioManager().SetCutoffFrequency(1000, 5000);
     }
 

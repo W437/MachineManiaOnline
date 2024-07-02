@@ -13,7 +13,6 @@ public class AttractionHandler : MonoBehaviour
 
     private void Start()
     {
-        // Change audio source to the main SFX source of the mixer.
         audioSource = gameObject.AddComponent<AudioSource>();
 
         if (coinTarget != null)

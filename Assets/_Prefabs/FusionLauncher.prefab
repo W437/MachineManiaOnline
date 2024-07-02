@@ -47,6 +47,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lobbyManagerPrefab:
     RawGuidValue: 4cc980d485168e74e8238c567d488859
+  playerPrefab:
+    RawGuidValue: 50a919bc2a097ab439261b05e1e4d11f
+  playerManager: {fileID: 0}
+  cameraPrefab: {fileID: 3920667316604248805, guid: 5b76bc550cd018f47899e590e8c1484c, type: 3}
   enableLoading: 1
 --- !u!114 &2027989544727447448
 MonoBehaviour:

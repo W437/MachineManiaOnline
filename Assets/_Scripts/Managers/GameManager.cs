@@ -44,7 +44,6 @@ public class GameManager : MonoBehaviour
     public void SetGameMode(GameMode mode)
     {
         CurrentGameMode = mode;
-        // Additional logic for setting game mode can be added here
     }
 
     private void InitializeGame()

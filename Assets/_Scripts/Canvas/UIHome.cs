@@ -25,14 +25,11 @@ public class UIHome : MonoBehaviour
     public TextMeshProUGUI playNowText;
 
     [Header("Players Online Settings")]
-    public float joinLeaveRatio = 1.0f; // Higher values make it more likely to increase
+    public float joinLeaveRatio = 1.0f;
     private int currentPlayerCount;
     private int targetPlayerCount;
     private int initialPlayerCount = 7817;
-    private UIParticleAttractor particleAttractor;
 
-    private LobbyManager networkManager; // Add reference to NetworkManager
-    private AudioManager audioManager;
     private ButtonHandler buttonHandler;
     private NotificationManager notificationManager;
 

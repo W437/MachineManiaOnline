@@ -15,9 +15,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static LobbyManager Instance;
 
-    [SerializeField] private NetworkPrefabRef playerPrefab;
-    [SerializeField] private GameObject cameraPrefab;
-
     private SceneRef gameScene;
     public bool isSpawned = false;
 
@@ -26,19 +23,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private Transform playerPositionsParent;
     private Coroutine currentNewsCoroutine = null;
 
-    // Properties in sync with all clients
-    // superadmin is the solution to shared mode's authority rules
-    // Since there's no server 'brain', and all players have authority over what they spawn (on runner) we need a ruler on system operations
-    // and systems like LobbyManager
-    // So:
-    // 1. First player to join a 'session' defined by string, is the superadmin.
-    // 2. Before player 1 intends to leave (only with other players in), the authority is automatically transfered to the first in the list.
-    // 3. Lobby continues living.
-    // 4. 
-
     //[Networked] private PlayerRef Superadmin { get; set; } // State Authority, The Big BOSS
     [Networked] private NetworkDictionary<PlayerRef, NetworkBool> NetworkedReadyStates { get; }
     [Networked, Capacity(16)] private NetworkLinkedList<PlayerRef> NetworkedPlayerList { get; }
+    [Networked, Capacity(16)] private NetworkDictionary<PlayerRef, int> playerPositionMap { get; }
+
     [Networked] private NetworkBool newsStarted { get; set; }
     [Networked] private int currentNewsIndex { get; set; }
 
@@ -62,13 +51,10 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         // game scene is 1 (at least the first level)
         gameScene = SceneRef.FromIndex(1);
 
-        // Initialize player positions
         foreach (Transform pos in UILobby.Instance.playerPositionsParent)
         {
             playerPositions.Add(pos);
         }
-
-        LobbyManiaNews.Instance.InitializeNews();
     }
 
     private void Start()
@@ -112,70 +98,38 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void UpdatePlayerList()
     {
-        var runner = FusionLauncher.Instance.GetNetworkRunner();
-        var activePlayers = runner.ActivePlayers.ToList(); // Convert to List to use indexing
-
-        for (int i = 0; i < playerPositions.Count; i++)
+        foreach (var entry in playerPositionMap)
         {
-            var position = playerPositions[i];
-            var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
-            var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
-            var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+            PlayerRef player = entry.Key;
+            int positionIndex = entry.Value;
 
-
-            if (i < activePlayers.Count)
+            if (positionIndex >= 0 && positionIndex < playerPositions.Count)
             {
-                nameText.color = new Color(1f, 1f, 1f);
-                var player = activePlayers[i];
-                bool isReady = IsPlayerReady(player);
-                nameText.text = $"Player {player.PlayerId}";
-                statusText.text = isReady ? "Ready" : "Not Ready";
-                messageText.gameObject.SetActive(false);
-            }
-            else
-            {
-                nameText.color = ColorUtility.TryParseHtmlString("#4480C3", out Color waitingColor) ? waitingColor : Color.white;
-                nameText.text = "Waiting...";
-                statusText.text = "";
-                messageText.gameObject.SetActive(false);
+                Transform position = playerPositions[positionIndex];
+                UpdatePlayerUI(position, player);
             }
         }
     }
 
-    private void DisableMenuComponents(NetworkObject playerObject)
+    private void UpdatePlayerUI(Transform position, PlayerRef player)
     {
-        // Disable the PlayerController component if the player is in the menu
-        PlayerController playerController = playerObject.GetComponent<PlayerController>();
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
+        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
+        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
+        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
-        // Set Rigidbody2D to static if the player is in the menu
-        Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.bodyType = RigidbodyType2D.Static;
-        }
+        nameText.color = new Color(1f, 1f, 1f);
+        bool isReady = IsPlayerReady(player);
+        nameText.text = $"Player {player.PlayerId}";
+        statusText.text = isReady ? "Ready" : "Not Ready";
+        messageText.gameObject.SetActive(false);
 
-        NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
-        if (networkRb != null)
+        NetworkObject playerObject = Runner.GetPlayerObject(player);
+        if (playerObject != null)
         {
-            networkRb.enabled = false;
-        }
-
-        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
-        if (runnerSimulate2D != null)
-        {
-            runnerSimulate2D.enabled = false;
-        }
-
-        // Ensure the player is rendered in front of the UI canvas
-        var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.sortingLayerName = "UI"; // Ensure you have a sorting layer named "UI"
-            spriteRenderer.sortingOrder = 10; // Ensure this is high enough to be on top
+            playerObject.gameObject.SetActive(true);
+            playerObject.transform.position = position.position;
+            playerObject.transform.position += new Vector3(0, 0, 5f);
+            playerObject.transform.localScale = new Vector3(.5f, .5f, .5f);
         }
     }
 
@@ -273,33 +227,24 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             var emoteText = playerPositions[playerIndex].Find("messageTxt").GetComponent<TextMeshProUGUI>();
             if (emoteText != null)
             {
-                // Cancel any ongoing animations
                 LeanTween.cancel(emoteText.gameObject);
                 emoteText.gameObject.SetActive(false);
 
-                // Store the original position
                 Vector3 originalPosition = emoteText.transform.localPosition;
                 Vector3 belowOriginalPosition = originalPosition + new Vector3(0, -100f, 0);
 
-                // Set the font size for the emoji text
                 emoteText.fontSize = 63;
-
-                // Set initial position and scale
                 emoteText.transform.localPosition = belowOriginalPosition;
                 emoteText.transform.localScale = Vector3.zero;
 
-                // Set the emote text and activate the game object
                 emoteText.text = emote;
                 emoteText.gameObject.SetActive(true);
 
-                // Animate the emote popping out with a bounce
                 LeanTween.moveLocalY(emoteText.gameObject, originalPosition.y, 0.5f).setEase(LeanTweenType.easeInOutBack);
                 LeanTween.scale(emoteText.gameObject, Vector3.one, 0.5f).setEase(LeanTweenType.easeOutBounce).setOnComplete(() =>
                 {
-                    // Wiggle and ping-pong scale animation
                     LeanTween.scale(emoteText.gameObject, Vector3.one * 1.2f, 0.3f).setEase(LeanTweenType.easeInOutSine).setLoopPingPong(4).setOnComplete(() =>
                     {
-                        // Animate the emote popping down smoothly
                         LeanTween.moveLocalY(emoteText.gameObject, belowOriginalPosition.y, 0.5f).setEase(LeanTweenType.easeInOutBack);
                         LeanTween.scale(emoteText.gameObject, Vector3.zero, 0.5f).setEase(LeanTweenType.easeInOutBack).setOnComplete(() =>
                         {
@@ -482,7 +427,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (NetworkedPlayerList.Count > 0)
         {
-            PlayerRef newMasterClient = NetworkedPlayerList[0]; // Assuming the first in the list
+            PlayerRef newMasterClient = NetworkedPlayerList[0];
             RpcNotifyNewMasterClient(newMasterClient);
         }
         else
@@ -496,7 +441,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         NetworkObject lobbyManager = FindObjectOfType<LobbyManager>().GetComponent<NetworkObject>();
 
-        // Check if the current player is the new master client
         if (Runner.LocalPlayer == newMasterClient)
         {
             lobbyManager.RequestStateAuthority();
@@ -504,30 +448,16 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcSpawnPlayerForAll(PlayerRef player)
+    private int AssignPosition(PlayerRef player)
     {
-        Debug.Log("STate authority calls to spawn player for all");
-        SpawnPlayer(player, true);
-    }
-
-    public void SpawnPlayer(PlayerRef player, bool isMenu = false)
-    {
-        var runner = FusionLauncher.Instance.GetNetworkRunner();
-        NetworkObject playerObject = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
-        Debug.Log($"{player} spawned. NetworkObject ID: {playerObject?.NetworkTypeId}");
-
-        if (isMenu)
+        for (int i = 0; i < playerPositions.Count; i++)
         {
-            int playerIndex = runner.ActivePlayers.ToList().IndexOf(player);
-            if (playerIndex >= 0 && playerIndex < playerPositions.Count)
+            if (!playerPositionMap.ContainsValue(i))
             {
-                var spawnPosition = playerPositions[playerIndex].position;
-                playerObject.transform.position = spawnPosition;
-                playerObject.transform.localScale = new Vector3(.5f, .5f, .5f);
-                DisableMenuComponents(playerObject);
+                return i;
             }
         }
+        return -1;
     }
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
@@ -540,15 +470,23 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (!NetworkedPlayerList.Contains(player))
+        if (!playerPositionMap.ContainsKey(player))
         {
-            NetworkedPlayerList.Add(player);
-            if (HasStateAuthority)
-            {
-                RpcSpawnPlayerForAll(player);
-            }
+            int positionIndex = AssignPosition(player);
+            playerPositionMap.Set(player, positionIndex);
         }
-        Debug.Log("OnPlayerJoined called");
+        UpdatePlayerList();
+        Debug.Log("OnPlayerJoined");
+        if (player == runner.LocalPlayer)
+        {
+            NetworkObject playerObject = runner.GetPlayerObject(player);
+            if (playerObject != null)
+            {
+                Debug.Log("set active");
+                playerObject.gameObject.SetActive(true);
+            }
+            Debug.Log("Player == locaplayer of runner");
+        }
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
@@ -557,16 +495,17 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         bool wasMasterClient = runner.IsSharedModeMasterClient && runner.LocalPlayer == player;
 
-        // If the player who left was in the player list, remove them
-        if (NetworkedPlayerList.Contains(player))
+        if (playerPositionMap.ContainsKey(player))
         {
-            NetworkedPlayerList.Remove(player);
+            playerPositionMap.Remove(player);
+            UpdatePlayerList();
         }
 
         var playerObject = runner.GetPlayerObject(player);
         if (playerObject != null)
         {
             runner.Despawn(playerObject);
+            runner.Despawn(FusionLauncher.Instance.playerObject);
             Destroy(playerObject.gameObject);
         }
 
