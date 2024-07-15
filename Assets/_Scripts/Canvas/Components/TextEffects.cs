@@ -4,6 +4,7 @@ using TMPro;
 using Assets.Scripts.TypewriterEffects;
 using Assets.Scripts.TypewriterEffects.Notifiables;
 
+// using custom library to typewrite messages.
 public class TextEffects : MonoBehaviour, ITypingNotifiable
 {
     private Action onTypingEndAction;

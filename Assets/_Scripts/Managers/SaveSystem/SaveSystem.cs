@@ -4,24 +4,24 @@ public static class SaveSystem
 {
     private static readonly string SaveKey = "PlayerSaveData";
 
-    public static void Save(S_PlayerSaveData data)
+    public static void Save(PlayerSaveData data)
     {
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(SaveKey, json);
         PlayerPrefs.Save();
     }
 
-    public static S_PlayerSaveData Load()
+    public static PlayerSaveData Load()
     {
         if (PlayerPrefs.HasKey(SaveKey))
         {
             string json = PlayerPrefs.GetString(SaveKey);
-            return JsonUtility.FromJson<S_PlayerSaveData>(json);
+            return JsonUtility.FromJson<PlayerSaveData>(json);
         }
         else
         {
             // default values
-            return new S_PlayerSaveData
+            return new PlayerSaveData
             {
                 playerName = "PlayaHater",
                 level = 1,

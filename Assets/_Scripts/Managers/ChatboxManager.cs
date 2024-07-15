@@ -193,7 +193,7 @@ public class ChatboxManager : MonoBehaviour
     public void AddCategory(string category)
     {
         GameObject newCategory = Instantiate(categoryPrefab, messageListParent);
-        CategoryHeader categoryHeader = newCategory.GetComponent<CategoryHeader>();
+        ShitTalkBoxCategory categoryHeader = newCategory.GetComponent<ShitTalkBoxCategory>();
         categoryHeader.Initialize(category);
 
         LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)messageListParent);

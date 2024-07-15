@@ -135,7 +135,7 @@ public class PlayerStats : MonoBehaviour
     // Save stats using SaveSystem
     public void SaveStats()
     {
-        S_PlayerSaveData data = new S_PlayerSaveData
+        PlayerSaveData data = new PlayerSaveData
         {
             playerName = PlayerName,
             level = Level,
@@ -152,7 +152,7 @@ public class PlayerStats : MonoBehaviour
     // Load stats using SaveSystem
     public void LoadStats()
     {
-        S_PlayerSaveData data = SaveSystem.Load();
+        PlayerSaveData data = SaveSystem.Load();
         PlayerName = data.playerName;
         Level = data.level;
         Experience = data.experience;

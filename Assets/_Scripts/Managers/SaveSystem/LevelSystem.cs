@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "LevelSystem", menuName = "Game/LevelSystem")]
 public class LevelSystem : ScriptableObject
 {
-    public List<S_PlayerProgressLevelData> levels;
+    public List<PlayerProgressLevelData> levels;
 
     public int GetRequiredXPForLevel(int level)
     {

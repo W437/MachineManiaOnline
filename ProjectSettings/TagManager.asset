@@ -44,6 +44,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: PlayersUI
+  - name: UI
     uniqueID: 7223647
     locked: 0

@@ -12,8 +12,8 @@ public class FusionLauncher : MonoBehaviour
     private NetworkRunner _runner;
     private NetworkInputHandler _inputHandler;
     public NetworkPrefabRef lobbyManagerPrefab;
-    public NetworkPrefabRef playerPrefab;
-    public NetworkObject playerObject;
+    public NetworkPrefabRef chatManagerPrefab;
+    public NetworkPrefabRef gameManagerPrefab;
     public GameObject cameraPrefab;
     public bool enableLoading = true;
 
@@ -109,55 +109,23 @@ public class FusionLauncher : MonoBehaviour
         if (_runner.IsRunning && LobbyManager.Instance == null && lobbyManagerPrefab != null && _runner.IsSharedModeMasterClient)
         {
             _runner.Spawn(lobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            _runner.Spawn(chatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            _runner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
         }
 
-        playerObject = _runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+/*        playerObject = _runner.Spawn(playerPrefab, new Vector3(0, 2000f, 5f), Quaternion.identity, _runner.LocalPlayer);
         _runner.SetPlayerObject(_runner.LocalPlayer, playerObject);
-        DisableMenuComponents(playerObject);
-        playerObject.transform.position += new Vector3(0, 0, 5f);
-        playerObject.transform.localScale = new Vector3(.8f, .8f, .8f);
+
+        DisableMenuComponents(playerObject);*/
+        //playerObject.transform.position += new Vector3(0, 0, 5f);
+        //playerObject.transform.localScale = new Vector3(.8f, .8f, .8f);
     }
-
-    private void DisableMenuComponents(NetworkObject playerObject)
-    {
-        PlayerController playerController = playerObject.GetComponent<PlayerController>();
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
-
-        Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.bodyType = RigidbodyType2D.Static;
-        }
-
-        NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
-        if (networkRb != null)
-        {
-            networkRb.enabled = false;
-        }
-
-        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
-        if (runnerSimulate2D != null)
-        {
-            runnerSimulate2D.enabled = false;
-        }
-
-        var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.sortingLayerName = "UI";
-            spriteRenderer.sortingOrder = 10;
-        }
-    }
-
 
     private async Task<StartGameResult> StartGameWithProgress(StartGameArgs startGameArgs)
     {
         if (enableLoading)
         {
-            LoadingScreen.Instance.ShowLoadingScreen("Connecting");
+            UILoadingScreen.Instance.ShowLoadingScreen("Connecting");
         }
 
         var result = await _runner.StartGame(startGameArgs);
@@ -165,30 +133,30 @@ public class FusionLauncher : MonoBehaviour
         {
             if (enableLoading)
             {
-                LoadingScreen.Instance.SetLoadingMessage("Loading Assets");
+                UILoadingScreen.Instance.SetLoadingMessage("Loading Assets");
                 await LoadAssetsWithProgress();
             }
 
             if (enableLoading)
             {
-                LoadingScreen.Instance.SetLoadingMessage("Finalizing");
+                UILoadingScreen.Instance.SetLoadingMessage("Finalizing");
                 await Task.Delay(500);
             }
         }
 
         if (enableLoading)
-            LoadingScreen.Instance.HideLoadingScreen();
+            UILoadingScreen.Instance.HideLoadingScreen();
 
         return result;
     }
 
     private async Task LoadAssetsWithProgress()
     {
-        float totalSteps = 66f;
+        float totalSteps = 33f;
         for (int i = 1; i <= totalSteps; i++)
         {
             await Task.Delay(13);
-            LoadingScreen.Instance.SetProgress(i / totalSteps);
+            UILoadingScreen.Instance.SetProgress(i / totalSteps);
         }
     }
 
@@ -202,11 +170,11 @@ public class FusionLauncher : MonoBehaviour
         Debug.Log($"Connection status: {status}, message: {message}");
 
         if (enableLoading)
-            LoadingScreen.Instance.ShowLoadingScreen(message);
+            UILoadingScreen.Instance.ShowLoadingScreen(message);
 
         if (status == ConnectionStatus.Connected || (status == ConnectionStatus.Failed && enableLoading))
         {
-            LoadingScreen.Instance.HideLoadingScreen();
+            UILoadingScreen.Instance.HideLoadingScreen();
         }
     }
 }

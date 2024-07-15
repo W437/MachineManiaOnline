@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 
-public class MessageButton : MonoBehaviour
+public class MessageButton : ButtonHandler
 {
     public TextMeshProUGUI messageText;
     private float buttonHoldTime = 1.5f;
@@ -15,7 +15,7 @@ public class MessageButton : MonoBehaviour
     private void Awake()
     {
         button = GetComponent<Button>();
-        button.onClick.AddListener(OnButtonClick);
+        AddEventTrigger(button, OnClick);
     }
 
     public void Initialize(string message)
@@ -23,7 +23,7 @@ public class MessageButton : MonoBehaviour
         messageText.text = message;
     }
 
-    private void OnButtonClick()
+    private void OnClick(Button button)
     {
 
     }

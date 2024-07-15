@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using static Coffee.UIExtensions.UIParticleAttractor;
 using static UnityEngine.UI.Image;
 
 public class PlayerController : NetworkBehaviour
@@ -10,6 +11,14 @@ public class PlayerController : NetworkBehaviour
     //
     // Player movement inspired by Toyful Games' Capsule Theory - https://www.youtube.com/watch?v=qdskE8PJy6Q
     // Game should feel like Toyful Games' 'Very Very Valet', but in 2D.
+
+
+    // Create custom physics player movement
+    // Declutter player controller
+    // Improve multiplayer syncing
+    // To keep:
+    // 1. Keep upright spring mechanism for custom physics
+    // 2. Spring and 'bouncy' feel when hitting hard slope angles
 
     [Header("Movement Settings")]
     [SerializeField] private float maxSpeed = 8f;
@@ -82,6 +91,8 @@ public class PlayerController : NetworkBehaviour
     private NetworkInputData networkInput;
     private PickupSystem pickupSystem;
 
+    private PlayerManager playerManager;
+
 
     void Start()
     {
@@ -94,7 +105,7 @@ public class PlayerController : NetworkBehaviour
 
         pickupSystem = ServiceLocator.GetPickupSystem();
 
-        playerStats = GameManager.Instance.PlayerStats;
+        //playerStats = GameManager.Instance.PlayerStats;
 
         if (!Object.HasInputAuthority)
         {
@@ -102,14 +113,9 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-    }
+        playerManager = GetComponent<PlayerManager>();
 
-/*    private void FixedUpdate()
-    {
-        CheckGround();
-        CheckWall();
-        Move();
-    }*/
+    }
 
     public override void FixedUpdateNetwork()
     {
@@ -118,12 +124,16 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (GetInput(out NetworkInputData data))
+        if (playerManager.CanMove && playerManager.IsAlive)
         {
-            networkInput = data;
+            if (GetInput(out NetworkInputData data))
+            {
+                networkInput = data;
+            }
         }
 
-        CheckGround();
+        // Most checks could be done outside FixedUpdateNetwork for a smoother experience
+        CheckGround(); 
         CheckWall();
         Move();
         ApplySpringForce();
@@ -407,6 +417,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    // Keep upright spring mechanism for custom physics
     public float GetPlayerDistanceFromGround()
     {
         // Position from where the raycast should start

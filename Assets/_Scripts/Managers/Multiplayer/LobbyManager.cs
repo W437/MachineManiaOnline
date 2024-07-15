@@ -10,6 +10,7 @@ using System.Linq;
 using Fusion.Addons.Physics;
 using Random = UnityEngine.Random;
 using Assets.Scripts.TypewriterEffects;
+using System.Threading.Tasks;
 
 public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
@@ -18,19 +19,21 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private SceneRef gameScene;
     public bool isSpawned = false;
 
-    // Lobby stuff
-    [NonSerialized] public List<Transform> playerPositions = new List<Transform>();
-    private Transform playerPositionsParent;
-    private Coroutine currentNewsCoroutine = null;
 
-    //[Networked] private PlayerRef Superadmin { get; set; } // State Authority, The Big BOSS
-    [Networked] private NetworkDictionary<PlayerRef, NetworkBool> NetworkedReadyStates { get; }
-    [Networked, Capacity(16)] private NetworkLinkedList<PlayerRef> NetworkedPlayerList { get; }
-    [Networked, Capacity(16)] private NetworkDictionary<PlayerRef, int> playerPositionMap { get; }
+
+    // Lobby stuff
+    [SerializeField] private NetworkPrefabRef playerPrefab;
+
+    //[Networked, Capacity(6)] private Dictionary<PlayerRef, GameObject> playerGameObjects => default;
+    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, NetworkBool> NetworkedReadyStates => default;
+    [Networked, Capacity(6)] private NetworkLinkedList<PlayerRef> NetworkedPlayerList => default;
+    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, int> playerPositionMap => default;
+
+
+    [Networked, Capacity(6)] private NetworkArray<PlayerInfo> playerPositions => default;
 
     [Networked] private NetworkBool newsStarted { get; set; }
     [Networked] private int currentNewsIndex { get; set; }
-
 
     private LTDescr currentNewsTween;
     private bool isMessageCooldown = false;
@@ -50,16 +53,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         ServiceLocator.RegisterLobbyManager(this);
         // game scene is 1 (at least the first level)
         gameScene = SceneRef.FromIndex(1);
-
-        foreach (Transform pos in UILobby.Instance.playerPositionsParent)
-        {
-            playerPositions.Add(pos);
-        }
     }
 
     private void Start()
     {
-        StartCoroutine(WaitForRunners());
+        //StartCoroutine(WaitForRunners());
     }
 
     private IEnumerator WaitForRunners()
@@ -93,43 +91,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (FusionLauncher.Instance.GetNetworkRunner().IsRunning)
         {
             FusionLauncher.Instance.GetNetworkRunner().LoadScene(gameScene, LoadSceneMode.Single);
-        }
-    }
-
-    public void UpdatePlayerList()
-    {
-        foreach (var entry in playerPositionMap)
-        {
-            PlayerRef player = entry.Key;
-            int positionIndex = entry.Value;
-
-            if (positionIndex >= 0 && positionIndex < playerPositions.Count)
-            {
-                Transform position = playerPositions[positionIndex];
-                UpdatePlayerUI(position, player);
-            }
-        }
-    }
-
-    private void UpdatePlayerUI(Transform position, PlayerRef player)
-    {
-        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
-        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
-        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-        nameText.color = new Color(1f, 1f, 1f);
-        bool isReady = IsPlayerReady(player);
-        nameText.text = $"Player {player.PlayerId}";
-        statusText.text = isReady ? "Ready" : "Not Ready";
-        messageText.gameObject.SetActive(false);
-
-        NetworkObject playerObject = Runner.GetPlayerObject(player);
-        if (playerObject != null)
-        {
-            playerObject.gameObject.SetActive(true);
-            playerObject.transform.position = position.position;
-            playerObject.transform.position += new Vector3(0, 0, 5f);
-            playerObject.transform.localScale = new Vector3(.5f, .5f, .5f);
         }
     }
 
@@ -188,7 +149,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        RPC_ShowMessageAbovePlayer(Runner.LocalPlayer, message);
+        RPC_TalkShit(Runner.LocalPlayer, message);
     }
 
     public void ShowEmoteAbovePlayer(string emote)
@@ -198,11 +159,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        RpcShowEmoteAbovePlayer(Runner.LocalPlayer, emote);
+        RPC_SendEmote(Runner.LocalPlayer, emote);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RpcShowEmoteAbovePlayer(PlayerRef player, string emote)
+    private void RPC_SendEmote(PlayerRef player, string emote)
     {
         isMessageCooldown = true;
 
@@ -220,11 +181,13 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void PlayDefaultEmoteAnimation(PlayerRef player, string emote)
     {
         var runner = FusionLauncher.Instance.GetNetworkRunner();
-        int playerIndex = runner.ActivePlayers.ToList().IndexOf(player);
+        int playerIndex = FindPlayerPosition(player);
 
-        if (playerIndex >= 0 && playerIndex < playerPositions.Count)
+        if (playerIndex >= 0 && playerIndex < playerPositions.Length)
         {
-            var emoteText = playerPositions[playerIndex].Find("messageTxt").GetComponent<TextMeshProUGUI>();
+            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
             if (emoteText != null)
             {
                 LeanTween.cancel(emoteText.gameObject);
@@ -258,18 +221,20 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-
+    // decouple from LobbyManager. (ChatManager)
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_ShowMessageAbovePlayer(PlayerRef player, string message)
+    private void RPC_TalkShit(PlayerRef player, string message)
     {
         isMessageCooldown = true;
 
         var runner = FusionLauncher.Instance.GetNetworkRunner();
-        int playerIndex = runner.ActivePlayers.ToList().IndexOf(player);
+        int playerIndex = FindPlayerPosition(player);
 
-        if (playerIndex >= 0 && playerIndex < playerPositions.Count)
+        if (playerIndex >= 0 && playerIndex < playerPositions.Length)
         {
-            var messageText = playerPositions[playerIndex].Find("messageTxt").GetComponent<TextMeshProUGUI>();
+            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
             if (messageText != null)
             {
                 var typewriter = messageText.GetComponent<Typewriter>();
@@ -282,9 +247,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
                 Vector3 belowOriginalPosition = originalPosition + new Vector3(0, -100f, 0);
 
                 messageText.fontSize = 28;
-
-                //messageText.transform.localPosition = belowOriginalPosition;
-                //messageText.transform.localScale = Vector3.zero;
 
                 messageText.gameObject.SetActive(true);
                 messageText.text = "";
@@ -301,11 +263,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
                                           .setEase(LeanTweenType.easeInOutSine);
                              });
                 });
-
-
-                //LeanTween.moveLocalY(messageText.gameObject, originalPosition.y, 0.55f).setEase(LeanTweenType.easeOutBack);
-                //LeanTween.scale(messageText.gameObject, Vector3.one, 0.75f).setEase(LeanTweenType.easeOutBack);
-
 
                 // Delay before removing msg
                 LeanTween.value(messageText.gameObject, 0, 1, ChatboxManager.MESSAGE_DISPLAY_TIME).setOnComplete(() =>
@@ -368,11 +325,13 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void PlayCustomAnimation(PlayerRef player, string emote)
     {
         var runner = FusionLauncher.Instance.GetNetworkRunner();
-        int playerIndex = runner.ActivePlayers.ToList().IndexOf(player);
+        int playerIndex = FindPlayerPosition(player);
 
-        if (playerIndex >= 0 && playerIndex < playerPositions.Count)
+        if (playerIndex >= 0 && playerIndex < playerPositions.Length)
         {
-            var emoteText = playerPositions[playerIndex].Find("messageTxt").GetComponent<TextMeshProUGUI>();
+            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
             if (emoteText != null)
             {
                 // Cancel any ongoing animations
@@ -411,7 +370,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
                             LeanTween.moveLocalY(emoteText.gameObject, Screen.height, 2f).setEase(LeanTweenType.easeInOutExpo).setOnComplete(() =>
                             {
                                 emoteText.gameObject.SetActive(false);
-                                emoteText.transform.SetParent(playerPositions[playerIndex]);
+                                //emoteText.transform.SetParent(PlayerPositions[playerIndex]);
                                 emoteText.transform.localPosition = originalPosition;
                                 emoteText.fontSize = 55; // Reset font size
                                 isMessageCooldown = false;
@@ -428,16 +387,17 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (NetworkedPlayerList.Count > 0)
         {
             PlayerRef newMasterClient = NetworkedPlayerList[0];
-            RpcNotifyNewMasterClient(newMasterClient);
+            RPC_NotifyNewMasterClient(newMasterClient);
         }
         else
         {
             Debug.Log("No players left to transfer authority to.");
+            return;
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcNotifyNewMasterClient(PlayerRef newMasterClient)
+    private void RPC_NotifyNewMasterClient(PlayerRef newMasterClient)
     {
         NetworkObject lobbyManager = FindObjectOfType<LobbyManager>().GetComponent<NetworkObject>();
 
@@ -448,17 +408,118 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private int AssignPosition(PlayerRef player)
+    private void UpdatePlayerList()
     {
-        for (int i = 0; i < playerPositions.Count; i++)
+        foreach (var player in playerPositionMap)
         {
-            if (!playerPositionMap.ContainsValue(i))
+            int positionIndex = player.Value;
+            Transform positionTransform = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+            UpdatePlayerUI(positionTransform, player.Key);
+        }
+    }
+
+    private void DisableMenuComponents(GameObject playerObject)
+    {
+        var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.sortingLayerName = "UI";
+            spriteRenderer.sortingOrder = 10;
+            //playerObject.AddComponent<NetworkTransform>();
+            Debug.Log($"Sort order: {spriteRenderer.sortingOrder}");
+        }
+
+        NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
+        if (networkRb != null)
+        {
+            //Destroy(networkRb);
+            //Destroy(playerObject.GetComponent<NetworkRigidbody2D>());
+            //networkRb.enabled = false;
+            // Disabling this prevents setting position
+        }
+
+        PlayerController playerController = playerObject.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+
+        Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Static;
+        }
+
+        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
+        if (runnerSimulate2D != null)
+        {
+            Destroy(playerObject.GetComponent<RunnerSimulatePhysics2D>());
+        }
+    }
+
+    private void UpdateUI(int positionIndex, PlayerRef player)
+    {
+        var playerInfo = playerPositions.Get(positionIndex);
+        Transform position = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+
+        UpdatePlayerUI(position, player);
+    }
+
+    private void ClearUI(int positionIndex)
+    {
+        Transform position = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+
+        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
+        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
+        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+        nameText.text = "";
+        statusText.text = "";
+        messageText.gameObject.SetActive(false);
+    }
+
+    private void UpdatePlayerUI(Transform position, PlayerRef player)
+    {
+        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
+        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
+        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+        nameText.color = new Color(1f, 1f, 1f);
+        bool isReady = NetworkedReadyStates.ContainsKey(player) && NetworkedReadyStates[player];
+        nameText.text = $"Player {player.PlayerId}";
+        statusText.text = isReady ? "Ready" : "Not Ready";
+        messageText.gameObject.SetActive(false);
+    }
+
+    private int GetNextAvailablePosition()
+    {
+        for (int i = 0; i < playerPositions.Length; i++)
+        {
+            if (IsDefault(playerPositions.Get(i)))
+            {
+                return i;
+            }
+        }
+        return -1; // Lobby is full
+    }
+
+    private bool IsDefault(PlayerInfo playerInfo)
+    {
+        return playerInfo.Player == default;
+    }
+
+    private int FindPlayerPosition(PlayerRef player)
+    {
+        for (int i = 0; i < playerPositions.Length; i++)
+        {
+            if (playerPositions.Get(i).Player == player)
             {
                 return i;
             }
         }
         return -1;
     }
+
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
@@ -470,46 +531,50 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (!playerPositionMap.ContainsKey(player))
+        if (HasInputAuthority)
         {
-            int positionIndex = AssignPosition(player);
-            playerPositionMap.Set(player, positionIndex);
-        }
-        UpdatePlayerList();
-        Debug.Log("OnPlayerJoined");
-        if (player == runner.LocalPlayer)
-        {
-            NetworkObject playerObject = runner.GetPlayerObject(player);
-            if (playerObject != null)
+            int positionIndex = GetNextAvailablePosition();
+            if (positionIndex != -1)
             {
-                Debug.Log("set active");
-                playerObject.gameObject.SetActive(true);
+                playerPositions.Set(positionIndex, new PlayerInfo
+                {
+                    Player = player,
+                    PlayerName = "Player " + player.PlayerId,
+                    PlayerState = "Ready",
+                    PlayerMessage = "Welcome"
+                });
+
+                NetworkObject playerObject;
+                playerObject = FusionLauncher.Instance.GetNetworkRunner().Spawn(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+                FusionLauncher.Instance.GetNetworkRunner().SetPlayerObject(player, playerObject);
+
+                UpdateUI(positionIndex, player);
             }
-            Debug.Log("Player == locaplayer of runner");
         }
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"Player {player} left. LocalPlayer: {runner.LocalPlayer}, IsLocalPlayerValid: {!runner.LocalPlayer.IsNone}");
+        bool wasMasterClient = player.IsMasterClient || runner.IsSharedModeMasterClient && runner.LocalPlayer == player;
 
-        bool wasMasterClient = runner.IsSharedModeMasterClient && runner.LocalPlayer == player;
-
-        if (playerPositionMap.ContainsKey(player))
+        if (HasStateAuthority || runner.IsSharedModeMasterClient) // State authority or masterclient?
         {
-            playerPositionMap.Remove(player);
-            UpdatePlayerList();
+            int positionIndex = FindPlayerPosition(player);
+            if (positionIndex != -1)
+            {
+                playerPositions.Set(positionIndex, default);
+
+                ClearUI(positionIndex);
+            }
         }
+        UpdatePlayerList();
 
         var playerObject = runner.GetPlayerObject(player);
         if (playerObject != null)
         {
             runner.Despawn(playerObject);
-            runner.Despawn(FusionLauncher.Instance.playerObject);
             Destroy(playerObject.gameObject);
         }
-
-        UpdatePlayerList();
 
         if (wasMasterClient)
         {
@@ -519,7 +584,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {
-        Debug.Log("Scene load done!");
+        Debug.Log("[Lobby] Lobby scene loaded.");
     }
 
     public void OnSceneLoadStart(NetworkRunner runner)

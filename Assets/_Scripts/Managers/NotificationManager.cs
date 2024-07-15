@@ -74,7 +74,7 @@ public class NotificationManager : MonoBehaviour
         }
 
         var notification = Instantiate(notificationPrefab, parent);
-        var notificationScript = notification.GetComponent<Notification>();
+        var notificationScript = notification.GetComponent<MainNotification>();
 
         notificationScript.messageText.text = message;
         notificationScript.iconImage.sprite = icon;
@@ -84,7 +84,7 @@ public class NotificationManager : MonoBehaviour
         AdjustNotificationPositions(notificationsList);
     }
 
-    private IEnumerator DisplayNotification(Notification notification, float duration, List<GameObject> notificationsList)
+    private IEnumerator DisplayNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
     {
         LeanTween.alphaCanvas(notification.canvasGroup, 1, 0.5f); // Fade in
 
@@ -111,7 +111,7 @@ public class NotificationManager : MonoBehaviour
         }
 
         var notification = Instantiate(notificationPrefab, parent);
-        var notificationScript = notification.GetComponent<Notification>();
+        var notificationScript = notification.GetComponent<MainNotification>();
 
         notificationScript.messageText.text = message;
         notificationScript.iconImage.sprite = icon;
@@ -120,7 +120,7 @@ public class NotificationManager : MonoBehaviour
         StartCoroutine(DisplayInGameNotification(notificationScript, duration, notificationsList));
     }
 
-    private IEnumerator DisplayInGameNotification(Notification notification, float duration, List<GameObject> notificationsList)
+    private IEnumerator DisplayInGameNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
     {
         RectTransform rectTransform = notification.GetComponent<RectTransform>();
         rectTransform.localPosition = new Vector3(0, -10, 0); // Start 10 units below the center
