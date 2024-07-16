@@ -25,9 +25,10 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     [SerializeField] private NetworkPrefabRef playerPrefab;
 
     //[Networked, Capacity(6)] private Dictionary<PlayerRef, GameObject> playerGameObjects => default;
-    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, NetworkBool> NetworkedReadyStates => default;
-    [Networked, Capacity(6)] private NetworkLinkedList<PlayerRef> NetworkedPlayerList => default;
-    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, int> playerPositionMap => default;
+    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, NetworkBool> net_ReadyStates => default;
+    [Networked, Capacity(6)] private NetworkLinkedList<PlayerRef> net_PlaerList => default;
+    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, int> net_PlayerPositionsMap => default;
+    [Networked] private TickTimer net_GameStartTimer { get; set; }
 
 
     [Networked, Capacity(6)] private NetworkArray<PlayerInfo> playerPositions => default;
@@ -107,16 +108,16 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         bool newReadyState;
 
-        if (NetworkedReadyStates.ContainsKey(player))
+        if (net_ReadyStates.ContainsKey(player))
         {
-            bool currentReadyState = NetworkedReadyStates[player];
+            bool currentReadyState = net_ReadyStates[player];
             newReadyState = !currentReadyState;
-            NetworkedReadyStates.Set(player, newReadyState);
+            net_ReadyStates.Set(player, newReadyState);
         }
         else
         {
             newReadyState = true;
-            NetworkedReadyStates.Add(player, newReadyState);
+            net_ReadyStates.Add(player, newReadyState);
         }
 
         RPC_SyncReadyState(player, newReadyState);
@@ -125,13 +126,13 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_SyncReadyState(PlayerRef player, bool isReady)
     {
-        if (NetworkedReadyStates.ContainsKey(player))
+        if (net_ReadyStates.ContainsKey(player))
         {
-            NetworkedReadyStates.Set(player, isReady);
+            net_ReadyStates.Set(player, isReady);
         }
         else
         {
-            NetworkedReadyStates.Add(player, isReady);
+            net_ReadyStates.Add(player, isReady);
         }
 
         UpdatePlayerList();
@@ -139,7 +140,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public bool IsPlayerReady(PlayerRef player)
     {
-        return NetworkedReadyStates.ContainsKey(player) && NetworkedReadyStates[player];
+        return net_ReadyStates.ContainsKey(player) && net_ReadyStates[player];
     }
 
     public void ShowMessageAbovePlayer(string message)
@@ -384,9 +385,9 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void InitiateMasterClientTransfer()
     {
-        if (NetworkedPlayerList.Count > 0)
+        if (net_PlaerList.Count > 0)
         {
-            PlayerRef newMasterClient = NetworkedPlayerList[0];
+            PlayerRef newMasterClient = net_PlaerList[0];
             RPC_NotifyNewMasterClient(newMasterClient);
         }
         else
@@ -410,7 +411,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void UpdatePlayerList()
     {
-        foreach (var player in playerPositionMap)
+        foreach (var player in net_PlayerPositionsMap)
         {
             int positionIndex = player.Value;
             Transform positionTransform = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
@@ -485,7 +486,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
         nameText.color = new Color(1f, 1f, 1f);
-        bool isReady = NetworkedReadyStates.ContainsKey(player) && NetworkedReadyStates[player];
+        bool isReady = net_ReadyStates.ContainsKey(player) && net_ReadyStates[player];
         nameText.text = $"Player {player.PlayerId}";
         statusText.text = isReady ? "Ready" : "Not Ready";
         messageText.gameObject.SetActive(false);

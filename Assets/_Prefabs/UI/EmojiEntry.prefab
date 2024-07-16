@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 4525194497070536510}
   - component: {fileID: 4945682163287872643}
   m_Layer: 5
-  m_Name: EmojiBoxEntry
+  m_Name: EmojiEntry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

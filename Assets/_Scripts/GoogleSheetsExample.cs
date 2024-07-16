@@ -10,6 +10,9 @@ using Google.Apis.Sheets.v4.Data;
 
 // To be commented out for ease of use during development
 // Daniel's in command
+/// <summary>
+/// 
+/// </summary>
 
 public class GoogleSheetsExample : MonoBehaviour
 {

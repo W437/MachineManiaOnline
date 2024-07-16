@@ -26,12 +26,12 @@ public class UILobby : MonoBehaviour
 
     [SerializeField] private LobbyManiaNews maniaNews;
 
-    // chat
+    [Header("Private Lobby Chat")]
     public GameObject chatPanel;
     public ScrollRect messageScrollView;
     public TMP_InputField messageInputField;
-    public Button sendButton;
     public Transform messageContent;
+    public Button sendButton;
     public bool isChatVisible = false;
     public GameObject chatBG;
     public RectTransform chatContainer;

@@ -18,8 +18,6 @@ public class GameManager : NetworkBehaviour
     /// 3. Player Start Positionss
     /// </summary>
     public static GameManager Instance { get; private set; }
-
-    [Networked] private TickTimer gameStartTimer { get; set; }
     [Networked] private TickTimer raceCountdownTimer { get; set; }
     [Networked] private TickTimer postRaceCountdownTimer { get; set; }
     [Networked] private int gameState { get; set; } // 0: Waiting, 1: Countdown, 2: Racing, 3: Finished
@@ -51,13 +49,12 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    // Either move this to LobbyManager
+    // Or manage from here
+    // Better decouple, and move it to LobbyManager.
     public override void Spawned()
     {
-        if (Runner.IsSharedModeMasterClient || HasStateAuthority)
-        {
-            gameStartTimer = TickTimer.CreateFromSeconds(Runner, 20); // 20 seconds countdown to game start
-            gameState = 0;
-        }
+
     }
 
     public override void FixedUpdateNetwork()
@@ -72,13 +69,6 @@ public class GameManager : NetworkBehaviour
     {
         switch (gameState)
         {
-            case 0: // Waiting for players to ready up
-                if (gameStartTimer.Expired(Runner))
-                {
-                    StartGameCountdown();
-                }
-                break;
-
             case 1: // Countdown before race start
                 if (raceCountdownTimer.Expired(Runner))
                 {
