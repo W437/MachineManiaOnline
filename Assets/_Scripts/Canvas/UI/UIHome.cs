@@ -12,30 +12,28 @@ public class UIHome : MonoBehaviour
     public static UIHome Instance;
 
     [Header("Buttons")]
-    public Button[] buttons;
-    public Button playButton;
-    public Button modeSelectButton;
-    private bool isButtonOnCooldown = false;
+    [SerializeField] private Button[] buttons;
+    [SerializeField] private Button playButton;
+    [SerializeField] private Button modeSelectButton;
+    private bool _isButtonOnCooldown = false;
 
     [Header("Player Stats")]
-    public TextMeshProUGUI playerLevelText;
-    public TextMeshProUGUI goldText;
-    public TextMeshProUGUI diamondsText;
-    public TextMeshProUGUI playersOnlineText;
-    public TextMeshProUGUI playNowText;
+    [SerializeField] private TextMeshProUGUI playerLevelText;
+    [SerializeField] private TextMeshProUGUI goldText;
+    [SerializeField] private TextMeshProUGUI diamondsText;
+    [SerializeField] private TextMeshProUGUI playersOnlineText;
+    [SerializeField] private TextMeshProUGUI playNowText;
 
     [Header("Players Online Settings")]
-    public float joinLeaveRatio = 1.0f;
-    private int currentPlayerCount;
-    private int targetPlayerCount;
-    private int initialPlayerCount = 7817;
+    [SerializeField] private float joinLeaveRatio = 1.0f;
+    [SerializeField] private int currentPlayerCount;
+    [SerializeField] private int targetPlayerCount;
+    [SerializeField] private int initialPlayerCount = 7817;
 
     private ButtonHandler buttonHandler;
-    private NotificationManager notificationManager;
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -45,12 +43,12 @@ public class UIHome : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        // Disable until connection is set
         playButton.interactable = false;
     }
 
     private void Start()
     {
-        notificationManager = ServiceLocator.GetNotificationManager();
 
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
 
@@ -85,7 +83,7 @@ public class UIHome : MonoBehaviour
     private void OnPlayButtonReleased(Button button)
     {
         GameLauncher.Instance.Launch("MainSession2", false);
-        ServiceLocator.GetLobbyManager().ShowLobbyUI();
+        LobbyManager.Instance.ShowLobbyUI();
     }
 
     private void OnButtonReleased(Button button)
@@ -94,38 +92,38 @@ public class UIHome : MonoBehaviour
         {
             case "[Button] Menu":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "Menu clicked");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Menu clicked");
 
             break;
 
             case "[Button] Chat":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "Chat Clicked");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Chat Clicked");
                 ChatManager.Instance.ShowChat();
 
             break;
 
-            case "[Button] Season Pass":
+            case "[Button] Mania Pass":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "SP Clicked");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "SP Clicked");
 
             break;
 
             case "[Button] Shop":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "Shop Clicked");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Shop Clicked");
 
             break;
 
             case "[Button] Mode":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "Mode Clicked");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Mode Clicked");
 
             break;
 
             case "[Button] Play":
 
-                notificationManager.ShowNotification(NotificationManager.NotificationType.Display, "Searching session..");
+                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Searching session..");
 
             break;
         }

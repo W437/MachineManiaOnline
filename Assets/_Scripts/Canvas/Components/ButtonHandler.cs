@@ -16,10 +16,10 @@ public class ButtonHandler : MonoBehaviour
     private Dictionary<Button, bool> withinThreshold = new Dictionary<Button, bool>();
     private Dictionary<Button, bool> buttonCooldowns = new Dictionary<Button, bool>();
 
-    private Vector3 originalScale;
-    private Vector3 originalRotation;
+    private Vector3 _originalScale;
+    private Vector3 _originalRotation;
 
-    private Action<Button> onButtonReleasedCallback;
+    private Action<Button> _onButtonReleasedCallback;
 
     // Main method used to add triggers to button events w/ custom callbacks n' config
     public void AddEventTrigger(Button button, Action<Button> onButtonReleased, ButtonConfig config = null)
@@ -51,17 +51,15 @@ public class ButtonHandler : MonoBehaviour
     {
         if (buttonCooldowns[button]) return;
 
-        ServiceLocator.GetAudioManager().PlayMenuSFX(AudioManager.MenuSFX.Click);
+        AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
 
         LeanTween.cancel(button.gameObject);
 
         var config = buttonConfigs[button];
-        originalScale = buttonTransform.localScale;
-
+        _originalScale = buttonTransform.localScale;
         initialPressPositions[button] = eventData.position;
-
         Transform parentTransform = button.transform.parent;
-        originalRotation = parentTransform.localRotation.eulerAngles;
+        _originalRotation = parentTransform.localRotation.eulerAngles;
 
         Vector2 _localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(buttonTransform as RectTransform, eventData.position, eventData.pressEventCamera, out _localPoint);
@@ -80,7 +78,7 @@ public class ButtonHandler : MonoBehaviour
 
             if (config.ShrinkScale != 1)
             {
-                LeanTween.scale(button.gameObject, originalScale * config.ShrinkScale, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
+                LeanTween.scale(button.gameObject, _originalScale * config.ShrinkScale, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
             }
 
             if (config.CustomAnimation)
@@ -127,12 +125,12 @@ public class ButtonHandler : MonoBehaviour
         {
             LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutSine);
             LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
 
             if (config.CustomAnimation)
             {
                 LeanTween.scale(parentTransform.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.rotate(parentTransform.gameObject, originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                LeanTween.rotate(parentTransform.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
             }
 
             withinThreshold[button] = false;
@@ -162,12 +160,12 @@ public class ButtonHandler : MonoBehaviour
                 {
                     LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutBounce);
                     LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                    LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                    LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
 
                     if (config.CustomAnimation)
                     {
                         LeanTween.scale(parentTransform.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                        LeanTween.rotate(parentTransform.gameObject, originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                        LeanTween.rotate(parentTransform.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
                     }
                 }
 
@@ -177,12 +175,12 @@ public class ButtonHandler : MonoBehaviour
             {
                 LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutBounce);
                 LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
 
                 if (config.CustomAnimation)
                 {
                     LeanTween.scale(parentTransform.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                    LeanTween.rotate(parentTransform.gameObject, originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                    LeanTween.rotate(parentTransform.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
                 }
             }
 
@@ -199,12 +197,12 @@ public class ButtonHandler : MonoBehaviour
         {
             LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutBounce);
             LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
 
             if (config.CustomAnimation)
             {
                 LeanTween.scale(parentTransform.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.rotate(parentTransform.gameObject, originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                LeanTween.rotate(parentTransform.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
             }
         }
 
@@ -225,12 +223,12 @@ public class ButtonHandler : MonoBehaviour
 
             LeanTween.moveLocal(button.transform.parent.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
             LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.scale(button.gameObject, originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
 
             if (config.CustomAnimation)
             {
                 LeanTween.scale(button.transform.parent.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.rotate(button.transform.parent.gameObject, originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                LeanTween.rotate(button.transform.parent.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
             }
 
             buttonToggledStates[button] = false;

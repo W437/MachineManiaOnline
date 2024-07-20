@@ -12,10 +12,10 @@ public class UILoadingScreen : MonoBehaviour
     [SerializeField] private TextMeshProUGUI loadingText;
     [SerializeField] private Slider loadingBar;
     [SerializeField] private GameObject loadingPanel;
-    private UITransitionEffect imageTransitionEffect;
 
-    private Coroutine loadingDotsCoroutine;
-    private string currentLoadingMessage;
+    private UITransitionEffect _imageTransitionEffect;
+    private Coroutine _loadingDotsCoroutine;
+    private string _currentLoadingMessage;
     
 
     private void Awake()
@@ -30,21 +30,19 @@ public class UILoadingScreen : MonoBehaviour
             Destroy(gameObject);
         }
 
-        imageTransitionEffect = loadingPanel.GetComponent<UITransitionEffect>();
+        _imageTransitionEffect = loadingPanel.GetComponent<UITransitionEffect>();
     }
 
     public void ShowLoadingScreen(string message = "Connecting")
     {
-        ServiceLocator.GetAudioManager().SetCutoffFrequency(22000, 1000, 0.1f);
+        AudioManager.Instance.SetCutoffFrequency(22000, 1000, 0.1f);
         loadingScreen.SetActive(true);
-        currentLoadingMessage = message;
-        loadingText.text = currentLoadingMessage;
+
+        _currentLoadingMessage = message;
+        loadingText.text = _currentLoadingMessage;
         loadingBar.value = 0f;
 
-        if (loadingDotsCoroutine == null)
-        {
-            loadingDotsCoroutine = StartCoroutine(AnimateLoadingDots());
-        }
+        _loadingDotsCoroutine ??= StartCoroutine(AnimateLoadingDots());
     }
 
     public void SetProgress(float progress)
@@ -54,32 +52,32 @@ public class UILoadingScreen : MonoBehaviour
 
     public void SetLoadingMessage(string message)
     {
-        currentLoadingMessage = message;
-        loadingText.text = currentLoadingMessage;
+        _currentLoadingMessage = message;
+        loadingText.text = _currentLoadingMessage;
     }
 
     public void HideLoadingScreen()
     {
-        LeanTween.value(1, 0, 0.5f).setOnUpdate(value => imageTransitionEffect.effectFactor = value)
+        LeanTween.value(1, 0, 0.5f).setOnUpdate(value => _imageTransitionEffect.effectFactor = value)
             .setOnComplete(() => { loadingScreen.SetActive(false); });
 
-        if (loadingDotsCoroutine != null)
+        if (_loadingDotsCoroutine != null)
         {
-            StopCoroutine(loadingDotsCoroutine);
-            loadingDotsCoroutine = null;
+            StopCoroutine(_loadingDotsCoroutine);
+            _loadingDotsCoroutine = null;
         }
 
-        ServiceLocator.GetAudioManager().SetCutoffFrequency(1000, 5000);
+        AudioManager.Instance.SetCutoffFrequency(1000, 5000);
     }
 
     private IEnumerator AnimateLoadingDots()
     {
-        int dotCount = 0;
+        int _dotCount = 0;
 
         while (true)
         {
-            loadingText.text = currentLoadingMessage + new string('.', dotCount);
-            dotCount = (dotCount + 1) % 4;
+            loadingText.text = _currentLoadingMessage + new string('.', _dotCount);
+            _dotCount = (_dotCount + 1) % 4;
             yield return new WaitForSeconds(0.5f);
         }
     }

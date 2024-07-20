@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isSpawned: 0
-  playerPrefab:
+  net_PlayerPrefab:
     RawGuidValue: 8fc2c373a38a3e94e89711093573739d
 --- !u!114 &8803661743556970216
 MonoBehaviour:

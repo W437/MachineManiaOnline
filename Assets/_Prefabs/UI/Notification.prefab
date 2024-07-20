@@ -400,9 +400,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b263f7b4584f4b4c973e315000a48e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  messageText: {fileID: 5131871384609068681}
-  canvasGroup: {fileID: 6613087889697334891}
-  iconImage: {fileID: 920713070662125652}
+  MessageText: {fileID: 5131871384609068681}
+  CanvasGroup: {fileID: 6613087889697334891}
+  IconImage: {fileID: 920713070662125652}
 --- !u!225 &6613087889697334891
 CanvasGroup:
   m_ObjectHideFlags: 0

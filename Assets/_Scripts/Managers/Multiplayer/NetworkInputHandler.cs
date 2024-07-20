@@ -14,9 +14,9 @@ public class NetworkInputHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
         NetworkInputData data = new NetworkInputData
         {
-            jump = Input.GetKey(KeyCode.Space),
-            slide = Input.GetKey(KeyCode.LeftShift),
-            usePickup = Input.GetKey(KeyCode.E)
+            net_Jump = Input.GetKey(KeyCode.Space),
+            net_Slide = Input.GetKey(KeyCode.LeftShift),
+            net_UsePickup = Input.GetKey(KeyCode.E)
         };
 
         input.Set(data);

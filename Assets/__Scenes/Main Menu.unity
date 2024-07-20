@@ -14297,9 +14297,6 @@ MonoBehaviour:
   notificationPrefab: {fileID: 6020767925684246501, guid: 28513f66ac217e64ea15b6c032d60038, type: 3}
   topCenterNotificationParent: {fileID: 728636186}
   inGameNotificationParent: {fileID: 551393554}
-  displayNotificationDuration: 3
-  warningNotificationDuration: 4
-  inGameNotificationDuration: 2
   displayIcon: {fileID: 21300000, guid: 530ceaadf5929334794922834c5fb6df, type: 3}
   warningIcon: {fileID: 21300000, guid: 530ceaadf5929334794922834c5fb6df, type: 3}
   inGameIcon: {fileID: 21300000, guid: 530ceaadf5929334794922834c5fb6df, type: 3}
@@ -16492,7 +16489,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -3.79, y: 0}
+  m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &436249065
 MonoBehaviour:
@@ -17653,8 +17650,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 20}
+  m_AnchoredPosition: {x: 0, y: 5}
+  m_SizeDelta: {x: 20, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &488601171
 MonoBehaviour:
@@ -17669,7 +17666,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.90588236, b: 0, a: 1}
+  m_Color: {r: 1, g: 0.90588236, b: 0, a: 0.5019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -18407,7 +18404,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 3.79, y: 0}
+  m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &524571276
 MonoBehaviour:
@@ -19668,7 +19665,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.90588236, b: 0, a: 1}
+  m_Color: {r: 1, g: 0.90588236, b: 0, a: 0.5019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25502,6 +25499,7 @@ GameObject:
   - component: {fileID: 976235366}
   - component: {fileID: 976235368}
   - component: {fileID: 976235367}
+  - component: {fileID: 976235369}
   m_Layer: 5
   m_Name: PanelBG
   m_TagString: Untagged
@@ -25566,6 +25564,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 976235365}
   m_CullTransparentMesh: 1
+--- !u!225 &976235369
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976235365}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &979433799
 GameObject:
   m_ObjectHideFlags: 0
@@ -28909,7 +28919,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1156408247}
   m_Layer: 5
-  m_Name: Exit
+  m_Name: Exit Button Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28981,8 +28991,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maniaNewsParent: {fileID: 1932894649}
-  displayDuration: 3
-  randomOrder: 1
+  _displayDuration: 3
+  _randomOrder: 1
 --- !u!1 &1159418241
 GameObject:
   m_ObjectHideFlags: 0
@@ -31313,7 +31323,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00016196363}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 634.3}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1324691835
@@ -33842,7 +33852,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -0.78999996, y: 0}
+  m_SizeDelta: {x: -17, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1495397675
 MonoBehaviour:
@@ -34057,6 +34067,9 @@ MonoBehaviour:
   playersOnlineText: {fileID: 1276712549}
   playNowText: {fileID: 1126242604}
   joinLeaveRatio: 1
+  currentPlayerCount: 0
+  targetPlayerCount: 0
+  initialPlayerCount: 7817
 --- !u!1 &1531788988
 GameObject:
   m_ObjectHideFlags: 0
@@ -34242,7 +34255,7 @@ GameObject:
   - component: {fileID: 1532499985}
   - component: {fileID: 1532499986}
   m_Layer: 0
-  m_Name: Chatbox
+  m_Name: Public Lobby Chat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -34367,7 +34380,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1551084925}
   m_Layer: 5
-  m_Name: Send
+  m_Name: Send Button Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36193,8 +36206,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 200, y: -325.84}
-  m_SizeDelta: {x: 400.01, y: 528.33}
+  m_AnchoredPosition: {x: 195, y: -325.84}
+  m_SizeDelta: {x: 390.01, y: 528.33}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1638766968
 MonoBehaviour:
@@ -37479,7 +37492,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0.000030517578, y: 0}
-  m_SizeDelta: {x: 3.79, y: 0}
+  m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1727884721
 MonoBehaviour:
@@ -37619,18 +37632,18 @@ MonoBehaviour:
   connectingOverlay: {fileID: 853028273}
   connectingText: {fileID: 693258208}
   maniaNews: {fileID: 1157817623}
-  chatPanel: {fileID: 1136465860}
-  messageScrollView: {fileID: 433187638}
-  messageInputField: {fileID: 1343479482}
-  messageContent: {fileID: 957843201}
-  sendButton: {fileID: 2101418821}
-  isChatVisible: 0
-  chatBG: {fileID: 976235365}
-  chatContainer: {fileID: 1580840415}
-  fadeDuration: 0.25
-  slideDuration: 0.5
+  ChatPanel: {fileID: 1136465860}
+  MessageScrollView: {fileID: 433187638}
+  MessageInputField: {fileID: 1343479482}
+  MessageContent: {fileID: 957843201}
+  SendMessageButton: {fileID: 2101418821}
+  ChatVisible: 0
+  ChatBG: {fileID: 976235365}
+  ChatContainer: {fileID: 1580840415}
+  FadeDuration: 0.25
+  SlideDuration: 0.5
   BGExitButton: {fileID: 1869463950}
-  exitButton: {fileID: 298402738}
+  ChatExitButton: {fileID: 298402738}
 --- !u!1 &1734730304
 GameObject:
   m_ObjectHideFlags: 0
@@ -41571,7 +41584,7 @@ MonoBehaviour:
   useDefaultTextColor: 0
   textColor:
     serializedVersion: 2
-    rgba: 4293190884
+    rgba: 4294967295
   font: {fileID: 12800000, guid: 5dd49b3eacc540408c98eee0de38e0f1, type: 3}
   fontSize: 16
   fontStyle: 0
@@ -41625,10 +41638,8 @@ MonoBehaviour:
   emitCrystalsButton: {fileID: 0}
   coinUiParticle: {fileID: 0}
   coinParticleSystem: {fileID: 0}
-  coinEmitCount: 100
   crystalUiParticle: {fileID: 0}
   crystalParticleSystem: {fileID: 0}
-  crystalEmitCount: 100
 --- !u!1 &1952663760
 GameObject:
   m_ObjectHideFlags: 0

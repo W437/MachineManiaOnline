@@ -4,15 +4,15 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ChatboxManager : MonoBehaviour
+public class LobbyChatManager : MonoBehaviour
 {
-    public GameObject messagePrefab;
-    public GameObject emojiPrefab;
-    public GameObject categoryPrefab;
-    public Transform messageListParent;
-    public Transform emojiListParent;
-    public ScrollRect messageScrollRect;
-    public ScrollRect emojiScrollRect;
+    [SerializeField] private GameObject messagePrefab;
+    [SerializeField] private GameObject emojiPrefab;
+    [SerializeField] private GameObject categoryPrefab;
+    [SerializeField] private Transform messageListParent;
+    [SerializeField] private Transform emojiListParent;
+    [SerializeField] private ScrollRect messageScrollRect;
+    [SerializeField] private ScrollRect emojiScrollRect;
 
     public const float MESSAGE_DISPLAY_TIME = 2.5f;
     public const float MESSAGE_COOLDOWN_DURATION = 2f;

@@ -9,13 +9,14 @@ public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
 
+    [SerializeField] private NetworkPrefabRef lobbyManagerPrefab;
+    [SerializeField] private NetworkPrefabRef chatManagerPrefab;
+    [SerializeField] private NetworkPrefabRef gameManagerPrefab;
+    [SerializeField] private GameObject cameraPrefab;
+    [SerializeField] private bool enableLoading = true;
+
     private NetworkRunner _runner;
     private NetworkInputHandler _inputHandler;
-    public NetworkPrefabRef lobbyManagerPrefab;
-    public NetworkPrefabRef chatManagerPrefab;
-    public NetworkPrefabRef gameManagerPrefab;
-    public GameObject cameraPrefab;
-    public bool enableLoading = true;
 
     public enum ConnectionStatus
     {
@@ -40,7 +41,7 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-    public async void InitializeNetwork(string sessionName, bool isInitialStart)
+    public async void InitializeNetwork(string sessionName, bool isInitialStart = false)
     {
         Debug.Log($"Joining Session: {sessionName}");
 
@@ -98,7 +99,6 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-
     private async Task WaitForRunnerToBeReady()
     {
         while (!_runner.IsRunning)
@@ -112,13 +112,6 @@ public class FusionLauncher : MonoBehaviour
             _runner.Spawn(chatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
             _runner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
         }
-
-/*        playerObject = _runner.Spawn(playerPrefab, new Vector3(0, 2000f, 5f), Quaternion.identity, _runner.LocalPlayer);
-        _runner.SetPlayerObject(_runner.LocalPlayer, playerObject);
-
-        DisableMenuComponents(playerObject);*/
-        //playerObject.transform.position += new Vector3(0, 0, 5f);
-        //playerObject.transform.localScale = new Vector3(.8f, .8f, .8f);
     }
 
     private async Task<StartGameResult> StartGameWithProgress(StartGameArgs startGameArgs)

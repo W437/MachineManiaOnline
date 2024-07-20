@@ -12,39 +12,36 @@ public class UILobby : MonoBehaviour
     public static UILobby Instance;
 
     [Header("Lobby")]
-    public GameObject lobbyPlatformScreen;
-    public Button lobbyReadyButton;
-    public Button lobbyLeaveButton;
+    [SerializeField] private GameObject lobbyPlatformScreen;
+    [SerializeField] private Button lobbyReadyButton;
+    [SerializeField] private Button lobbyLeaveButton;
     public Transform playerPositionsParent;
 
     [Header("Connecting Overlay")]
-    public GameObject connectingOverlay;
-    public TextMeshProUGUI connectingText;
+    [SerializeField] private GameObject connectingOverlay;
+    [SerializeField] private TextMeshProUGUI connectingText;
+    private Coroutine _connectingCoroutine;
+    private ButtonHandler _buttonHandler;
 
-    private Coroutine connectingCoroutine;
-    private ButtonHandler buttonHandler;
-
+    [Header("Mania News")]
     [SerializeField] private LobbyManiaNews maniaNews;
 
     [Header("Private Lobby Chat")]
-    public GameObject chatPanel;
-    public ScrollRect messageScrollView;
-    public TMP_InputField messageInputField;
-    public Transform messageContent;
-    public Button sendButton;
-    public bool isChatVisible = false;
-    public GameObject chatBG;
-    public RectTransform chatContainer;
-    public float fadeDuration = 0.25f;
-    public float slideDuration = 0.5f;
-
-    // Exit buttons
+    public GameObject ChatPanel;
+    public ScrollRect MessageScrollView;
+    public TMP_InputField MessageInputField;
+    public Transform MessageContent;
+    public Button SendMessageButton;
+    public bool ChatVisible = false;
+    public GameObject ChatBG;
+    public RectTransform ChatContainer;
+    public float FadeDuration = 0.25f;
+    public float SlideDuration = 0.5f;
     public Button BGExitButton;
-    public Button exitButton;
+    public Button ChatExitButton;
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -58,14 +55,14 @@ public class UILobby : MonoBehaviour
 
     private void Start()
     {
-        buttonHandler = gameObject.AddComponent<ButtonHandler>();
-        buttonHandler.AddEventTrigger(lobbyReadyButton, OnLobbyReadyButtonReleased, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
-        buttonHandler.AddEventTrigger(lobbyLeaveButton, OnLobbyLeaveButtonReleased, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        _buttonHandler = gameObject.AddComponent<ButtonHandler>();
+        _buttonHandler.AddEventTrigger(lobbyReadyButton, OnLobbyReadyButtonReleased, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
+        _buttonHandler.AddEventTrigger(lobbyLeaveButton, OnLobbyLeaveButtonReleased, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
     }
 
     private IEnumerator CheckIfLobbyIsSpawned()
     {
-        connectingCoroutine = StartCoroutine(AnimateConnectingText());
+        _connectingCoroutine = StartCoroutine(AnimateConnectingText());
         while (true)
         {
             yield return new WaitForSeconds(1f);
@@ -90,10 +87,10 @@ public class UILobby : MonoBehaviour
         if (connectingOverlay != null)
         {
             connectingOverlay.SetActive(false);
-            if (connectingCoroutine != null)
+            if (_connectingCoroutine != null)
             {
-                StopCoroutine(connectingCoroutine);
-                connectingCoroutine = null;
+                StopCoroutine(_connectingCoroutine);
+                _connectingCoroutine = null;
             }
         }
     }
@@ -103,7 +100,7 @@ public class UILobby : MonoBehaviour
         string baseText = "Starting Session";
         int dotCount = 0;
 
-        // Run indefinitely until the coroutine is stopped from elsewhere
+        // Run until stopped from elsewhere
         while (true)
         {
             connectingText.text = baseText + new string('.', dotCount);
@@ -117,21 +114,22 @@ public class UILobby : MonoBehaviour
         if (!(FusionLauncher.Instance.GetNetworkRunner() != null && FusionLauncher.Instance.GetNetworkRunner().IsRunning)) return;
 
         PlayerRef player = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
+        LobbyManager.Instance.RPC_StartGame();
 
-        if (!ServiceLocator.GetLobbyManager().IsPlayerReady(player))
+        if (!LobbyManager.Instance.IsPlayerReady(player))
         {
-            ServiceLocator.GetLobbyManager().SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
+            LobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
         }
         else
         {
-            ServiceLocator.GetLobbyManager().SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
+            LobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
         }
     }
 
     private void OnLobbyLeaveButtonReleased(Button button)
     {
-        ServiceLocator.GetAudioManager().SetCutoffFrequency(7000, 10000);
-        buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
+        AudioManager.Instance.SetCutoffFrequency(7000, 10000);
+        _buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
         lobbyPlatformScreen.SetActive(false);
         string uniqueSessionName = GameLauncher.Instance.GenerateUniqueSessionName();
         GameLauncher.Instance.Launch(uniqueSessionName, false);

@@ -3,7 +3,7 @@ using TMPro;
 
 public class ShitTalkBoxCategory : MonoBehaviour
 {
-    public TextMeshProUGUI categoryText;
+    [SerializeField] private TextMeshProUGUI categoryText;
 
     public void Initialize(string category)
     {

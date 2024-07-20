@@ -4,17 +4,17 @@ using UnityEngine.UI;
 
 public class UIModeSelect : MonoBehaviour
 {
-    public Button modeButton;
-    public TextMeshProUGUI modeText;
-    public TextMeshProUGUI modeInfoText;
+    [SerializeField] private Button modeButton;
+    [SerializeField] private TextMeshProUGUI modeText;
+    [SerializeField] private TextMeshProUGUI modeInfoText;
 
     private GameManager.GameMode currentMode;
 
     private void Start()
     {
         currentMode = GameManager.Instance.CurrentGameMode;
-        UpdateModeText();
         modeButton.onClick.AddListener(OnModeButtonClicked);
+        UpdateModeText();
     }
 
     private void OnModeButtonClicked()

@@ -15,25 +15,25 @@ public class AudioManager : MonoBehaviour
     public static AudioManager Instance;
 
     [Header("Audio Sources")]
-    public AudioSource musicSource;
-    public AudioSource sfxSource;
+    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private AudioSource sfxSource;
 
     [Header("Audio Mixer")]
-    public AudioMixer mainMixer;
+    [SerializeField] private AudioMixer mainMixer;
 
     [Header("Mixer Groups")]
-    public AudioMixerGroup inGameMusicGroup;
-    public AudioMixerGroup inGameSFXGroup;
-    public AudioMixerGroup menuSFXGroup;
-    public AudioMixerGroup masterGroup;
+    [SerializeField] private AudioMixerGroup inGameMusicGroup;
+    [SerializeField] private AudioMixerGroup inGameSFXGroup;
+    [SerializeField] private AudioMixerGroup menuSFXGroup;
+    [SerializeField] private AudioMixerGroup masterGroup;
 
     [Header("Menu SFX Clips")]
-    public List<MenuSFXClip> menuSFXClips;
+    [SerializeField] private List<MenuSFXClip> menuSFXClips;
 
     [Header("Music Tracks")]
-    public List<AudioClip> musicTracks;
+    [SerializeField] private List<AudioClip> musicTracks;
 
-    private int lastTrackIndex = -1;
+    private int _lastTrackIndex = -1;
 
     public enum MenuSFX
     {
@@ -49,7 +49,6 @@ public class AudioManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            ServiceLocator.RegisterAudioManager(this);
             InitializeMenuSFXClipMap();
             AssignAudioMixerGroups();
         }
@@ -105,9 +104,9 @@ public class AudioManager : MonoBehaviour
         do
         {
             randomIndex = Random.Range(0, musicTracks.Count);
-        } while (randomIndex == lastTrackIndex);
+        } while (randomIndex == _lastTrackIndex);
 
-        lastTrackIndex = randomIndex;
+        _lastTrackIndex = randomIndex;
         AudioClip track = musicTracks[randomIndex];
 
         StartCoroutine(FadeInMusic(track));

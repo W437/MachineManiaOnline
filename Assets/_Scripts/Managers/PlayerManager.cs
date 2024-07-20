@@ -3,25 +3,25 @@ using UnityEngine;
 
 public class PlayerManager : NetworkBehaviour
 {
-    [Networked] public string PlayerName { get; set; }
-    [Networked] public int Score { get; set; }
-    [Networked] public int PlayerID { get; set; }
-    [Networked] public bool CanMove { get; set; }
-    [Networked] public bool IsAlive { get; set; }
+    [Networked] public string net_PlayerName { get; set; }
+    [Networked] public int net_Score { get; set; }
+    [Networked] public int net_PlayerID { get; set; }
+    [Networked] public bool net_CanMove { get; set; }
+    [Networked] public bool net_IsAlive { get; set; }
 
-    private PlayerController playerController;
+    private PlayerController _playerController;
 
     private void Awake()
     {
-        playerController = GetComponent<PlayerController>();
+        _playerController = GetComponent<PlayerController>();
     }
 
     public override void Spawned()
     {
         if (HasStateAuthority)
         {
-            CanMove = false; 
-            IsAlive = true; 
+            net_CanMove = false; 
+            net_IsAlive = true; 
         }
     }
 
@@ -29,7 +29,7 @@ public class PlayerManager : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
-            PlayerName = name;
+            net_PlayerName = name;
         }
     }
 
@@ -37,7 +37,7 @@ public class PlayerManager : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
-            Score += score;
+            net_Score += score;
         }
     }
 
@@ -45,7 +45,7 @@ public class PlayerManager : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
-            IsAlive = false;
+            net_IsAlive = false;
             RpcPlayerKilled();
         }
     }
@@ -54,7 +54,7 @@ public class PlayerManager : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
-            IsAlive = true;
+            net_IsAlive = true;
             transform.position = position;
             RpcPlayerRespawned(position);
         }

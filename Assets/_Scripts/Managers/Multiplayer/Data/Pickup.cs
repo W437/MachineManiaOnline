@@ -1,10 +1,15 @@
 using UnityEngine;
 
-public abstract class Pickup : ScriptableObject
+public interface IPickup
 {
-    public string pickupName;
-    public Sprite icon;
-    public GameObject prefab;
-    public float spawnOffsetX;
+    void Use(PlayerController player);
+}
+
+public abstract class Pickup : ScriptableObject, IPickup
+{
+    public string PickupName;
+    public Sprite PickupIcon;
+    public GameObject PickupPrefab;
+    public float SpawnOffsetX;
     public abstract void Use(PlayerController player);
 }

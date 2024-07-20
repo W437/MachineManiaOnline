@@ -89,9 +89,9 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerStats playerStats;
     private NetworkInputData networkInput;
-    private PickupSystem pickupSystem;
 
     private PlayerManager playerManager;
+    private PickupSystem pickupSystem;
 
 
     void Start()
@@ -103,8 +103,6 @@ public class PlayerController : NetworkBehaviour
         originalRideHeight = rideHeight;
         originalSpriteScale = playerSpriteRenderer.transform.localScale;
 
-        pickupSystem = ServiceLocator.GetPickupSystem();
-
         //playerStats = GameManager.Instance.PlayerStats;
 
         if (!Object.HasInputAuthority)
@@ -114,6 +112,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         playerManager = GetComponent<PlayerManager>();
+        pickupSystem = GetComponent<PickupSystem>();
 
     }
 
@@ -124,7 +123,7 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (playerManager.CanMove && playerManager.IsAlive)
+        if (playerManager.net_CanMove && playerManager.net_IsAlive)
         {
             if (GetInput(out NetworkInputData data))
             {
@@ -139,17 +138,17 @@ public class PlayerController : NetworkBehaviour
         ApplySpringForce();
         CheckUprightAndAlignRotation();
 
-        if (networkInput.jump)
+        if (networkInput.net_Jump)
         {
             Jump();
         }
 
-        if (networkInput.usePickup)
+        if (networkInput.net_UsePickup)
         {
             pickupSystem.UsePickup();
         }
 
-        if (networkInput.slide)
+        if (networkInput.net_Slide)
         {
             StartSlide();
         }

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class MainNotification : MonoBehaviour
 {
-    [SerializeField] public TextMeshProUGUI messageText;
-    [SerializeField] public CanvasGroup canvasGroup;
-    [SerializeField] public Image iconImage;
+    public TextMeshProUGUI MessageText;
+    public CanvasGroup CanvasGroup;
+    public Image IconImage;
 }

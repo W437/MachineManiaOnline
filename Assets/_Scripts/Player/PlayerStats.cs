@@ -25,7 +25,6 @@ public class PlayerStats : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            ServiceLocator.RegisterPlayerStats(this);
             DontDestroyOnLoad(gameObject);
             LoadStats();
         }

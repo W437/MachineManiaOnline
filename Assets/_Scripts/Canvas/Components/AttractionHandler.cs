@@ -3,21 +3,22 @@ using Coffee.UIExtensions;
 
 public class AttractionHandler : MonoBehaviour
 {
-    public GameObject coinTarget;
-    public GameObject crystalTarget;
-    public AudioClip coinAttractionSFX;
-    public AudioClip crystalAttractionSFX;
-    private AudioSource audioSource;
-    private Vector3 coinOriginalScale;
-    private Vector3 crystalOriginalScale;
+    [SerializeField] private GameObject coinTarget;
+    [SerializeField] private GameObject crystalTarget;
+    [SerializeField] private AudioClip coinAttractionSFX;
+    [SerializeField] private AudioClip crystalAttractionSFX;
+
+    private AudioSource _audioSource;
+    private Vector3 _coinOriginalScale;
+    private Vector3 _crystalOriginalScale;
 
     private void Start()
     {
-        audioSource = gameObject.AddComponent<AudioSource>();
+        _audioSource = gameObject.AddComponent<AudioSource>();
 
         if (coinTarget != null)
         {
-            coinOriginalScale = coinTarget.transform.localScale;
+            _coinOriginalScale = coinTarget.transform.localScale;
             var coinAttractor = coinTarget.GetComponent<UIParticleAttractor>();
             if (coinAttractor != null)
             {
@@ -27,7 +28,7 @@ public class AttractionHandler : MonoBehaviour
 
         if (crystalTarget != null)
         {
-            crystalOriginalScale = crystalTarget.transform.localScale;
+            _crystalOriginalScale = crystalTarget.transform.localScale;
             var crystalAttractor = crystalTarget.GetComponent<UIParticleAttractor>();
             if (crystalAttractor != null)
             {
@@ -39,20 +40,20 @@ public class AttractionHandler : MonoBehaviour
     private void OnCoinAttracted(GameObject attractedObject)
     {
         PlaySound(coinAttractionSFX);
-        PlayPopUpEffect(coinTarget, coinOriginalScale);
+        PlayPopUpEffect(coinTarget, _coinOriginalScale);
     }
 
     private void OnCrystalAttracted(GameObject attractedObject)
     {
         PlaySound(crystalAttractionSFX);
-        PlayPopUpEffect(crystalTarget, crystalOriginalScale);
+        PlayPopUpEffect(crystalTarget, _crystalOriginalScale);
     }
 
     private void PlaySound(AudioClip clip)
     {
-        if (audioSource != null && clip != null)
+        if (_audioSource != null && clip != null)
         {
-            audioSource.PlayOneShot(clip);
+            _audioSource.PlayOneShot(clip);
         }
     }
 

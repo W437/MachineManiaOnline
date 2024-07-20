@@ -7,7 +7,7 @@ using Fusion;
 public class GameLauncher : MonoBehaviour
 {
     public static GameLauncher Instance;
-    public GameObject LauncherPrefab;
+    [SerializeField] private GameObject LauncherPrefab;
     private FusionLauncher launcher;
 
     private void Awake()

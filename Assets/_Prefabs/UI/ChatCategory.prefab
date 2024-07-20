@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 536340899792485051}
   - component: {fileID: 6564354452822104549}
   - component: {fileID: 504082884259331341}
-  - component: {fileID: 2769870276930487631}
   m_Layer: 5
   m_Name: ChatCategory
   m_TagString: Untagged
@@ -136,19 +135,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   categoryText: {fileID: 7005954912305085662}
---- !u!114 &2769870276930487631
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3930330232631808058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b81fc6872c101c4c881044d89eebc53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  messageText: {fileID: 7005954912305085662}
 --- !u!1 &8180482806725575733
 GameObject:
   m_ObjectHideFlags: 0

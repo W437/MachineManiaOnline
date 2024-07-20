@@ -5,16 +5,17 @@ using System.Collections;
 
 public class CurrencyEmitter : MonoBehaviour
 {
-    public Button emitCoinsButton;
-    public Button emitCrystalsButton;
+    [SerializeField] private Button emitCoinsButton;
+    [SerializeField] private Button emitCrystalsButton;
 
-    public UIParticle coinUiParticle;
-    public ParticleSystem coinParticleSystem;
-    public int coinEmitCount = 100;
+    [SerializeField] private UIParticle coinUiParticle;
+    [SerializeField] private ParticleSystem coinParticleSystem;
 
-    public UIParticle crystalUiParticle;
-    public ParticleSystem crystalParticleSystem;
-    public int crystalEmitCount = 100;
+    [SerializeField] private UIParticle crystalUiParticle;
+    [SerializeField] private ParticleSystem crystalParticleSystem;
+
+    private int _coinEmitCount = 100;
+    private int _crystalEmitCount = 100;
 
     private void Start()
     {
@@ -34,7 +35,7 @@ public class CurrencyEmitter : MonoBehaviour
         if (coinUiParticle != null && coinParticleSystem != null)
         {
             coinParticleSystem.Clear();
-            StartCoroutine(EmitParticlesOverTime(coinParticleSystem, coinEmitCount));
+            StartCoroutine(EmitParticlesOverTime(coinParticleSystem, _coinEmitCount));
         }
     }
 
@@ -43,7 +44,7 @@ public class CurrencyEmitter : MonoBehaviour
         if (crystalUiParticle != null && crystalParticleSystem != null)
         {
             crystalParticleSystem.Clear();
-            StartCoroutine(EmitParticlesOverTime(crystalParticleSystem, crystalEmitCount));
+            StartCoroutine(EmitParticlesOverTime(crystalParticleSystem, _crystalEmitCount));
         }
     }
 

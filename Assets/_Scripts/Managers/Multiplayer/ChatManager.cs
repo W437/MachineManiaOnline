@@ -9,7 +9,7 @@ public class ChatManager : NetworkBehaviour
 {
     public static ChatManager Instance;
 
-    public GameObject chatMessagePrefab;
+    [SerializeField] private GameObject chatMessagePrefab;
     private List<GameObject> messages = new List<GameObject>();
     private Dictionary<string, System.Action> specialMessages = new Dictionary<string, System.Action>();
 
@@ -17,7 +17,6 @@ public class ChatManager : NetworkBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -31,11 +30,10 @@ public class ChatManager : NetworkBehaviour
 
     void Start()
     {
-        UILobby.Instance.sendButton.onClick.AddListener(OnSendButtonClicked);
+        UILobby.Instance.SendMessageButton.onClick.AddListener(OnSendButtonClicked);
         UILobby.Instance.BGExitButton.onClick.AddListener(ToggleChat);
-        UILobby.Instance.chatPanel.SetActive(false);
-
-        UILobby.Instance.exitButton.onClick.AddListener(HideChat);
+        UILobby.Instance.ChatExitButton.onClick.AddListener(HideChat);
+        UILobby.Instance.ChatPanel.SetActive(false);
 
         specialMessages["/wave"] = PlayWaveAnimation;
         specialMessages["/cheer"] = PlayCheerAnimation;
@@ -43,7 +41,7 @@ public class ChatManager : NetworkBehaviour
 
     public void ToggleChat()
     {
-        if (UILobby.Instance.isChatVisible)
+        if (UILobby.Instance.ChatVisible)
         {
             HideChat();
         }
@@ -55,59 +53,59 @@ public class ChatManager : NetworkBehaviour
 
     public void ShowChat()
     {
-        UILobby.Instance.isChatVisible = true;
+        UILobby.Instance.ChatVisible = true;
 
         // Enable the chat panel
-        UILobby.Instance.chatPanel.SetActive(true);
+        UILobby.Instance.ChatPanel.SetActive(true);
 
         // Fade in the background
-        CanvasGroup bgCanvasGroup = UILobby.Instance.chatBG.GetComponent<CanvasGroup>();
-        CanvasGroup chatCanvasGroup = UILobby.Instance.chatContainer.GetComponent<CanvasGroup>();
+        CanvasGroup bgCanvasGroup = UILobby.Instance.ChatBG.GetComponent<CanvasGroup>();
+        CanvasGroup chatCanvasGroup = UILobby.Instance.ChatContainer.GetComponent<CanvasGroup>();
 
         bgCanvasGroup.alpha = 0f;
         chatCanvasGroup.alpha = 0f;
 
-        LeanTween.alphaCanvas(bgCanvasGroup, 1f, UILobby.Instance.fadeDuration);
-        LeanTween.alphaCanvas(chatCanvasGroup, 1f, UILobby.Instance.fadeDuration);
+        LeanTween.alphaCanvas(bgCanvasGroup, 1f, UILobby.Instance.FadeDuration);
+        LeanTween.alphaCanvas(chatCanvasGroup, 1f, UILobby.Instance.FadeDuration);
 
         // Slide in the ChatContainer from above
-        Vector2 originalPosition = UILobby.Instance.chatContainer.position;
+        Vector2 originalPosition = UILobby.Instance.ChatContainer.position;
 
-        UILobby.Instance.chatContainer.anchoredPosition = new Vector3(0, 300, 0);
+        UILobby.Instance.ChatContainer.anchoredPosition = new Vector3(0, 300, 0);
 
-        LeanTween.move(UILobby.Instance.chatContainer, originalPosition, UILobby.Instance.slideDuration).setEase(LeanTweenType.easeOutQuart);
+        LeanTween.move(UILobby.Instance.ChatContainer, originalPosition, UILobby.Instance.SlideDuration).setEase(LeanTweenType.easeOutQuart);
     }
 
     public void HideChat()
     {
-        UILobby.Instance.isChatVisible = false;
+        UILobby.Instance.ChatVisible = false;
          
         // Fade out the background after the chat box is hidden
-        CanvasGroup bgCanvasGroup = UILobby.Instance.chatBG.GetComponent<CanvasGroup>();
-        CanvasGroup chatCanvasGroup = UILobby.Instance.chatContainer.GetComponent<CanvasGroup>();
+        CanvasGroup bgCanvasGroup = UILobby.Instance.ChatBG.GetComponent<CanvasGroup>();
+        CanvasGroup chatCanvasGroup = UILobby.Instance.ChatContainer.GetComponent<CanvasGroup>();
 
-        LeanTween.alphaCanvas(bgCanvasGroup, 0f, UILobby.Instance.fadeDuration);
-        LeanTween.alphaCanvas(chatCanvasGroup, 0f, UILobby.Instance.fadeDuration);
+        LeanTween.alphaCanvas(bgCanvasGroup, 0f, UILobby.Instance.FadeDuration);
+        LeanTween.alphaCanvas(chatCanvasGroup, 0f, UILobby.Instance.FadeDuration);
 
-        Vector2 originalPosition = UILobby.Instance.chatContainer.anchoredPosition;
-        LeanTween.move(UILobby.Instance.chatContainer, new Vector2(originalPosition.x, originalPosition.y + 900f), UILobby.Instance.slideDuration).setEase(LeanTweenType.easeOutQuart)
+        Vector2 originalPosition = UILobby.Instance.ChatContainer.anchoredPosition;
+        LeanTween.move(UILobby.Instance.ChatContainer, new Vector2(originalPosition.x, originalPosition.y + 900f), UILobby.Instance.SlideDuration).setEase(LeanTweenType.easeOutQuart)
             .setOnComplete(() =>
             {
-                UILobby.Instance.chatPanel.SetActive(false);
+                UILobby.Instance.ChatPanel.SetActive(false);
             });
     }
 
     public void ToggleChatPanel()
     {
-        UILobby.Instance.chatPanel.SetActive(!UILobby.Instance.chatPanel.activeSelf);
+        UILobby.Instance.ChatPanel.SetActive(!UILobby.Instance.ChatPanel.activeSelf);
     }
 
     private void OnSendButtonClicked()
     {
-        if (!string.IsNullOrEmpty(UILobby.Instance.messageInputField.text))
+        if (!string.IsNullOrEmpty(UILobby.Instance.MessageInputField.text))
         {
-            SendChatMessage(UILobby.Instance.messageInputField.text);
-            UILobby.Instance.messageInputField.text = string.Empty;
+            SendChatMessage(UILobby.Instance.MessageInputField.text);
+            UILobby.Instance.MessageInputField.text = string.Empty;
         }
     }
 
@@ -129,7 +127,7 @@ public class ChatManager : NetworkBehaviour
 
     private void AddMessageToChat(string owner, string message)
     {
-        GameObject newMessage = Instantiate(chatMessagePrefab, UILobby.Instance.messageContent);
+        GameObject newMessage = Instantiate(chatMessagePrefab, UILobby.Instance.MessageContent);
         var messageText = newMessage.transform.Find("message").GetComponent<TextMeshProUGUI>();
         var ownerText = newMessage.transform.Find("owner").GetComponent<TextMeshProUGUI>();
 
@@ -138,15 +136,15 @@ public class ChatManager : NetworkBehaviour
 
         messages.Add(newMessage);
 
-        UpdateContentHeight(UILobby.Instance.messageContent, chatMessagePrefab, UILobby.Instance.messageScrollView);
+        UpdateContentHeight(UILobby.Instance.MessageContent, chatMessagePrefab, UILobby.Instance.MessageScrollView);
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(UILobby.Instance.messageContent.GetComponent<RectTransform>());
+        LayoutRebuilder.ForceRebuildLayoutImmediate(UILobby.Instance.MessageContent.GetComponent<RectTransform>());
 
         newMessage.transform.localScale = new Vector3(1, 0, 1);
         LeanTween.scaleY(newMessage, 1, 0.3f).setEase(LeanTweenType.easeOutQuart);
 
         Canvas.ForceUpdateCanvases();
-        UILobby.Instance.messageScrollView.verticalNormalizedPosition = 0f;
+        UILobby.Instance.MessageScrollView.verticalNormalizedPosition = 0f;
     }
 
     private void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)

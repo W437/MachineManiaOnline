@@ -45,12 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11b6406b76895fe42a040b5e1018ecc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatPanel: {fileID: 0}
-  messageScrollView: {fileID: 0}
-  messageInputField: {fileID: 0}
-  sendButton: {fileID: 0}
-  messageContent: {fileID: 0}
   chatMessagePrefab: {fileID: 3588865336957506395, guid: 18fc9619ea7d2734caa3bd9f69622db5, type: 3}
+  messages: []
   chatEffectsEnabled: 1
 --- !u!114 &3624414200203399642
 MonoBehaviour:
