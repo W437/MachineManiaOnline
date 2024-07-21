@@ -2,7 +2,7 @@ using Fusion;
 using UnityEngine;
 
 public class PickupSystem : NetworkBehaviour
-{.
+{
     private Pickup currentPickup;
     private PlayerController player;
 

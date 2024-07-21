@@ -1,23 +1,19 @@
-using System;
+using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
-using UnityEngine;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-
-
-// To be commented out for ease of use during development
-// Daniel's in command
-/// <summary>
-/// 
-/// </summary>
+using Newtonsoft.Json;
+using System;
 
 public class GoogleSheetsExample : MonoBehaviour
 {
     private static readonly string[] Scopes = { SheetsService.Scope.SpreadsheetsReadonly };
     private static readonly string ApplicationName = "Pickup Balance";
+
+    private SkillData skillData;
 
     void Start()
     {
@@ -38,37 +34,24 @@ public class GoogleSheetsExample : MonoBehaviour
 
         String spreadsheetId = "11NDkrOoQljZAib_2CIjTJh2prgTpKJJ0bx9l1Mc3mlg";
 
-        List<string> stringList = new List<string>();
-        List<int> intList = new List<int>();
-        List<float> floatList = new List<float>();
+        skillData = new SkillData
+        {
+            SkillNames = new List<string>(),
+            Durations = new List<int>(),
+            DropRates = new List<float>()
+        };
 
         List<string> stringRange = new List<string> { "SkillSheet!A2:A21" };
         List<string> intRange = new List<string> { "SkillSheet!C2:C21" };
         List<string> floatRange = new List<string> { "SkillSheet!E2:E21" };
 
-        FetchAndStoreData(service, spreadsheetId, stringRange, ref stringList, DataType.String);
+        FetchAndStoreData(service, spreadsheetId, stringRange, ref skillData.SkillNames, DataType.String);
+        FetchAndStoreData(service, spreadsheetId, intRange, ref skillData.Durations, DataType.Int);
+        FetchAndStoreData(service, spreadsheetId, floatRange, ref skillData.DropRates, DataType.FloatPercent);
 
-        FetchAndStoreData(service, spreadsheetId, intRange, ref intList, DataType.Int);
+        SaveDataToJson(skillData);
 
-        FetchAndStoreData(service, spreadsheetId, floatRange, ref floatList, DataType.FloatPercent);
-
-        Debug.Log("Skill Name List:");
-        foreach (var item in stringList)
-        {
-            Debug.Log(item);
-        }
-
-        Debug.Log("Duration List:");
-        foreach (var item in intList)
-        {
-            Debug.Log(item);
-        }
-
-        Debug.Log("Drop Rate List:");
-        foreach (var item in floatList)
-        {
-            Debug.Log(item);
-        }
+        Debug.Log("Data saved to JSON file.");
     }
 
     private void FetchAndStoreData<T>(SheetsService service, string spreadsheetId, List<string> ranges, ref List<T> dataList, DataType dataType)
@@ -115,6 +98,13 @@ public class GoogleSheetsExample : MonoBehaviour
                 Debug.Log($"No data found at range: {range}.");
             }
         }
+    }
+
+    private void SaveDataToJson(SkillData data)
+    {
+        string jsonPath = Path.Combine(Application.persistentDataPath, "SkillData.json");
+        string json = JsonConvert.SerializeObject(new SkillDataWrapper { SkillData = data }, Formatting.Indented);
+        File.WriteAllText(jsonPath, json);
     }
 
     private enum DataType
