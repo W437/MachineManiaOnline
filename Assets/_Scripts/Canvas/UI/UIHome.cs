@@ -15,7 +15,7 @@ public class UIHome : MonoBehaviour
     [SerializeField] private Button[] buttons;
     [SerializeField] private Button playButton;
     [SerializeField] private Button modeSelectButton;
-    private bool _isButtonOnCooldown = false;
+
 
     [Header("Player Stats")]
     [SerializeField] private TextMeshProUGUI playerLevelText;

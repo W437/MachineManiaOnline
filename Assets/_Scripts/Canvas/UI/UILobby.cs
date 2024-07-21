@@ -12,19 +12,25 @@ public class UILobby : MonoBehaviour
     public static UILobby Instance;
 
     [Header("Lobby")]
-    [SerializeField] private GameObject lobbyPlatformScreen;
-    [SerializeField] private Button lobbyReadyButton;
-    [SerializeField] private Button lobbyLeaveButton;
-    public Transform playerPositionsParent;
+    [SerializeField] GameObject lobbyPlatformScreen;
+    [SerializeField] Button lobbyReadyButton;
+    [SerializeField] Button lobbyLeaveButton;
+    public Transform PlayerPositionsParent;
+
+    [Header("Custom Session")]
+    [SerializeField] TMP_InputField inputSessionName;
+    [SerializeField] TMP_InputField inputSessionPassword;
+    [SerializeField] TMP_Dropdown inputMaxPlayers;
+    [SerializeField] Button btnCreateCustomSession;
 
     [Header("Connecting Overlay")]
-    [SerializeField] private GameObject connectingOverlay;
-    [SerializeField] private TextMeshProUGUI connectingText;
-    private Coroutine _connectingCoroutine;
-    private ButtonHandler _buttonHandler;
+    [SerializeField] GameObject connectingOverlay;
+    [SerializeField] TextMeshProUGUI connectingText;
+    Coroutine connectingCoroutine;
+    ButtonHandler buttonHandler;
 
     [Header("Mania News")]
-    [SerializeField] private LobbyManiaNews maniaNews;
+    [SerializeField] LobbyManiaNews maniaNews;
 
     [Header("Private Lobby Chat")]
     public GameObject ChatPanel;
@@ -55,14 +61,18 @@ public class UILobby : MonoBehaviour
 
     private void Start()
     {
-        _buttonHandler = gameObject.AddComponent<ButtonHandler>();
-        _buttonHandler.AddEventTrigger(lobbyReadyButton, OnLobbyReadyButtonReleased, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
-        _buttonHandler.AddEventTrigger(lobbyLeaveButton, OnLobbyLeaveButtonReleased, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        if(buttonHandler == null)
+        {
+            buttonHandler = gameObject.AddComponent<ButtonHandler>();
+        }
+        buttonHandler.AddEventTrigger(lobbyReadyButton, OnLobbyReady, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
+        buttonHandler.AddEventTrigger(lobbyLeaveButton, OnLobbyLeave, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
     }
 
     private IEnumerator CheckIfLobbyIsSpawned()
     {
-        _connectingCoroutine = StartCoroutine(AnimateConnectingText());
+        connectingCoroutine = StartCoroutine(AnimateConnectingText());
         while (true)
         {
             yield return new WaitForSeconds(1f);
@@ -87,10 +97,10 @@ public class UILobby : MonoBehaviour
         if (connectingOverlay != null)
         {
             connectingOverlay.SetActive(false);
-            if (_connectingCoroutine != null)
+            if (connectingCoroutine != null)
             {
-                StopCoroutine(_connectingCoroutine);
-                _connectingCoroutine = null;
+                StopCoroutine(connectingCoroutine);
+                connectingCoroutine = null;
             }
         }
     }
@@ -109,7 +119,7 @@ public class UILobby : MonoBehaviour
         }
     }
 
-    private void OnLobbyReadyButtonReleased(Button button)
+    private void OnLobbyReady(Button button)
     {
         if (!(FusionLauncher.Instance.GetNetworkRunner() != null && FusionLauncher.Instance.GetNetworkRunner().IsRunning)) return;
 
@@ -126,12 +136,37 @@ public class UILobby : MonoBehaviour
         }
     }
 
-    private void OnLobbyLeaveButtonReleased(Button button)
+    private void OnLobbyLeave(Button button)
     {
         AudioManager.Instance.SetCutoffFrequency(7000, 10000);
-        _buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
+        buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
         lobbyPlatformScreen.SetActive(false);
         string uniqueSessionName = GameLauncher.Instance.GenerateUniqueSessionName();
         GameLauncher.Instance.Launch(uniqueSessionName, false);
+    }
+
+    private void OnCreateCustomSession(Button button)
+    {
+        string sessionName = inputSessionName.text;
+        string sessionPassword = inputSessionPassword.text;
+        int maxPlayers = int.Parse(inputMaxPlayers.options[inputMaxPlayers.value].text);
+
+        if (string.IsNullOrEmpty(sessionName) || sessionName.Length >= 14)
+        {
+            Debug.LogError("Session name must be non-empty and shorter than 14 characters.");
+            return;
+        }
+
+        bool withPassword = !string.IsNullOrEmpty(sessionPassword);
+
+        // Check if the session already exists before launching (pseudo-code, replace with actual check)
+/*        if (!SessionExists(sessionName))
+        {
+            GameLauncher.Instance.Launch(sessionName, withPassword, maxPlayers);
+        }
+        else
+        {
+            Debug.LogError("Session with the given name already exists.");
+        }*/
     }
 }

@@ -1,558 +1,237 @@
-using Fusion;
 using System;
-using System.Collections;
-using TMPro;
+using TarodevController;
 using UnityEngine;
-using static Coffee.UIExtensions.UIParticleAttractor;
-using static UnityEngine.UI.Image;
 
-public class PlayerController : NetworkBehaviour
+/// <summary>
+/// A 2D player controller script by Tarodev.
+/// This script provides basic movement, jumping, and collision handling for a 2D character.
+/// </summary>
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(PickupSystem))]
+public class PlayerController : MonoBehaviour, IPlayerController
 {
-    //
-    // Player movement inspired by Toyful Games' Capsule Theory - https://www.youtube.com/watch?v=qdskE8PJy6Q
-    // Game should feel like Toyful Games' 'Very Very Valet', but in 2D.
+    [SerializeField] private ScriptableStats _stats; // Reference to the player's stats stored in a ScriptableObject.
+    private Rigidbody2D _rb; // Reference to the Rigidbody2D component for physics interactions.
+    private CapsuleCollider2D _col; // Reference to the CapsuleCollider2D component for collision detection.
+    private FrameInput _frameInput; // Stores input for the current frame.
+    private Vector2 _frameVelocity; // Stores the player's velocity for the current frame.
+    private bool _cachedQueryStartInColliders; // Caches the default value of Physics2D.queriesStartInColliders.
 
+    #region Interface
 
-    // Create custom physics player movement
-    // Declutter player controller
-    // Improve multiplayer syncing
-    // To keep:
-    // 1. Keep upright spring mechanism for custom physics
-    // 2. Spring and 'bouncy' feel when hitting hard slope angles
+    // Property to access the movement input for the current frame.
+    public Vector2 FrameInput => _frameInput.Move;
 
-    [Header("Movement Settings")]
-    [SerializeField] private float maxSpeed = 8f;
-    [SerializeField] private float acceleration = 10f;
-    [SerializeField] private float maxSlopeAngle = 45f; // recheck if needed anymore
-    [SerializeField] private float downhillSpeedMultiplier = 1.5f; // fix downhill movement
-    [SerializeField] private CapsuleCollider2D capsuleCollider, capsuleColliderTrigger;
-    [SerializeField] private bool raycastRotatesWithPlayer = true;
-    [SerializeField] private bool rotateWithGround = true;
+    // Events that are triggered when the player lands or jumps.
+    public event Action<bool, float> GroundedChanged;
+    public event Action Jumped;
 
-    private float speedVelocity;
-    private float rotationVelocity;
-    private float currentSpeed;
+    #endregion
 
-    // Spring 
-    [Header("Spring Settings")]
-    [SerializeField] private float springStrength = 50f;
-    [SerializeField] private float springDamping = 5f;
-    [SerializeField] private float rideHeight = 1f;
-    [SerializeField] private float rotationDamping = 0.2f;
-    [SerializeField] private float compressionLimit = 0.5f;
-    [SerializeField] private float decompressionLimit = 0.5f;
+    private float _time; // Keeps track of elapsed time.
 
-    // Player Alignment - this keeps player upright with spring mechanism
-    [Header("Player Alignment")]
-    [SerializeField] private float uprightCheckDistance = 1f;
-    [SerializeField] private float fallAlignmentThreshold = 10f;
-    [SerializeField] private float uprightSpringStrength = 50f; 
-    [SerializeField] private float uprightSpringDamping = 5f;
-
-    // Jump
-    [Header("Jump Settings")]
-    [SerializeField] private float secondJumpMultiplier = 0.7f; 
-    [SerializeField] private int maxJumps = 2;
-    [SerializeField] private float jumpForce = 7.5f;
-    [SerializeField] private float jumpDelay = 0.2f;
-
-    // Sliding
-    [Header("Sliding Settings")]
-    [SerializeField] private float slideDuration = 1.5f; 
-    [SerializeField] private float slideCheckDistance = 1.0f; 
-    [SerializeField] private KeyCode slideKey = KeyCode.LeftShift; 
-    [SerializeField] private float slideRotationSpeed = 5f; 
-
-    private bool isSliding = false;
-    private bool isReturningToNormal = false; 
-    private float slideTimer = 0.0f;
-    private float originalRideHeight;
-    private Vector2 slideColliderSize = new Vector2(1.0f, 0.5f); 
-    private Vector2 originalColliderSize;
-    private Quaternion originalRotation;
-    private Vector3 originalSpriteScale;
-
-    [Header("Layers & Others")]
-    [SerializeField] private LayerMask platformLayer;
-    [SerializeField] private LayerMask obstaclesLayer;
-    [SerializeField] private LayerMask wallLayer;
-    [SerializeField] private Transform slopeDetector;
-    [SerializeField] private SpriteRenderer playerSpriteRenderer;
-    [SerializeField] private Rigidbody2D playerRb;
-
-
-    private bool isAgainstWall;
-    private int jumpCount;
-    private bool isGrounded;
-    private bool canJump = true;
-    private Vector2 currentGroundNormal;
-
-    private PlayerStats playerStats;
-    private NetworkInputData networkInput;
-
-    private PlayerManager playerManager;
-    private PickupSystem pickupSystem;
-
-
-    void Start()
+    private void Awake()
     {
-        playerRb.freezeRotation = true;
-        jumpCount = maxJumps;
-        originalRotation = transform.rotation;
-        originalColliderSize = capsuleCollider.size;
-        originalRideHeight = rideHeight;
-        originalSpriteScale = playerSpriteRenderer.transform.localScale;
+        // Get references to the Rigidbody2D and CapsuleCollider2D components.
+        _rb = GetComponent<Rigidbody2D>();
+        _col = GetComponent<CapsuleCollider2D>();
 
-        //playerStats = GameManager.Instance.PlayerStats;
-
-        if (!Object.HasInputAuthority)
-        {
-            enabled = false; // Disable the script for non-authoritative clients
-            return;
-        }
-
-        playerManager = GetComponent<PlayerManager>();
-        pickupSystem = GetComponent<PickupSystem>();
-
+        // Cache the default value of Physics2D.queriesStartInColliders.
+        _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
     }
 
-    public override void FixedUpdateNetwork()
+    private void Update()
     {
-        if (!HasStateAuthority)
+        _time += Time.deltaTime; // Increment the elapsed time.
+        GatherInput(); // Gather input from the player.
+    }
+
+    private void GatherInput()
+    {
+        // Gather input from Unity's Input system.
+        _frameInput = new FrameInput
         {
-            return;
+            JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.C), // Jump button pressed.
+            JumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.C), // Jump button held down.
+            Move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) // Movement input.
+        };
+
+        // Snap input to discrete values if SnapInput is enabled.
+        if (_stats.SnapInput)
+        {
+            _frameInput.Move.x = Mathf.Abs(_frameInput.Move.x) < _stats.HorizontalDeadZoneThreshold ? 0 : Mathf.Sign(_frameInput.Move.x);
+            _frameInput.Move.y = Mathf.Abs(_frameInput.Move.y) < _stats.VerticalDeadZoneThreshold ? 0 : Mathf.Sign(_frameInput.Move.y);
         }
 
-        if (playerManager.net_CanMove && playerManager.net_IsAlive)
+        // Record jump input time for buffered jump handling.
+        if (_frameInput.JumpDown)
         {
-            if (GetInput(out NetworkInputData data))
-            {
-                networkInput = data;
-            }
-        }
-
-        // Most checks could be done outside FixedUpdateNetwork for a smoother experience
-        CheckGround(); 
-        CheckWall();
-        Move();
-        ApplySpringForce();
-        CheckUprightAndAlignRotation();
-
-        if (networkInput.net_Jump)
-        {
-            Jump();
-        }
-
-        if (networkInput.net_UsePickup)
-        {
-            pickupSystem.UsePickup();
-        }
-
-        if (networkInput.net_Slide)
-        {
-            StartSlide();
-        }
-
-        if (isSliding)
-        {
-            HandleSlide();
-        }
-
-        if (isReturningToNormal)
-        {
-            HandleReturningToNormal();
+            _jumpToConsume = true;
+            _timeJumpWasPressed = _time;
         }
     }
 
 
-    private void Move()
+    /// <summary>
+    /// We're going to limit movement to only horizontally, we want the player
+    /// to always move to the right direction continously without stopping, 
+    /// we also want a flag to control whether he moves or not, for freezing the game before the game starts
+    /// after he finishes, so we can manipuklate his position and movement.
+    /// Some state system perhaps for animations, and custom stuff etc?
+    /// </summary>
+    private void FixedUpdate()
     {
-        CheckWall();
+        CheckCollisions(); // Check for collisions with the ground and ceiling.
 
-        if (isAgainstWall)
-        {
-            playerRb.velocity = new Vector2(0, playerRb.velocity.y); // stop horizontal movement
-            return;
-        }
+        HandleJump(); // Handle jumping logic.
+        HandleDirection(); // Handle horizontal movement logic.
+        HandleGravity(); // Handle gravity and falling logic.
 
-        float targetSpeed = maxSpeed;
-        currentSpeed = playerRb.velocity.x;
-
-        if (isGrounded)
-        {
-            float slopeAngle = Vector2.SignedAngle(Vector2.up, currentGroundNormal);
-            if (slopeAngle < 0) // downhill
-            {
-                targetSpeed *= downhillSpeedMultiplier;
-            }
-        }
-
-        // acceleration
-        currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedVelocity, acceleration * Time.fixedDeltaTime);
-        playerRb.velocity = new Vector2(currentSpeed, playerRb.velocity.y);
+        ApplyMovement(); // Apply the computed velocity to the Rigidbody2D.
     }
 
-    private void Jump()
+    #region Collisions
+
+    private float _frameLeftGrounded = float.MinValue; // Time when the player last left the ground.
+    private bool _grounded; // Whether the player is currently grounded.
+
+    private void CheckCollisions()
     {
-        if (isGrounded)
+        // Temporarily disable queries starting inside colliders.
+        Physics2D.queriesStartInColliders = false;
+
+        // Check for collisions with the ground and ceiling.
+        bool groundHit = Physics2D.CapsuleCast(_col.bounds.center, _col.size, _col.direction, 0, Vector2.down, _stats.GrounderDistance, ~_stats.PlayerLayer);
+        bool ceilingHit = Physics2D.CapsuleCast(_col.bounds.center, _col.size, _col.direction, 0, Vector2.up, _stats.GrounderDistance, ~_stats.PlayerLayer);
+
+        // Prevent upward velocity when hitting the ceiling.
+        if (ceilingHit) _frameVelocity.y = Mathf.Min(0, _frameVelocity.y);
+
+        // Handle landing on the ground.
+        if (!_grounded && groundHit)
         {
-            // Reset jumps when grounded
-            jumpCount = maxJumps;
+            _grounded = true;
+            _coyoteUsable = true;
+            _bufferedJumpUsable = true;
+            _endedJumpEarly = false;
+            GroundedChanged?.Invoke(true, Mathf.Abs(_frameVelocity.y));
         }
-        if (canJump)
+        // Handle leaving the ground.
+        else if (_grounded && !groundHit)
         {
-            if (isAgainstWall || jumpCount > 1)
-            {
-                // unlimited jumps when against a wall
-                playerRb.velocity = new Vector2(playerRb.velocity.x, jumpForce);
-                jumpCount--;
-                StartCoroutine(JumpDelay(jumpDelay));
-            }
+            _grounded = false;
+            _frameLeftGrounded = _time;
+            GroundedChanged?.Invoke(false, 0);
         }
+
+        // Restore the default value of queriesStartInColliders.
+        Physics2D.queriesStartInColliders = _cachedQueryStartInColliders;
     }
 
-    private void StartSlide()
+    #endregion
+
+
+    #region Jumping
+
+    private bool _jumpToConsume; // Whether a jump input should be consumed.
+    private bool _bufferedJumpUsable; // Whether a buffered jump can be used.
+    private bool _endedJumpEarly; // Whether the jump was ended early.
+    private bool _coyoteUsable; // Whether coyote time can be used.
+    private float _timeJumpWasPressed; // Time when the jump button was pressed.
+
+    // Whether a buffered jump is available.
+    private bool HasBufferedJump => _bufferedJumpUsable && _time < _timeJumpWasPressed + _stats.JumpBuffer;
+    // Whether coyote time can be used.
+    private bool CanUseCoyote => _coyoteUsable && !_grounded && _time < _frameLeftGrounded + _stats.CoyoteTime;
+
+    private void HandleJump()
     {
-        if (!isSliding && !isReturningToNormal)
+        // End the jump early if the jump button is released.
+        if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.velocity.y > 0) _endedJumpEarly = true;
+
+        // Return if there's no jump to consume and no buffered jump.
+        if (!_jumpToConsume && !HasBufferedJump) return;
+
+        // Execute the jump if grounded or using coyote time.
+        if (_grounded || CanUseCoyote) ExecuteJump();
+
+        _jumpToConsume = false; // Reset jump consumption flag.
+    }
+
+    private void ExecuteJump()
+    {
+        _endedJumpEarly = false;
+        _timeJumpWasPressed = 0;
+        _bufferedJumpUsable = false;
+        _coyoteUsable = false;
+        _frameVelocity.y = _stats.JumpPower; // Set the vertical velocity to the jump power.
+        Jumped?.Invoke(); // Trigger the Jumped event.
+    }
+
+    #endregion
+
+    #region Horizontal
+
+    private void HandleDirection()
+    {
+        // Decelerate to a stop if no movement input is detected.
+        if (_frameInput.Move.x == 0)
         {
-            isSliding = true;
-            slideTimer = 0.0f;
-
-            float distanceFromGround = GetPlayerDistanceFromGround();
-            Debug.Log($"Distance from ground: {distanceFromGround}");
-
-            if (!isGrounded && distanceFromGround > 4)
-            {
-                // Apply downward force when sliding in the air
-                Debug.Log("Applying downward force");
-                Debug.Log($"Velocity before force: {playerRb.velocity}");
-                playerRb.AddForce(Vector2.down * 333, ForceMode2D.Impulse);
-                Debug.Log($"Velocity after force: {playerRb.velocity}");
-
-                // Animate the size change faster
-                LeanTween.value(gameObject, UpdateColliderSize, originalColliderSize, slideColliderSize, 0.25f)
-                    .setEase(LeanTweenType.easeOutBounce);
-
-                // Halve the ride height faster
-                LeanTween.value(gameObject, UpdateRideHeight, originalRideHeight, originalRideHeight / 2, 0.25f)
-                    .setEase(LeanTweenType.easeOutBounce);
-
-                // Animate the sprite scale change faster
-                LeanTween.scaleY(playerSpriteRenderer.gameObject, originalSpriteScale.y * 0.5f, 0.25f)
-                    .setEase(LeanTweenType.easeOutBounce);
-            }
-            else
-            {
-                // Regular slide animation
-                LeanTween.value(gameObject, UpdateColliderSize, originalColliderSize, slideColliderSize, 0.5f)
-                    .setEase(LeanTweenType.easeOutBounce);
-
-                LeanTween.value(gameObject, UpdateRideHeight, originalRideHeight, originalRideHeight / 2, 0.5f)
-                    .setEase(LeanTweenType.easeOutBounce);
-
-                LeanTween.scaleY(playerSpriteRenderer.gameObject, originalSpriteScale.y * 0.5f, 0.5f)
-                    .setEase(LeanTweenType.easeOutBounce);
-            }
+            var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
+            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
         }
-    }
-
-    private void UpdateColliderSize(Vector2 newSize)
-    {
-        capsuleCollider.size = newSize;
-    }
-
-    private void UpdateRideHeight(float newHeight)
-    {
-        rideHeight = newHeight;
-    }
-
-    private void HandleSlide()
-    {
-        slideTimer += Time.fixedDeltaTime;
-
-        Vector2 frontDirection = transform.TransformDirection(Vector2.right);
-        Vector2 backDirection = transform.TransformDirection(Vector2.left);
-
-        RaycastHit2D frontHit = Physics2D.Raycast(transform.position, frontDirection, slideCheckDistance, platformLayer);
-        RaycastHit2D backHit = Physics2D.Raycast(transform.position, backDirection, slideCheckDistance, platformLayer);
-
-        Debug.DrawRay(transform.position, frontDirection * slideCheckDistance, Color.cyan);
-        Debug.DrawRay(transform.position, backDirection * slideCheckDistance, Color.cyan);
-
-        if (slideTimer >= slideDuration && frontHit.collider == null && backHit.collider == null)
+        // Accelerate towards the input direction.
+        else
         {
-            isSliding = false;
-            isReturningToNormal = true;
-
-            float animationTime = isGrounded ? 1.3f : 1.3f;
-
-            LeanTween.value(gameObject, UpdateColliderSize, slideColliderSize, originalColliderSize, animationTime)
-                .setEase(LeanTweenType.easeOutBounce);
-
-            LeanTween.scaleY(playerSpriteRenderer.gameObject, originalSpriteScale.y, animationTime)
-                .setEase(LeanTweenType.easeOutBounce);
-
-            LeanTween.value(gameObject, UpdateRideHeight, rideHeight, originalRideHeight, animationTime)
-                .setEase(LeanTweenType.easeOutBounce)
-                .setOnComplete(() => isReturningToNormal = false);
+            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
         }
     }
 
-    private void HandleReturningToNormal()
-    {
-        float targetRotationSpeed = isGrounded ? slideRotationSpeed : slideRotationSpeed * 4;
-        transform.rotation = Quaternion.Lerp(transform.rotation, originalRotation, Time.fixedDeltaTime * targetRotationSpeed);
+    #endregion
 
-        if (Quaternion.Angle(transform.rotation, originalRotation) < 0.1f)
+    #region Gravity
+
+    private void HandleGravity()
+    {
+        // Apply grounding force if grounded and not moving upwards.
+        if (_grounded && _frameVelocity.y <= 0f)
         {
-            transform.rotation = originalRotation;
-            EndSlide();
-        }
-    }
-
-    private void EndSlide()
-    {
-        isSliding = false;
-        isReturningToNormal = false;
-        capsuleCollider.size = originalColliderSize;
-        transform.rotation = originalRotation;
-        rideHeight = originalRideHeight;
-        playerSpriteRenderer.transform.localScale = originalSpriteScale;
-        LeanTween.cancel(gameObject); // Ensure all LeanTween animations are stopped
-    }
-
-    private void ApplySpringForce()
-    {
-        Quaternion originalRotation = Quaternion.Euler(0, 0, 0);
-
-        Vector2 bottomTipPosition = transform.TransformPoint(new Vector2(0, -capsuleCollider.size.y / 2));
-        Vector2 downDirection = originalRotation * Vector2.down;
-        RaycastHit2D mainHit = Physics2D.Raycast(bottomTipPosition, downDirection, rideHeight + originalColliderSize.y / 2, platformLayer);
-        Vector2 frontDirection = originalRotation * Quaternion.Euler(0, 0, 45) * Vector2.down;
-        Vector2 backDirection = originalRotation * Quaternion.Euler(0, 0, -45) * Vector2.down;
-        RaycastHit2D frontHit = Physics2D.Raycast(bottomTipPosition, frontDirection, rideHeight + originalColliderSize.y, platformLayer);
-        RaycastHit2D backHit = Physics2D.Raycast(bottomTipPosition, backDirection, rideHeight + originalColliderSize.y, platformLayer);
-
-        Debug.DrawRay(bottomTipPosition, downDirection * (rideHeight + originalColliderSize.y / 2), Color.red);
-        Debug.DrawRay(bottomTipPosition, frontDirection * (rideHeight + originalColliderSize.y), Color.blue);
-        Debug.DrawRay(bottomTipPosition, backDirection * (rideHeight + originalColliderSize.y), Color.green);
-
-        if (mainHit.collider != null)
-        {
-            isGrounded = true;
-            float distanceToGround = mainHit.distance - (originalColliderSize.y / 2);
-            float distance = rideHeight - distanceToGround;
-
-            // hard limits to spring compression and decompression
-            float clampedDistance = Mathf.Clamp(distance, -compressionLimit, decompressionLimit);
-            float springForce = springStrength * clampedDistance - springDamping * playerRb.velocity.y;
-
-            if (Mathf.Abs(springForce) > 0.1f)
-            {
-                playerRb.AddForce(Vector2.up * springForce);
-            }
-
-            Vector2 groundNormal = mainHit.normal;
-            bool onSlope = false;
-
-            if (frontHit.collider != null && backHit.collider != null)
-            {
-                groundNormal = ((frontHit.normal + backHit.normal) / 2).normalized;
-                onSlope = true;
-            }
-            else if (frontHit.collider != null)
-            {
-                groundNormal = frontHit.normal;
-                onSlope = true;
-            }
-            else if (backHit.collider != null)
-            {
-                groundNormal = backHit.normal;
-                onSlope = true;
-            }
-
-            // slopes and other rideable obstacles will have custom TAGS, to prevent rotation alighment
-            if (onSlope && !isAgainstWall && !mainHit.collider.CompareTag("GroundObjects"))
-            {
-                float groundAngle = Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg;
-                float targetRotation = groundAngle - 90f;
-                float currentRotation = transform.eulerAngles.z;
-                float newRotation = Mathf.LerpAngle(currentRotation, targetRotation, Time.fixedDeltaTime * rotationDamping);
-                transform.rotation = Quaternion.Euler(0f, 0f, newRotation);
-            }
-
-            // player doesn't penetrate the ground
-            if (transform.position.y - originalColliderSize.y / 2 < mainHit.point.y)
-            {
-                transform.position = new Vector2(transform.position.x, mainHit.point.y + originalColliderSize.y / 2);
-            }
+            _frameVelocity.y = _stats.GroundingForce;
         }
         else
         {
-            isGrounded = false;
+            // Apply gravity while in the air.
+            var inAirGravity = _stats.FallAcceleration;
+            if (_endedJumpEarly && _frameVelocity.y > 0) inAirGravity *= _stats.JumpEndEarlyGravityModifier;
+            _frameVelocity.y = Mathf.MoveTowards(_frameVelocity.y, -_stats.MaxFallSpeed, inAirGravity * Time.fixedDeltaTime);
         }
     }
 
+    #endregion
 
-    private void CheckUprightAndAlignRotation()
+    // Apply the computed velocity to the Rigidbody2D.
+    private void ApplyMovement() => _rb.velocity = _frameVelocity;
+
+#if UNITY_EDITOR
+    // Validate the scriptable object assignment in the editor.
+    private void OnValidate()
     {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, uprightCheckDistance, platformLayer);
-
-        //Debug.DrawRay(transform.position, Vector2.down * uprightCheckDistance, Color.blue);
-
-        if (hit.collider != null && !hit.collider.CompareTag("GroundObjects"))
-        {
-            // Maintain upright position with damping and spring mechanism
-            float distanceToGround = hit.distance - (capsuleCollider.size.y / 2);
-            float distance = rideHeight - distanceToGround;
-            float springForce = uprightSpringStrength * distance - uprightSpringDamping * playerRb.velocity.y;
-            playerRb.AddForce(Vector2.up * springForce);
-
-            // Align rotation with ground rotation if falling and within threshold distance
-            if (!isGrounded && distanceToGround < fallAlignmentThreshold)
-            {
-                ApplyGroundRotation(hit.normal);
-            }
-        }
+        if (_stats == null) Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
     }
+#endif
+}
 
-    // Keep upright spring mechanism for custom physics
-    public float GetPlayerDistanceFromGround()
-    {
-        // Position from where the raycast should start
-        Vector2 raycastStart = capsuleColliderTrigger.transform.position;
-        // Direction for the raycast
-        Vector2 raycastDirection = Vector2.down;
-        // Maximum distance to check for the ground
-        float maxDistance = 1000f;
+// Struct to store frame-specific input.
+public struct FrameInput
+{
+    public bool JumpDown;
+    public bool JumpHeld;
+    public Vector2 Move;
+}
 
-        // Perform the raycast
-        RaycastHit2D mainHit = Physics2D.Raycast(raycastStart, raycastDirection, maxDistance, platformLayer);
-
-        // If we hit something, return the distance
-        if (mainHit.collider != null)
-        {
-            return mainHit.distance;
-        }
-
-        // If we didn't hit anything, return a large number or -1 to indicate no ground was found
-        return -1f;
-    }
-
-
-    private void CheckGround()
-    {
-        float groundCheckDistance = 0.777f + rideHeight + (capsuleCollider.size.y / 2);
-        Vector2 groundDirection = raycastRotatesWithPlayer ? transform.TransformDirection(Vector2.down) : Vector2.down;
-        RaycastHit2D groundHit = Physics2D.Raycast(transform.position, groundDirection, groundCheckDistance, platformLayer);
-
-        Debug.DrawRay(transform.position, groundDirection * groundCheckDistance, Color.yellow);
-
-        if (groundHit.collider != null)
-        {
-            isGrounded = true;
-            currentGroundNormal = groundHit.normal;
-            // Check ground type for rotation
-/*            if (rotateWithGround)
-            {
-                ApplyGroundRotation(groundHit.normal);
-            }*/
-            
-            // ???????????????????
-/*            if(groundHit.distance < rideHeight * 2)
-            {
-                jumpCount = maxJumps;
-            }*/
-        }
-        else
-        {
-            isGrounded = false;
-            currentGroundNormal = Vector2.up;
-        }
-    }
-
-    private void ApplyGroundRotation(Vector2 groundNormal)
-    {
-        float groundAngle = Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg;
-        float targetRotation = groundAngle - 90f;
-        float smoothedRotation = Mathf.SmoothDampAngle(transform.eulerAngles.z, targetRotation, ref rotationVelocity, rotationDamping);
-        transform.rotation = Quaternion.Euler(0f, 0f, smoothedRotation);
-    }
-
-    private void CheckWall()
-    {
-        float wallCheckDistance = capsuleCollider.size.x / 2 + 0.333f;
-        Vector2 wallDirection = Vector2.right;
-
-        // checks wall using 3 rays along the capsule colider height
-        Vector2 wallCheckOriginCenter = transform.position;
-        Vector2 wallCheckOriginTop = wallCheckOriginCenter + (Vector2.up * capsuleCollider.size.y / 3);
-        Vector2 wallCheckOriginBottom = wallCheckOriginCenter - (Vector2.up * capsuleCollider.size.y / 3);
-
-        RaycastHit2D wallHitCenter = Physics2D.Raycast(wallCheckOriginCenter, wallDirection, wallCheckDistance, wallLayer);
-        RaycastHit2D wallHitTop = Physics2D.Raycast(wallCheckOriginTop, wallDirection, wallCheckDistance, wallLayer);
-        RaycastHit2D wallHitBottom = Physics2D.Raycast(wallCheckOriginBottom, wallDirection, wallCheckDistance, wallLayer);
-
-        Debug.DrawRay(wallCheckOriginCenter, wallDirection * wallCheckDistance, Color.red);
-        Debug.DrawRay(wallCheckOriginTop, wallDirection * wallCheckDistance, Color.red);
-        Debug.DrawRay(wallCheckOriginBottom, wallDirection * wallCheckDistance, Color.red);
-
-        isAgainstWall = wallHitCenter.collider != null || wallHitTop.collider != null || wallHitBottom.collider != null;
-    }
-
-    private IEnumerator JumpDelay(float delay)
-    {
-        canJump = false;
-        yield return new WaitForSeconds(delay);
-        canJump = true;
-    }
-
-    public float GetCurrentVelocity()
-    {
-        return currentSpeed;
-    }
-
-    public float GetAcceleration()
-    {
-        return acceleration;
-    }
-
-    public float GetPlayerRotation()
-    {
-        return transform.rotation.z;
-    }
-
-    public float GetSlopeAngle()
-    {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 20, platformLayer);
-
-        if (hit.collider != null)
-        {
-            float angle = Vector2.SignedAngle(Vector2.down, hit.normal);
-
-            return angle;
-        }
-        return 0; // No slope if no hit
-    }
-
-    public int GetJumpCount()
-    {
-        return jumpCount;
-    }
-
-    public bool IsGrounded()
-    {
-        return isGrounded;
-    }
-
-    public float GetPlayerMoveSpeed()
-    {
-        return maxSpeed;
-    }
-
-    public bool IsAgainstWall()
-    {
-        return isAgainstWall;
-    }
-
+// Interface to define the player controller events and properties.
+public interface IPlayerController
+{
+    public event Action<bool, float> GroundedChanged;
+    public event Action Jumped;
+    public Vector2 FrameInput { get; }
 }

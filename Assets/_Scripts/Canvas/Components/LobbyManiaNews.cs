@@ -10,7 +10,6 @@ public class LobbyManiaNews : MonoBehaviour
     public float _displayDuration = 3f;
     public bool _randomOrder = true;
 
-    private int currentIndex = 0;
 
     private void Awake()
     {

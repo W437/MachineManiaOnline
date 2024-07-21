@@ -183,7 +183,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
         {
-            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
             var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
             if (emoteText != null)
@@ -229,7 +229,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
         {
-            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
             var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
             if (messageText != null)
@@ -326,7 +326,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
         {
-            Transform position = UILobby.Instance.playerPositionsParent.GetChild(playerIndex);
+            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
             var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
             if (emoteText != null)
@@ -410,7 +410,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         foreach (var player in net_PlayerPositionsMap)
         {
             int positionIndex = player.Value;
-            Transform positionTransform = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+            Transform positionTransform = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
             UpdatePlayerUI(positionTransform, player.Key);
         }
     }
@@ -459,14 +459,14 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void UpdateUI(int positionIndex, PlayerRef player)
     {
         var playerInfo = net_PlayerPositions.Get(positionIndex);
-        Transform position = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+        Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
 
         UpdatePlayerUI(position, player);
     }
 
     private void ClearUI(int positionIndex)
     {
-        Transform position = UILobby.Instance.playerPositionsParent.GetChild(positionIndex);
+        Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
 
         var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
         var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();

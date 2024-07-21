@@ -2,7 +2,7 @@ using Fusion;
 using UnityEngine;
 
 public class PickupSystem : NetworkBehaviour
-{.
+{
     private Pickup currentPickup;
     private PlayerController player;
 
@@ -18,7 +18,7 @@ public class PickupSystem : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    public void UsePickup()
+    public void RPC_UsePickup()
     {
         if (currentPickup != null)
         {

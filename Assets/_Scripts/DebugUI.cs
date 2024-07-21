@@ -1,10 +1,10 @@
-using TMPro;
+/*using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class DebugUI : MonoBehaviour
 {
-    public PlayerController playerController; // Reference to the PlayerController
+    //public PlayerController playerController; // Reference to the PlayerController
     public TextMeshProUGUI debugText; // Reference to the UI Text component
 
     void Update()
@@ -36,3 +36,4 @@ public class DebugUI : MonoBehaviour
         }
     }
 }
+*/

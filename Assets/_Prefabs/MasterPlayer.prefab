@@ -5016,13 +5016,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4208896329048650225}
-  - component: {fileID: 5916024941392163280}
   - component: {fileID: 584280692854443194}
   - component: {fileID: 6321796016516855213}
   - component: {fileID: 4970704613789083963}
   - component: {fileID: 1819417312281767562}
   - component: {fileID: 7835155397552032863}
   - component: {fileID: 3475068331368132815}
+  - component: {fileID: 7672122624965089462}
   m_Layer: 3
   m_Name: MasterPlayer
   m_TagString: Player
@@ -5046,19 +5046,6 @@ Transform:
   - {fileID: 7479507966051628707}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5916024941392163280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4163250703601857657}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f61c64124c8575748994f087b9dc1b8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
 --- !u!50 &584280692854443194
 Rigidbody2D:
   serializedVersion: 4
@@ -5150,7 +5137,9 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 4970704613789083963}
   - {fileID: 7835155397552032863}
+  - {fileID: 3475068331368132815}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5185,6 +5174,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e50b6fe5a4456f44b1d0529772938e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7672122624965089462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f61c64124c8575748994f087b9dc1b8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stats: {fileID: 0}
 --- !u!1 &4328776677701572124
 GameObject:
   m_ObjectHideFlags: 0
@@ -24832,7 +24834,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7479507966051628707}
   - component: {fileID: 9134517692109595410}
-  - component: {fileID: 4296287523738406979}
+  - component: {fileID: 6662955104968191014}
   m_Layer: 3
   m_Name: Visual
   m_TagString: Untagged
@@ -24954,7 +24956,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &4296287523738406979
+--- !u!114 &6662955104968191014
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -24963,7 +24965,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6438604511294245872}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb09df9db553ffc4ab6600e3070de9eb, type: 3}
+  m_Script: {fileID: 11500000, guid: 34bcc063f0cc23b428b48b3d3c161a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _anim: {fileID: 5756642009046888929}
