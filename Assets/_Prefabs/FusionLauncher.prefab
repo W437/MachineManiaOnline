@@ -46,12 +46,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68f8c16257b2c384fb8c6a9c548e5a3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lobbyManagerPrefab:
+  net_LobbyManagerPrefab:
     RawGuidValue: 4cc980d485168e74e8238c567d488859
-  chatManagerPrefab:
+  net_ChatManagerPrefab:
     RawGuidValue: 3246b74ca37b2e544bd2484bf71872e1
-  gameManagerPrefab:
+  net_GameManagerPrefab:
     RawGuidValue: 8cf915bfe68e3324bad4a8e6ea7cdd62
+  net_PlayerPrefab:
+    RawGuidValue: 8fc2c373a38a3e94e89711093573739d
   cameraPrefab: {fileID: 3920667316604248805, guid: 5b76bc550cd018f47899e590e8c1484c, type: 3}
   enableLoading: 1
 --- !u!114 &2027989544727447448

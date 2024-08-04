@@ -26,16 +26,16 @@ public class GameLauncher : MonoBehaviour
     private void Start()
     {
         // Starts a unique session for each player, their own 'lobby'.
-        Launch(GenerateUniqueSessionName(), true);
+        Launch(GenerateUniqueSessionName(), true, 4);
     }
 
     // Main launcher of all network sessions (Lobby, MainSession)
-    public void Launch(string sessionName, bool isInitialStart)
+    public void Launch(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
     {
-        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart));
+        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart, maxPlayers));
     }
 
-    private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart)
+    private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
     {
         if (launcher != null)
         {
@@ -50,7 +50,7 @@ public class GameLauncher : MonoBehaviour
         Debug.Log($"Launching Fusion: {sessionName}");
         launcher = Instantiate(LauncherPrefab).GetComponent<FusionLauncher>();
         launcher.name = "[Fusion]" + sessionName;
-        launcher.InitializeNetwork(sessionName, isInitialStart);
+        launcher.InitializeNetwork(sessionName, isInitialStart, maxPlayers);
     }
 
     public string GenerateUniqueSessionName()

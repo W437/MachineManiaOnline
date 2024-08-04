@@ -1,12 +1,11 @@
 using System;
-using TarodevController;
 using UnityEngine;
 
 /// <summary>
 /// A 2D player controller script by Tarodev.
 /// This script provides basic movement, jumping, and collision handling for a 2D character.
 /// </summary>
-[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(PickupSystem))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class PlayerController : MonoBehaviour, IPlayerController
 {
     [SerializeField] private ScriptableStats _stats; // Reference to the player's stats stored in a ScriptableObject.
@@ -15,6 +14,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private FrameInput _frameInput; // Stores input for the current frame.
     private Vector2 _frameVelocity; // Stores the player's velocity for the current frame.
     private bool _cachedQueryStartInColliders; // Caches the default value of Physics2D.queriesStartInColliders.
+    
+    // move this
+    public float FinishTime { get; set; }
 
     #region Interface
 

@@ -18,7 +18,7 @@ public class PickupSystem : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    public void RPC_UsePickup()
+    public void RpcUsePickup()
     {
         if (currentPickup != null)
         {

@@ -12,6 +12,7 @@ public class UILoadingScreen : MonoBehaviour
     [SerializeField] private TextMeshProUGUI loadingText;
     [SerializeField] private Slider loadingBar;
     [SerializeField] private GameObject loadingPanel;
+    public TextMeshProUGUI PlayerUniqueID;
 
     private UITransitionEffect _imageTransitionEffect;
     private Coroutine _loadingDotsCoroutine;
@@ -30,7 +31,7 @@ public class UILoadingScreen : MonoBehaviour
             Destroy(gameObject);
         }
 
-        _imageTransitionEffect = loadingPanel.GetComponent<UITransitionEffect>();
+        _imageTransitionEffect = loadingPanel.GetComponentInChildren<UITransitionEffect>();
     }
 
     public void ShowLoadingScreen(string message = "Connecting")

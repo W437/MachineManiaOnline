@@ -85,7 +85,7 @@ public class NotificationManager : MonoBehaviour
 
     private IEnumerator DisplayNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
     {
-        LeanTween.alphaCanvas(notification.CanvasGroup, 1, 0.5f); // Fade in
+        LeanTween.alphaCanvas(notification.CanvasGroup, 1, 0.5f);
 
         yield return new WaitForSeconds(duration);
 
@@ -96,7 +96,7 @@ public class NotificationManager : MonoBehaviour
                 notificationsList.Remove(notification.gameObject);
                 Destroy(notification.gameObject);
                 AdjustNotificationPositions(notificationsList);
-            }); // Fade out
+            }); 
         }
     }
 
@@ -146,7 +146,7 @@ public class NotificationManager : MonoBehaviour
         for (int i = 0; i < notificationsList.Count; i++)
         {
             GameObject notification = notificationsList[i];
-            LeanTween.moveLocalY(notification, -((notificationsList.Count - 1 - i) * _offset), 0.3f).setEase(LeanTweenType.easeOutExpo); // Adjust Y position
+            LeanTween.moveLocalY(notification, -((notificationsList.Count - 1 - i) * _offset), 0.3f).setEase(LeanTweenType.easeOutExpo); // Adjust Y pos
         }
     }
 

@@ -19,19 +19,25 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private SceneRef _gameScene;
     public bool isSpawned = false;
 
-
     // Lobby stuff
-    [SerializeField] private NetworkPrefabRef net_PlayerPrefab;
     [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, NetworkBool> net_ReadyStates => default;
     [Networked, Capacity(6)] private NetworkLinkedList<PlayerRef> net_PlayerList => default;
     [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, int> net_PlayerPositionsMap => default;
-    [Networked] private TickTimer net_GameStartTimer { get; set; }
+    [Networked] private TickTimer net_GameStartLobbyTimer { get; set; }
     [Networked, Capacity(6)] private NetworkArray<PlayerInfo> net_PlayerPositions => default;
     [Networked] private NetworkBool net_NewsStarted { get; set; }
     [Networked] private int net_CurrentNewsIndex { get; set; }
 
     private LTDescr currentNewsTween;
     private bool isMessageCooldown = false;
+
+    private const int MaxPlayers = 6;
+    private const int LobbyTimerStart = 10;
+    private const int PlayerJoinTimeBonus = 3;
+
+    [Networked] private bool isTimerRunning { get; set; }
+    [Networked] private float remainingTime { get; set; }
+
 
 
     /// <summary>
@@ -66,6 +72,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         isSpawned = true;
         Runner.AddCallbacks(this);
+
+        if (HasStateAuthority && UILobby.Instance.lobbyPlatformScreen.activeSelf)
+        {
+            StartLobbyTimer();
+        }
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
@@ -74,20 +85,105 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         isSpawned = false;
     }
 
+    public override void FixedUpdateNetwork()
+    {
+        if (isTimerRunning && HasStateAuthority)
+        {
+            RpcUpdateTimer(remainingTime);
+        }
+    }
+
+    private void Update()
+    {
+        UpdateLobbyTimer();
+    }
+
+
     public void ShowLobbyUI()
     {
         AudioManager.Instance.SetCutoffFrequency(10000, 7000);
         UILobby.Instance.ConnectToLobby();
     }
 
+    public void StartLobbyTimer()
+    {
+        if (net_PlayerList.Count >= 0 && !isTimerRunning)
+        {
+            remainingTime = LobbyTimerStart;
+            isTimerRunning = true;
+        }
+    }
+
+    private void StopLobbyTimer()
+    {
+        isTimerRunning = false;
+        remainingTime = LobbyTimerStart;
+        UILobby.Instance.gameStartLobbyTimer.text = LobbyTimerStart.ToString();
+    }
+
+    private void UpdateLobbyTimer()
+    { 
+        if (net_PlayerList.Count < 0)
+        {
+            StopLobbyTimer();
+            return;
+        }
+
+        if (remainingTime > 0)
+        {
+            remainingTime -= Time.deltaTime;
+            int remainingSeconds = Mathf.CeilToInt(remainingTime);
+            UILobby.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
+
+            if (remainingSeconds <= 0)
+            {
+                ShowConnectingOverlay();
+                StartGame();
+            }
+        }
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_StartGame()
+    private void RpcUpdateTimer(float newTime)
+    {
+        remainingTime = newTime;
+        int remainingSeconds = Mathf.CeilToInt(remainingTime);
+        UILobby.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString();
+    }
+
+
+    private void AddTimeToLobbyTimer(int seconds)
+    {
+        if (net_GameStartLobbyTimer.RemainingTime(Runner) > 0)
+        {
+            net_GameStartLobbyTimer = TickTimer.CreateFromSeconds(Runner, Mathf.CeilToInt((float)net_GameStartLobbyTimer.RemainingTime(Runner)) + seconds);
+        }
+    }
+
+    private void ShowConnectingOverlay()
+    {
+        UILobby.Instance.ConnectingOverlay.SetActive(true);
+        UILobby.Instance.ConnectingText.text = "Joining Game";
+    }
+
+    private void StartGame()
+    {
+        if (HasStateAuthority)
+        {
+            RpcStartGame();
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcStartGame()
     {
         if (HasStateAuthority)
         {
             if (FusionLauncher.Instance.GetNetworkRunner().IsRunning)
             {
+                FusionLauncher.Instance.GetNetworkRunner().Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
                 FusionLauncher.Instance.GetNetworkRunner().LoadScene(_gameScene, LoadSceneMode.Single);
+                Destroy(gameObject);
             }
         }
     }
@@ -96,12 +192,12 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (player == Runner.LocalPlayer)
         {
-            RPC_RequestToggleReadyState(player);
+            RpcRequestToggleReadyState(player);
         }
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_RequestToggleReadyState(PlayerRef player)
+    private void RpcRequestToggleReadyState(PlayerRef player)
     {
         bool newReadyState;
 
@@ -117,11 +213,27 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             net_ReadyStates.Add(player, newReadyState);
         }
 
-        RPC_SyncReadyState(player, newReadyState);
+        RpcSyncReadyState(player, newReadyState);
+
+        // Check if all players are ready
+        bool allReady = true;
+        foreach (var entry in net_ReadyStates)
+        {
+            if (!entry.Value)
+            {
+                allReady = false;
+                break;
+            }
+        }
+
+        if (allReady)
+        {
+            StartGame();
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_SyncReadyState(PlayerRef player, bool isReady)
+    private void RpcSyncReadyState(PlayerRef player, bool isReady)
     {
         if (net_ReadyStates.ContainsKey(player))
         {
@@ -147,7 +259,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        RPC_TalkShit(Runner.LocalPlayer, message);
+        RpcTalkShit(Runner.LocalPlayer, message);
     }
 
     public void ShowEmoteAbovePlayer(string emote)
@@ -157,11 +269,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        RPC_SendEmote(Runner.LocalPlayer, emote);
+        RpcSendEmote(Runner.LocalPlayer, emote);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_SendEmote(PlayerRef player, string emote)
+    private void RpcSendEmote(PlayerRef player, string emote)
     {
         isMessageCooldown = true;
 
@@ -169,10 +281,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             case "<sprite name=\"ManiaMoji_4\">":
                 PlayCustomAnimation(player, emote);
-                break;
+            break;
+
             default:
                 PlayDefaultEmoteAnimation(player, emote);
-                break;
+            break;
         }
     }
 
@@ -220,7 +333,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_TalkShit(PlayerRef player, string message)
+    private void RpcTalkShit(PlayerRef player, string message)
     {
         isMessageCooldown = true;
 
@@ -285,7 +398,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             net_NewsStarted = true;
             net_CurrentNewsIndex = 0;
-            RPC_RequestUpdateNews(net_CurrentNewsIndex);
+            RpcRequestUpdateNews(net_CurrentNewsIndex);
         }
     }
 
@@ -294,20 +407,20 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         int newsCount = LobbyManiaNews.Instance.GetNewsCount();
         int nextIndex = LobbyManiaNews.Instance._randomOrder ? Random.Range(0, newsCount) : (net_CurrentNewsIndex + 1) % newsCount;
         net_CurrentNewsIndex = nextIndex;
-        RPC_RequestUpdateNews(nextIndex);
+        RpcRequestUpdateNews(nextIndex);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_RequestUpdateNews(int index)
+    public void RpcRequestUpdateNews(int index)
     {
         if (net_NewsStarted)
         {
-            RPC_UpdateManiaNews(index);
+            RpcUpdateManiaNews(index);
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_UpdateManiaNews(int index)
+    public void RpcUpdateManiaNews(int index)
     {
         LobbyManiaNews.Instance.ShowNews(index);
 
@@ -384,7 +497,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (net_PlayerList.Count > 0)
         {
             PlayerRef newMasterClient = net_PlayerList[0];
-            RPC_NotifyNewMasterClient(newMasterClient);
+            RpcNotifyNewMasterClient(newMasterClient);
         }
         else
         {
@@ -394,7 +507,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_NotifyNewMasterClient(PlayerRef newMasterClient)
+    private void RpcNotifyNewMasterClient(PlayerRef newMasterClient)
     {
         NetworkObject lobbyManager = FindObjectOfType<LobbyManager>().GetComponent<NetworkObject>();
 
@@ -426,7 +539,8 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
                     Debug.Log($"Sort order: {spriteRenderer.sortingOrder}");
         }*/
 
-        playerObject.transform.position += new Vector3(0, 0, 3);
+        playerObject.transform.position += new Vector3(0, -0.38f, 3);
+        playerObject.transform.localScale = new Vector3 (0.5f, 0.5f, 0.5f);
 
         NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
         if (networkRb != null)
@@ -519,7 +633,6 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         return -1;
     }
 
-
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
     }
@@ -530,45 +643,51 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (true)
+        net_PlayerList.Add(player);
+
+        int positionIndex = GetNextAvailablePosition();
+        if (positionIndex != -1)
         {
-            int positionIndex = GetNextAvailablePosition();
-            if (positionIndex != -1)
+            net_PlayerPositions.Set(positionIndex, new PlayerInfo
             {
-                net_PlayerPositions.Set(positionIndex, new PlayerInfo
-                {
-                    net_Player = player,
-                    net_PlayerName = "Player " + player.PlayerId,
-                    net_PlayerState = "Ready",
-                    net_PlayerMessage = "Welcome"
-                });
+                net_Player = player,
+                net_PlayerName = "Player " + player.PlayerId,
+                net_PlayerState = "Ready",
+                net_PlayerMessage = "Welcome"
+            });
 
-                NetworkObject playerObject;
-                playerObject = FusionLauncher.Instance.GetNetworkRunner().Spawn(net_PlayerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-                playerObject.GetComponent<NetworkRigidbody2D>().RBPosition += new Vector3(0, 0, 3);
-                PrepareForMenu(playerObject.gameObject);
-                FusionLauncher.Instance.GetNetworkRunner().SetPlayerObject(player, playerObject);
+            NetworkPrefabRef net_playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
 
-                UpdateUI(positionIndex, player);
-            }
+            NetworkObject playerObject = FusionLauncher.Instance.GetNetworkRunner().Spawn(net_playerPrefab, new Vector3(0, 0, 0), Quaternion.identity, player);
+            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
+            playerObject.transform.position = position.position;
+
+            PrepareForMenu(playerObject.gameObject);
+            FusionLauncher.Instance.GetNetworkRunner().SetPlayerObject(player, playerObject);
+
+            AddTimeToLobbyTimer(PlayerJoinTimeBonus);
+
+            UpdateUI(positionIndex, player);
+            StartLobbyTimer();
         }
     }
+
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         bool wasMasterClient = player.IsMasterClient || runner.IsSharedModeMasterClient && runner.LocalPlayer == player;
 
-        if (HasStateAuthority || runner.IsSharedModeMasterClient) // State authority or masterclient?
+        if (HasStateAuthority || runner.IsSharedModeMasterClient)
         {
             int positionIndex = FindPlayerPosition(player);
             if (positionIndex != -1)
             {
                 net_PlayerPositions.Set(positionIndex, default);
-
                 ClearUI(positionIndex);
             }
         }
-        UpdatePlayerList();
+
+        net_PlayerList.Remove(player);
 
         var playerObject = runner.GetPlayerObject(player);
         if (playerObject != null)
@@ -581,7 +700,10 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             InitiateMasterClientTransfer();
         }
+
+        UpdatePlayerList();
     }
+
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {

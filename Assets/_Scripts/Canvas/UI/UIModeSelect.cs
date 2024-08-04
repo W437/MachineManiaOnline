@@ -1,49 +1,86 @@
+using ExitGames.Client.Photon;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIModeSelect : MonoBehaviour
 {
-    [SerializeField] private Button modeButton;
+    public static UIModeSelect Instance;
     [SerializeField] private TextMeshProUGUI modeText;
     [SerializeField] private TextMeshProUGUI modeInfoText;
 
-    private GameManager.GameMode currentMode;
+    private GameMode currentMode;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
 
     private void Start()
     {
-        currentMode = GameManager.Instance.CurrentGameMode;
-        modeButton.onClick.AddListener(OnModeButtonClicked);
         UpdateModeText();
     }
 
-    private void OnModeButtonClicked()
+    public void OnModeButtonClicked(Button button)
     {
         CycleMode();
         UpdateModeText();
-        GameManager.Instance.SetGameMode(currentMode);
+        SetGameMode(currentMode);
     }
 
     private void CycleMode()
     {
-        GameManager.GameMode[] gameModes = GameManager.Instance.gameModes;
         int nextIndex = (System.Array.IndexOf(gameModes, currentMode) + 1) % gameModes.Length;
         currentMode = gameModes[nextIndex];
+    }
+
+    public enum GameMode
+    {
+        FFA,    // Free For All
+        TVT,    // Team vs Team
+        Custom  // PvP or custom setting
+    }
+
+    public GameMode CurrentGameMode { get; private set; }
+
+    public readonly GameMode[] gameModes =
+    {
+        GameMode.FFA,
+        GameMode.TVT,
+        GameMode.Custom
+    };
+
+    public void SetGameMode(GameMode mode)
+    {
+        CurrentGameMode = mode;
+    }
+
+    public GameMode GetGameMode()
+    {
+        return currentMode;
     }
 
     private void UpdateModeText()
     {
         switch (currentMode)
         {
-            case GameManager.GameMode.FFA:
+            case GameMode.FFA:
                 modeText.text = "Free for All";
-                modeInfoText.text = "24 players mania match";
+                modeInfoText.text = "6 players mania match";
                 break;
-            case GameManager.GameMode.TVT:
+            case GameMode.TVT:
                 modeText.text = "Team vs Team";
-                modeInfoText.text = "2-6 vs 2-6 team battle";
+                modeInfoText.text = "3 vs 3 team battle";
                 break;
-            case GameManager.GameMode.Custom:
+            case GameMode.Custom:
                 modeText.text = "Custom";
                 modeInfoText.text = "PvP or custom setting";
                 break;

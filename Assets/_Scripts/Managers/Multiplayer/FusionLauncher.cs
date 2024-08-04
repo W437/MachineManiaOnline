@@ -3,15 +3,17 @@ using Fusion;
 using System.Threading.Tasks;
 using Fusion.Addons.Physics;
 using System.Linq;
+using System.Collections.Generic;
 
 // Starts any fusion connection
 public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
 
-    [SerializeField] private NetworkPrefabRef lobbyManagerPrefab;
-    [SerializeField] private NetworkPrefabRef chatManagerPrefab;
-    [SerializeField] private NetworkPrefabRef gameManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_LobbyManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_ChatManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_GameManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_PlayerPrefab;
     [SerializeField] private GameObject cameraPrefab;
     [SerializeField] private bool enableLoading = true;
 
@@ -41,9 +43,20 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-    public async void InitializeNetwork(string sessionName, bool isInitialStart = false)
+    public NetworkPrefabRef GetGameManagerNetPrefab()
+    {
+        return net_GameManagerPrefab;
+    }
+
+    public NetworkPrefabRef GetPlayerNetPrefab()
+    {
+        return net_PlayerPrefab;
+    }
+
+    public async void InitializeNetwork(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
     {
         Debug.Log($"Joining Session: {sessionName}");
+        UILoadingScreen.Instance.PlayerUniqueID.text = sessionName;
 
         if (isInitialStart)
             SetConnectionStatus(ConnectionStatus.Connecting, "Initiating Network");
@@ -66,7 +79,8 @@ public class FusionLauncher : MonoBehaviour
                 GameMode = GameMode.Shared,
                 SessionName = sessionName,
                 SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(), 
-                Scene = SceneRef.FromIndex(0) 
+                Scene = SceneRef.FromIndex(0),
+                PlayerCount = maxPlayers
             };
 
             if (isInitialStart)
@@ -106,11 +120,11 @@ public class FusionLauncher : MonoBehaviour
             await Task.Yield();
         }
 
-        if (_runner.IsRunning && LobbyManager.Instance == null && lobbyManagerPrefab != null && _runner.IsSharedModeMasterClient)
+        if (_runner.IsRunning && LobbyManager.Instance == null && net_LobbyManagerPrefab != null && _runner.IsSharedModeMasterClient)
         {
-            _runner.Spawn(lobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-            _runner.Spawn(chatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-            _runner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            _runner.Spawn(net_LobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            _runner.Spawn(net_GameManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
         }
     }
 

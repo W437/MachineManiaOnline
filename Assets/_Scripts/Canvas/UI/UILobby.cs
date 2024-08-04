@@ -12,20 +12,15 @@ public class UILobby : MonoBehaviour
     public static UILobby Instance;
 
     [Header("Lobby")]
-    [SerializeField] GameObject lobbyPlatformScreen;
+    [SerializeField] public GameObject lobbyPlatformScreen;
     [SerializeField] Button lobbyReadyButton;
     [SerializeField] Button lobbyLeaveButton;
     public Transform PlayerPositionsParent;
-
-    [Header("Custom Session")]
-    [SerializeField] TMP_InputField inputSessionName;
-    [SerializeField] TMP_InputField inputSessionPassword;
-    [SerializeField] TMP_Dropdown inputMaxPlayers;
-    [SerializeField] Button btnCreateCustomSession;
+    public TextMeshProUGUI gameStartLobbyTimer;
 
     [Header("Connecting Overlay")]
-    [SerializeField] GameObject connectingOverlay;
-    [SerializeField] TextMeshProUGUI connectingText;
+    [SerializeField] public GameObject ConnectingOverlay;
+    [SerializeField] public TextMeshProUGUI ConnectingText;
     Coroutine connectingCoroutine;
     ButtonHandler buttonHandler;
 
@@ -65,9 +60,8 @@ public class UILobby : MonoBehaviour
         {
             buttonHandler = gameObject.AddComponent<ButtonHandler>();
         }
-        buttonHandler.AddEventTrigger(lobbyReadyButton, OnLobbyReady, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
-        buttonHandler.AddEventTrigger(lobbyLeaveButton, OnLobbyLeave, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
-        buttonHandler.AddEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(lobbyReadyButton, OnLobbyReady, new ButtonConfig(toggle: true, yOffset: -14f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(lobbyLeaveButton, OnLobbyLeave, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
     }
 
     private IEnumerator CheckIfLobbyIsSpawned()
@@ -75,7 +69,7 @@ public class UILobby : MonoBehaviour
         connectingCoroutine = StartCoroutine(AnimateConnectingText());
         while (true)
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.5f);
             if (LobbyManager.Instance != null && LobbyManager.Instance.isSpawned)
             {
                 HideConnectingOverlay();
@@ -88,15 +82,15 @@ public class UILobby : MonoBehaviour
     public void ConnectToLobby()
     {
         lobbyPlatformScreen.SetActive(true);
-        connectingOverlay.SetActive(true);
+        ConnectingOverlay.SetActive(true);
         StartCoroutine(CheckIfLobbyIsSpawned());
     }
 
     public void HideConnectingOverlay()
     {
-        if (connectingOverlay != null)
+        if (ConnectingOverlay != null)
         {
-            connectingOverlay.SetActive(false);
+            ConnectingOverlay.SetActive(false);
             if (connectingCoroutine != null)
             {
                 StopCoroutine(connectingCoroutine);
@@ -113,7 +107,7 @@ public class UILobby : MonoBehaviour
         // Run until stopped from elsewhere
         while (true)
         {
-            connectingText.text = baseText + new string('.', dotCount);
+            ConnectingText.text = baseText + new string('.', dotCount);
             dotCount = (dotCount + 1) % 4;
             yield return new WaitForSeconds(0.5f);
         }
@@ -124,7 +118,7 @@ public class UILobby : MonoBehaviour
         if (!(FusionLauncher.Instance.GetNetworkRunner() != null && FusionLauncher.Instance.GetNetworkRunner().IsRunning)) return;
 
         PlayerRef player = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
-        LobbyManager.Instance.RPC_StartGame();
+        //LobbyManager.Instance.RPC_StartGame();
 
         if (!LobbyManager.Instance.IsPlayerReady(player))
         {
@@ -143,30 +137,5 @@ public class UILobby : MonoBehaviour
         lobbyPlatformScreen.SetActive(false);
         string uniqueSessionName = GameLauncher.Instance.GenerateUniqueSessionName();
         GameLauncher.Instance.Launch(uniqueSessionName, false);
-    }
-
-    private void OnCreateCustomSession(Button button)
-    {
-        string sessionName = inputSessionName.text;
-        string sessionPassword = inputSessionPassword.text;
-        int maxPlayers = int.Parse(inputMaxPlayers.options[inputMaxPlayers.value].text);
-
-        if (string.IsNullOrEmpty(sessionName) || sessionName.Length >= 14)
-        {
-            Debug.LogError("Session name must be non-empty and shorter than 14 characters.");
-            return;
-        }
-
-        bool withPassword = !string.IsNullOrEmpty(sessionPassword);
-
-        // Check if the session already exists before launching (pseudo-code, replace with actual check)
-/*        if (!SessionExists(sessionName))
-        {
-            GameLauncher.Instance.Launch(sessionName, withPassword, maxPlayers);
-        }
-        else
-        {
-            Debug.LogError("Session with the given name already exists.");
-        }*/
     }
 }

@@ -55,10 +55,8 @@ public class ChatManager : NetworkBehaviour
     {
         UILobby.Instance.ChatVisible = true;
 
-        // Enable the chat panel
         UILobby.Instance.ChatPanel.SetActive(true);
 
-        // Fade in the background
         CanvasGroup bgCanvasGroup = UILobby.Instance.ChatBG.GetComponent<CanvasGroup>();
         CanvasGroup chatCanvasGroup = UILobby.Instance.ChatContainer.GetComponent<CanvasGroup>();
 
@@ -68,7 +66,6 @@ public class ChatManager : NetworkBehaviour
         LeanTween.alphaCanvas(bgCanvasGroup, 1f, UILobby.Instance.FadeDuration);
         LeanTween.alphaCanvas(chatCanvasGroup, 1f, UILobby.Instance.FadeDuration);
 
-        // Slide in the ChatContainer from above
         Vector2 originalPosition = UILobby.Instance.ChatContainer.position;
 
         UILobby.Instance.ChatContainer.anchoredPosition = new Vector3(0, 300, 0);
@@ -80,7 +77,6 @@ public class ChatManager : NetworkBehaviour
     {
         UILobby.Instance.ChatVisible = false;
          
-        // Fade out the background after the chat box is hidden
         CanvasGroup bgCanvasGroup = UILobby.Instance.ChatBG.GetComponent<CanvasGroup>();
         CanvasGroup chatCanvasGroup = UILobby.Instance.ChatContainer.GetComponent<CanvasGroup>();
 

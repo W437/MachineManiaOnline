@@ -24,6 +24,17 @@ public class UIHome : MonoBehaviour
     [SerializeField] private TextMeshProUGUI playersOnlineText;
     [SerializeField] private TextMeshProUGUI playNowText;
 
+    [Header("Custom Session")]
+    [SerializeField] TMP_InputField inputSessionName;
+    [SerializeField] TMP_InputField inputSessionPassword;
+    [SerializeField] TMP_Dropdown inputMaxPlayers;
+    [SerializeField] Button btnCreateCustomSession;
+    [SerializeField] Button btnExitCustomSession;
+    [SerializeField] GameObject customSessionPanel;
+    [SerializeField] GameObject customSessionContainer;
+    [SerializeField] Image customSessionPanelBG;
+    float originalAlpha;
+
     [Header("Players Online Settings")]
     [SerializeField] private float joinLeaveRatio = 1.0f;
     [SerializeField] private int currentPlayerCount;
@@ -49,7 +60,6 @@ public class UIHome : MonoBehaviour
 
     private void Start()
     {
-
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
 
         currentPlayerCount = 0;
@@ -72,15 +82,46 @@ public class UIHome : MonoBehaviour
         // Buttono listeners
         foreach (var button in buttons)
         {
-            buttonHandler.AddEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
+            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
         }
 
         // override
-        buttonHandler.AddEventTrigger(playButton, OnPlayButtonReleased, new ButtonConfig(yOffset: -12f, callbackDelay: 0.1f, rotationLock: true));
-        buttonHandler.AddEventTrigger(modeSelectButton, OnPlayButtonReleased, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(playButton, OnPlayButtonClick, new ButtonConfig(yOffset: -12f, callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(modeSelectButton, UIModeSelect.Instance.OnModeButtonClicked, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true, returnTime: 0.1f));
+        buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(btnExitCustomSession, OnExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
+
+        // init values
+        originalAlpha = customSessionPanelBG.color.a;
     }
 
-    private void OnPlayButtonReleased(Button button)
+
+    private void OnPlayButtonClick(Button button)
+    {
+        var selectedMode = UIModeSelect.Instance.CurrentGameMode;
+        switch (selectedMode)
+        {
+            case UIModeSelect.GameMode.Custom:
+                ToggleCustomSessionPanel();
+            break;
+
+            case UIModeSelect.GameMode.FFA:
+                GameLauncher.Instance.Launch("FFASession", false);
+                LobbyManager.Instance.ShowLobbyUI();
+            break;
+
+            case UIModeSelect.GameMode.TVT:
+                GameLauncher.Instance.Launch("TVTSession", false);
+                LobbyManager.Instance.ShowLobbyUI();
+            break;
+
+            default:
+                Debug.Log("Unknown game mode selected.");
+            break;
+        }
+    }
+
+    private void OnModeButtonClick(Button button)
     {
         GameLauncher.Instance.Launch("MainSession2", false);
         LobbyManager.Instance.ShowLobbyUI();
@@ -127,6 +168,60 @@ public class UIHome : MonoBehaviour
 
             break;
         }
+    }
+
+    private void OnCreateCustomSession(Button button)
+    {
+        string sessionName = inputSessionName.text;
+        string sessionPassword = inputSessionPassword.text;
+        int maxPlayers = int.Parse(inputMaxPlayers.options[inputMaxPlayers.value].text);
+
+        if (string.IsNullOrEmpty(sessionName) || sessionName.Length >= 12 || sessionName.Contains(" "))
+        {
+            NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Warning, "Session name must be non-empty, shorter than 10 characters, and contain no spaces.");
+            return;
+        }
+
+        bool withPassword = !string.IsNullOrEmpty(sessionPassword);
+
+        GameLauncher.Instance.Launch(sessionName, false, maxPlayers);
+        ToggleCustomSessionPanel();
+    }
+
+    private void OnExitCustomSessionPanel(Button button)
+    {
+        ToggleCustomSessionPanel();
+    }
+
+    public void ToggleCustomSessionPanel()
+    {
+        bool isOpening = !customSessionPanel.activeSelf;
+        customSessionPanel.SetActive(true);
+
+        if (isOpening)
+        {
+            customSessionContainer.transform.localScale = Vector3.zero;
+
+            LeanTween.scale(customSessionContainer, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
+
+            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f);
+        }
+        else
+        {
+            LeanTween.scale(customSessionContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad).setOnComplete(() =>
+            {
+                customSessionPanel.SetActive(false);
+            });
+
+            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f);
+        }
+    }
+
+    private void UpdateBGAlpha(float alpha)
+    {
+        Color color = customSessionPanelBG.color;
+        color.a = alpha;
+        customSessionPanelBG.color = color;
     }
 
     public void DisablePlayButton()
