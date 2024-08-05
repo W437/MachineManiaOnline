@@ -271,11 +271,11 @@ public class LobbyChatManager : MonoBehaviour
 
     private void OnMessageClicked(string message)
     {
-        LobbyManager.Instance.ShowMessageAbovePlayer(message);
+        PublicLobbyManager.Instance.ShowMessageAbovePlayer(message);
     }
 
     private void OnEmojiClicked(string emoji)
     {
-        LobbyManager.Instance.ShowEmoteAbovePlayer(emoji);
+        PublicLobbyManager.Instance.ShowEmoteAbovePlayer(emoji);
     }
 }

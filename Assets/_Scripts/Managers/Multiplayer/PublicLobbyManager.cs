@@ -12,9 +12,9 @@ using Random = UnityEngine.Random;
 using Assets.Scripts.TypewriterEffects;
 using System.Threading.Tasks;
 
-public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
+public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
-    public static LobbyManager Instance;
+    public static PublicLobbyManager Instance;
 
     private SceneRef _gameScene;
     public bool isSpawned = false;
@@ -37,6 +37,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     [Networked] private bool isTimerRunning { get; set; }
     [Networked] private float remainingTime { get; set; }
+
 
 
 
@@ -95,9 +96,11 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void Update()
     {
-        UpdateLobbyTimer();
+        if (isSpawned)
+        {
+            UpdateLobbyTimer();
+        }
     }
-
 
     public void ShowLobbyUI()
     {
@@ -509,7 +512,7 @@ public class LobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcNotifyNewMasterClient(PlayerRef newMasterClient)
     {
-        NetworkObject lobbyManager = FindObjectOfType<LobbyManager>().GetComponent<NetworkObject>();
+        NetworkObject lobbyManager = FindObjectOfType<PublicLobbyManager>().GetComponent<NetworkObject>();
 
         if (Runner.LocalPlayer == newMasterClient)
         {

@@ -70,7 +70,7 @@ public class UILobby : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(0.5f);
-            if (LobbyManager.Instance != null && LobbyManager.Instance.isSpawned)
+            if (PublicLobbyManager.Instance != null && PublicLobbyManager.Instance.isSpawned)
             {
                 HideConnectingOverlay();
                 yield break;
@@ -120,13 +120,13 @@ public class UILobby : MonoBehaviour
         PlayerRef player = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
         //LobbyManager.Instance.RPC_StartGame();
 
-        if (!LobbyManager.Instance.IsPlayerReady(player))
+        if (!PublicLobbyManager.Instance.IsPlayerReady(player))
         {
-            LobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
+            PublicLobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
         }
         else
         {
-            LobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
+            PublicLobbyManager.Instance.SetPlayerReadyState(FusionLauncher.Instance.GetNetworkRunner().LocalPlayer);
         }
     }
 

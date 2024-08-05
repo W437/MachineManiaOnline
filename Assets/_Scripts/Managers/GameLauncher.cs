@@ -25,17 +25,17 @@ public class GameLauncher : MonoBehaviour
 
     private void Start()
     {
-        // Starts a unique session for each player, their own 'lobby'.
-        Launch(GenerateUniqueSessionName(), true, 4);
+        // Start a private session for the player's home lobby
+        Launch(GenerateUniqueSessionName(), true, SessionType.Private, 4);
     }
 
     // Main launcher of all network sessions (Lobby, MainSession)
-    public void Launch(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
+    public void Launch(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
-        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart, maxPlayers));
+        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart, sessionType, maxPlayers));
     }
 
-    private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
+    private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
         if (launcher != null)
         {
@@ -47,14 +47,20 @@ public class GameLauncher : MonoBehaviour
             }
         }
 
-        Debug.Log($"Launching Fusion: {sessionName}");
+        Debug.Log($"Launching Fusion: {sessionName} ({sessionType})");
         launcher = Instantiate(LauncherPrefab).GetComponent<FusionLauncher>();
         launcher.name = "[Fusion]" + sessionName;
-        launcher.InitializeNetwork(sessionName, isInitialStart, maxPlayers);
+        launcher.InitializeNetwork(sessionName, isInitialStart, sessionType, maxPlayers);
     }
 
     public string GenerateUniqueSessionName()
     {
         return System.Guid.NewGuid().ToString();
     }
+}
+
+public enum SessionType
+{
+    Public,
+    Private
 }

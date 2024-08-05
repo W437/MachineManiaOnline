@@ -40,6 +40,9 @@ public class UIHome : MonoBehaviour
     [SerializeField] private int currentPlayerCount;
     [SerializeField] private int targetPlayerCount;
     [SerializeField] private int initialPlayerCount = 7817;
+    
+    [Header("Private Lobby")]
+    public GameObject PrivateLobbyPositions;
 
     private ButtonHandler buttonHandler;
 
@@ -65,6 +68,8 @@ public class UIHome : MonoBehaviour
         currentPlayerCount = 0;
         targetPlayerCount = initialPlayerCount;
         UpdatePlayersOnline(currentPlayerCount);
+
+        InitializePrivateLobby();
 
         // Players online sim
         LeanTween.value(gameObject, 0, initialPlayerCount, 3f)
@@ -95,6 +100,14 @@ public class UIHome : MonoBehaviour
         originalAlpha = customSessionPanelBG.color.a;
     }
 
+    private void InitializePrivateLobby()
+    {
+        if (PrivateLobbyManager.Instance != null && !UILobby.Instance.lobbyPlatformScreen.activeSelf)
+        {
+            PrivateLobbyManager.Instance.SpawnLocalPlayer();
+        }
+    }
+
 
     private void OnPlayButtonClick(Button button)
     {
@@ -107,12 +120,12 @@ public class UIHome : MonoBehaviour
 
             case UIModeSelect.GameMode.FFA:
                 GameLauncher.Instance.Launch("FFASession", false);
-                LobbyManager.Instance.ShowLobbyUI();
+                PublicLobbyManager.Instance.ShowLobbyUI();
             break;
 
             case UIModeSelect.GameMode.TVT:
                 GameLauncher.Instance.Launch("TVTSession", false);
-                LobbyManager.Instance.ShowLobbyUI();
+                PublicLobbyManager.Instance.ShowLobbyUI();
             break;
 
             default:
@@ -124,7 +137,7 @@ public class UIHome : MonoBehaviour
     private void OnModeButtonClick(Button button)
     {
         GameLauncher.Instance.Launch("MainSession2", false);
-        LobbyManager.Instance.ShowLobbyUI();
+        PublicLobbyManager.Instance.ShowLobbyUI();
     }
 
     private void OnButtonReleased(Button button)
@@ -184,7 +197,7 @@ public class UIHome : MonoBehaviour
 
         bool withPassword = !string.IsNullOrEmpty(sessionPassword);
 
-        GameLauncher.Instance.Launch(sessionName, false, maxPlayers);
+        GameLauncher.Instance.Launch(sessionName, false, SessionType.Private, maxPlayers);
         ToggleCustomSessionPanel();
     }
 

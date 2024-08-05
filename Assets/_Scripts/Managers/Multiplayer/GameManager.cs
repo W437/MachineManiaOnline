@@ -20,8 +20,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     /// 3. Player Start Positionss
     /// </summary>
     public static GameManager Instance { get; private set; }
-    [Networked] private TickTimer raceCountdownTimer { get; set; }
-    [Networked] private TickTimer postRaceCountdownTimer { get; set; }
+    [Networked] private float countdownTime { get; set; } // Time remaining for countdown
+    [Networked] private float elapsedTime { get; set; } // Elapsed game time
+    [Networked] private float postRaceTime { get; set; } // Time remaining after race finishes
+
     [Networked] private int gameState { get; set; }  // 0: Waiting, 1: Countdown, 2: Racing, 3: Finished
     [Networked, Capacity(6)] public NetworkLinkedList<PlayerRef> players => default;
 
@@ -54,7 +56,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         InitializeGame();
     }
 
-    public override void FixedUpdateNetwork()
+    private void Update()
     {
         if (HasStateAuthority || FusionLauncher.Instance.GetNetworkRunner().IsSharedModeMasterClient)
         {
@@ -66,62 +68,81 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         switch (gameState)
         {
-            case 1: 
-                if (raceCountdownTimer.Expired(Runner))
-                {
-                    StartRace();
-                }
+            case 1: // Countdown state
+                UpdateCountdown();
             break;
 
-            case 2:
+            case 2: // Racing state
                 if (!isRaceStarted)
                 {
                     isRaceStarted = true;
-                    raceDuration = Time.time;
+                    elapsedTime = 0f;
                 }
-                // UpdatePlayerRankings();
+                UpdateRaceTimer();
             break;
 
-            case 3:
-                if (postRaceCountdownTimer.Expired(Runner))
-                {
-                    var playerFinishTimes = new Dictionary<PlayerRef, float>();
-                    foreach (var player in players)
-                    {
-                        if (playerControllers.ContainsKey(player))
-                        {
-                            playerFinishTimes[player] = playerControllers[player].FinishTime;
-                        }
-                    }
-                    EndGame(playerFinishTimes);
-                }
-                break;
+            case 3: // Finished state
+                UpdatePostRaceTimer();
+            break;
         }
     }
-
 
     public void InitializeGame()
     {
         gameState = 0;
+        countdownTime = 3f;
     }
 
-    private void StartGameCountdown()
+    private void UpdateCountdown()
     {
-        raceCountdownTimer = TickTimer.CreateFromSeconds(Runner, 3);
-        gameState = 1;
-        RpcGameCountdown();
+        countdownTime -= Time.deltaTime;
+        RpcGameCountdown(countdownTime);
+
+        if (countdownTime <= 0f)
+        {
+            StartRace();
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcGameCountdown()
+    private void RpcGameCountdown(float timeLeft)
     {
-        UIGame.Instance.DisplayCountdown(3);
+        UIGame.Instance.DisplayCountdown(Mathf.CeilToInt(timeLeft));
     }
 
     private void StartRace()
     {
         gameState = 2;
         RpcStartRace();
+    }
+
+    private void UpdateRaceTimer()
+    {
+        elapsedTime += Time.deltaTime;
+        RpcUpdateRaceTimer(elapsedTime);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcUpdateRaceTimer(float elapsedTime)
+    {
+        UIGame.Instance.UpdateRaceTimer(elapsedTime);
+    }
+
+    private void UpdatePostRaceTimer()
+    {
+        postRaceTime -= Time.deltaTime;
+        RpcUpdatePostRaceTimer(postRaceTime);
+
+        if (postRaceTime <= 0f)
+        {
+            // Handle post-race logic here
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcUpdatePostRaceTimer(float timeLeft)
+    {
+        UIGame.Instance.DisplayPostRaceCountdown(timeLeft);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -135,12 +156,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (!playerControllers.ContainsKey(player)) return;
 
-        playerControllers[player].FinishTime = Time.time - raceDuration;
+        playerControllers[player].FinishTime = elapsedTime;
         RpcPlayerFinished(playerControllers[player].FinishTime);
 
-        if (playerControllers.Count == players.Count) 
+        if (playerControllers.Count == players.Count)
         {
-            postRaceCountdownTimer = TickTimer.CreateFromSeconds(Runner, 25);
+            postRaceTime = 25f; // 25-second post-race countdown
             gameState = 3;
         }
     }
@@ -169,6 +190,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         RpcEndGame(playerRefs, finishTimes);
     }
 
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcEndGame(PlayerRef[] playerRefs, float[] finishTimes)
     {
@@ -180,6 +202,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         UIGame.Instance.DisplayEndGameStats(playerFinishTimes);
     }
+
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {

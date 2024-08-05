@@ -10,7 +10,8 @@ public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
 
-    [SerializeField] private NetworkPrefabRef net_LobbyManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_PublicLobbyManagerPrefab;
+    [SerializeField] private NetworkPrefabRef net_PrivateLobbyManagerPrefab;
     [SerializeField] private NetworkPrefabRef net_ChatManagerPrefab;
     [SerializeField] private NetworkPrefabRef net_GameManagerPrefab;
     [SerializeField] private NetworkPrefabRef net_PlayerPrefab;
@@ -53,7 +54,7 @@ public class FusionLauncher : MonoBehaviour
         return net_PlayerPrefab;
     }
 
-    public async void InitializeNetwork(string sessionName, bool isInitialStart = false, int maxPlayers = 6)
+    public async void InitializeNetwork(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
         Debug.Log($"Joining Session: {sessionName}");
         UILoadingScreen.Instance.PlayerUniqueID.text = sessionName;
@@ -78,7 +79,7 @@ public class FusionLauncher : MonoBehaviour
             {
                 GameMode = GameMode.Shared,
                 SessionName = sessionName,
-                SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(), 
+                SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
                 Scene = SceneRef.FromIndex(0),
                 PlayerCount = maxPlayers
             };
@@ -90,7 +91,7 @@ public class FusionLauncher : MonoBehaviour
                 if (result.Ok)
                 {
                     SetConnectionStatus(ConnectionStatus.Connected, "Initiated!");
-                    await WaitForRunnerToBeReady();
+                    await WaitForRunnerToBeReady(sessionType);
                 }
                 else
                 {
@@ -103,7 +104,7 @@ public class FusionLauncher : MonoBehaviour
 
                 if (result.Ok)
                 {
-                    await WaitForRunnerToBeReady();
+                    await WaitForRunnerToBeReady(sessionType);
                 }
                 else
                 {
@@ -113,18 +114,35 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-    private async Task WaitForRunnerToBeReady()
+    private async Task WaitForRunnerToBeReady(SessionType sessionType)
     {
         while (!_runner.IsRunning)
         {
             await Task.Yield();
         }
 
-        if (_runner.IsRunning && LobbyManager.Instance == null && net_LobbyManagerPrefab != null && _runner.IsSharedModeMasterClient)
+        if (_runner.IsRunning && _runner.IsSharedModeMasterClient)
         {
-            _runner.Spawn(net_LobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-            _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-            _runner.Spawn(net_GameManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+            if (sessionType == SessionType.Public)
+            {
+                if (PublicLobbyManager.Instance == null && net_PublicLobbyManagerPrefab != null)
+                {
+                    _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+                }
+            }
+            else if (sessionType == SessionType.Private)
+            {
+                if (PrivateLobbyManager.Instance == null && net_PrivateLobbyManagerPrefab != null)
+                {
+                    _runner.Spawn(net_PrivateLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+                    _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+                }
+
+                if (net_ChatManagerPrefab != null)
+                {
+                    _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+                }
+            }
         }
     }
 

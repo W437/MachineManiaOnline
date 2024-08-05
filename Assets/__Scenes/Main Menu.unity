@@ -1940,7 +1940,7 @@ GameObject:
   m_Component:
   - component: {fileID: 87831730}
   m_Layer: 5
-  m_Name: pos3
+  m_Name: pos2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2239,7 +2239,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 4
   m_TargetDisplay: 0
 --- !u!224 &112837691
 RectTransform:
@@ -8828,7 +8828,7 @@ GameObject:
   m_Component:
   - component: {fileID: 179146987}
   m_Layer: 5
-  m_Name: pos4
+  m_Name: pos3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35842,6 +35842,7 @@ MonoBehaviour:
   currentPlayerCount: 0
   targetPlayerCount: 0
   initialPlayerCount: 7817
+  PrivateLobbyPositions: {fileID: 1627792277}
 --- !u!1 &1527290138
 GameObject:
   m_ObjectHideFlags: 0
@@ -37874,8 +37875,8 @@ RectTransform:
   m_Children:
   - {fileID: 75804187}
   - {fileID: 87831730}
-  - {fileID: 1952663761}
   - {fileID: 179146987}
+  - {fileID: 1952663761}
   m_Father: {fileID: 1361025352}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -43357,7 +43358,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1952663761}
   m_Layer: 5
-  m_Name: pos2
+  m_Name: pos4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

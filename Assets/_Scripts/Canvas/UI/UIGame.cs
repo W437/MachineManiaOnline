@@ -11,6 +11,7 @@ public class UIGame : MonoBehaviour
     [SerializeField] private TextMeshProUGUI countdownText;
     [SerializeField] private TextMeshProUGUI raceTimerText;
     [SerializeField] private TextMeshProUGUI endGameStatsText;
+    [SerializeField] private TextMeshProUGUI postRaceTimerText;
     [SerializeField] private Transform playerProgressBar;
     [SerializeField] private Transform playerProgressPrefab;
 
@@ -30,7 +31,17 @@ public class UIGame : MonoBehaviour
     public void DisplayCountdown(int seconds)
     {
         countdownText.gameObject.SetActive(true);
-        StartCoroutine(CountdownCoroutine(seconds));
+        countdownText.text = seconds > 0 ? seconds.ToString() : "GO!";
+        if (seconds <= 0)
+        {
+            StartCoroutine(HideCountdownCoroutine());
+        }
+    }
+
+    private IEnumerator HideCountdownCoroutine()
+    {
+        yield return new WaitForSeconds(1f);
+        countdownText.gameObject.SetActive(false);
     }
 
     private IEnumerator CountdownCoroutine(int seconds)
@@ -54,7 +65,11 @@ public class UIGame : MonoBehaviour
     public void StartRaceTimer()
     {
         raceTimerText.gameObject.SetActive(true);
-        StartCoroutine(RaceTimerCoroutine());
+    }
+
+    public void UpdateRaceTimer(float elapsedTime)
+    {
+        raceTimerText.text = FormatTime(elapsedTime);
     }
 
     private IEnumerator RaceTimerCoroutine()
@@ -66,6 +81,12 @@ public class UIGame : MonoBehaviour
             raceTimerText.text = FormatTime(elapsedTime);
             yield return null;
         }
+    }
+
+    public void DisplayPostRaceCountdown(float timeLeft)
+    {
+        postRaceTimerText.gameObject.SetActive(true);
+        postRaceTimerText.text = "Next Race in: " + Mathf.CeilToInt(timeLeft).ToString();
     }
 
     private string FormatTime(float time)
