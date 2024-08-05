@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "trans-trees-425110-g1",
+  "private_key_id": "478a82e6463b26218afac9c59be30b6c4f683a4a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCtgCLduzmZSHBv\n6zIcCPqvtMNaQlWbFNzUD0kxwjiE4wYLSfkgIdXJ/OaLasv8sD22MhAVlJ13utJZ\nR29+w1C/eKJAgKOVXg7NZ8lR78lbiZ54F+BC6y/huK7fqeTyj4/oYIfqD8PD1kD1\nllbtC5WzbLExn8sinOSLIyiyiwUyiNO2v7+VclUwfBAZzI6jCMuI6BJ1CLzlr4FT\nQ5NyrbZfl1KdZLEhlVF8u8eeFzyt14Vth5sTOPuexkv1CW1/ZNRQHnyaIRJwaXus\n3vm9hzZqE25XS7xm4HOO360oAEZhu9l/X7/lngMQfziWXLLJFs0+a64q8cYlQyrE\nzXdhinpPAgMBAAECggEADv5NRQsacagka0+Qb4LJIykEXsbvveyiHsNJaH7nwngZ\n/BzC5id2YbO0uqSahzY1xwpxgGPs7b1b0zJMrNA1KK7Emr1jJZPQxKhs6eNGa94r\nLyalDzNi2mdK2XJFoj6MyaCZ7jy5hrF7wJ1i2q5PHAfPEkJEXDPhvjJmIHPKGbE7\n6Ek9pQRHRO4el7Z+sI/8KDnRbZ5jmMNDp+yuFZiGVgYVDzW/UsMTXjS8/WF1QLi4\nzuRWTpWt0ytTjea5gDWrgTGJpBDlewDjb4xupfdkD04cQgGeVUN3EOW9HGpWmiEb\nt0+jCDqvt6UKIp51sB6seJZVmwzgPiJv46vM1/pTzQKBgQDWULX7SuNkKAtftcgY\nG38wxsVLbsCMZmE6pJ3ZCKuACLN7zsvuPDzAVyi+JlFbh3F+tWxRuOHKvVoU8Zj1\ntrXDa9UGmhb3lksaqIP0jP2lNZX2PzwMKUTOVc1lzFcHhuUbC6CYBvpbb02qQNf6\nQSt2OuR8LTHWGXy1I6gBCZEi0wKBgQDPPyhwc/d1JfB5KWjQtE1LpVIkUuJ0BZVz\nLL65bgbTb5Lm0VzeFZSt7XOc6RiXti+3C8S3WtakLKd22cAvgmMvaLnil7ZSRhyN\nEaace//40ja/h7FKuRAjUcKnz8OY67ZRlmC8hYlq6KVZpO7/soz/8YYlnHQwXhog\nduta02mFFQKBgQCseiIrDfb42P1mVn6lYCO5lo6biZNuqspfDrJ2Q3L6RIZmAmS+\n4z2lMb/5YA8j0Vo2tj1pe5hDuKXxqwoF3bhkgLjdak9HjG3/E1W3D2zmc7yvg+6I\nfwH/6K+32H7F8PsbC/1/vEXqJiZj+XGX1rDqorTVdu3ft31UrlB8HT3vvwKBgFUu\nt3dpIugCvRF/5LYLtc2G2PlXG/7mIKRjWs0qnSGgtXerzAj4Q9EtTRzMbjBFUN1i\nt+tJKfn25KokHCsq44uj9utcwjKU4L1W6O1exjpGZPxaUJPO9wQdYe3JprKfB6QH\nNCGonW/UycnL0fRFNlEou6OP5+3Nb92yI1CEntV1AoGBAKJaym7v9IwEV606OyQ7\nWDH5Y/yVMGH+ecBSVLLVh2gnK0iujdbx01A59maA1LX9QanZ1Fj0J1pZzuFLE40f\n7hnTuxqIV33JAbGhYqPLWVPvNFh0iktVZuWlWQUL0XVqEXcb3NazUsInWIk3341n\nx22X707ndWMwck2UJn0cpTCG\n-----END PRIVATE KEY-----\n",
+  "client_email": "danielkerzman@trans-trees-425110-g1.iam.gserviceaccount.com",
+  "client_id": "118313631555388191085",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/danielkerzman%40trans-trees-425110-g1.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

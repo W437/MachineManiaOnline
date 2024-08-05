@@ -18,17 +18,44 @@ public class GoogleSheetsExample : MonoBehaviour
 
     void Start()
     {
-        string jsonPath = Path.Combine(Application.streamingAssetsPath, "trans-trees-425110-g1-06c684a9a9d4.json");
+        string jsonPath = Path.Combine(Application.streamingAssetsPath, "trans-trees-425110-g1-478a82e6463b.json");
 
-        GoogleCredential credential;
-
-        using (var stream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read))
+        try
         {
-            credential = GoogleCredential.FromStream(stream).CreateScoped(Scopes);
+            GoogleCredential credential;
+            using (var stream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read))
+            {
+                credential = GoogleCredential.FromStream(stream).CreateScoped(Scopes);
+            }
+
+            var service = new SheetsService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = ApplicationName,
+            });
+
+            String spreadsheetId = "11NDkrOoQljZAib_2CIjTJh2prgTpKJJ0bx9l1Mc3mlg";
+
+            skillData = new SkillData
+            {
+                SkillNames = new List<string>(),
+                Durations = new List<int>(),
+                DropRates = new List<float>()
+            };
+
+            List<string> stringRange = new List<string> { "SkillSheet!A2:A21" };
+            List<string> intRange = new List<string> { "SkillSheet!C2:C21" };
+            List<string> floatRange = new List<string> { "SkillSheet!E2:E21" };
+
+            FetchAndStoreData(service, spreadsheetId, stringRange, ref skillData.SkillNames, DataType.String);
+            FetchAndStoreData(service, spreadsheetId, intRange, ref skillData.Durations, DataType.Int);
+            FetchAndStoreData(service, spreadsheetId, floatRange, ref skillData.DropRates, DataType.FloatPercent);
+
+            SaveDataToJson(skillData);
         }
-
-        var service = new SheetsService(new BaseClientService.Initializer()
+        catch (Exception ex)
         {
+<<<<<<< Updated upstream:Assets/_Scripts/GoogleSheetsExample.cs
             HttpClientInitializer = credential,
             ApplicationName = ApplicationName,
         });
@@ -65,6 +92,9 @@ public class GoogleSheetsExample : MonoBehaviour
         foreach (var item in floatList)
         {
             Debug.Log(item);
+=======
+            Debug.LogError($"Exception: {ex.Message}");
+>>>>>>> Stashed changes:Assets/_Scripts/GSData/GoogleSheetsExample.cs
         }
     }
 
@@ -107,13 +137,26 @@ public class GoogleSheetsExample : MonoBehaviour
                     }
                 }
             }
-            else
-            {
-                Debug.Log($"No data found at range: {range}.");
-            }
         }
     }
 
+<<<<<<< Updated upstream:Assets/_Scripts/GoogleSheetsExample.cs
+=======
+    private void SaveDataToJson(SkillData data)
+    {
+        string jsonDirectory = @"C:\Users\angry\Desktop\Studies\Unity\New Unity Projects\MachineManiaOnline";
+        string jsonPath = Path.Combine(jsonDirectory, "SkillData.json");
+
+        if (!Directory.Exists(jsonDirectory))
+        {
+            Directory.CreateDirectory(jsonDirectory);
+        }
+
+        string json = JsonConvert.SerializeObject(new SkillDataWrapper { SkillData = data }, Formatting.Indented);
+        File.WriteAllText(jsonPath, json);
+    }
+
+>>>>>>> Stashed changes:Assets/_Scripts/GSData/GoogleSheetsExample.cs
     private enum DataType
     {
         String,

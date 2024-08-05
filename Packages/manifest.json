@@ -2,6 +2,7 @@
   "dependencies": {
     "com.coffee.ui-effect": "https://github.com/mob-sakai/UIEffect.git",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
+    "com.unity.2d.animation": "9.1.1",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.burst": "1.8.15",
     "com.unity.cinemachine": "2.9.7",
@@ -9,6 +10,7 @@
     "com.unity.ide.vscode": "1.2.5",
     "com.unity.nuget.mono-cecil": "1.11.4",
     "com.unity.postprocessing": "3.4.0",
+    "com.unity.render-pipelines.universal": "14.0.10",
     "com.unity.splines": "2.5.2",
     "com.unity.textmeshpro": "3.0.9",
     "com.unity.modules.ai": "1.0.0",
