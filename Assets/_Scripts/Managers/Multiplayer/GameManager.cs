@@ -1,3 +1,4 @@
+using Cinemachine;
 using Fusion;
 using Fusion.Sockets;
 using System;
@@ -58,6 +59,10 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         // Spawn the player prefab
         NetworkObject playerObject = Runner.Spawn(FusionLauncher.Instance.GetPlayerNetPrefab());
+        var cameraPrefab = Instantiate(FusionLauncher.Instance.GetCameraPrefab());
+
+        var virtualCam = cameraPrefab.GetComponent<CinemachineVirtualCamera>();
+        virtualCam.Follow = playerObject.transform;
     }
 
     public override void FixedUpdateNetwork()

@@ -28,7 +28,7 @@ public class PickupBox : MonoBehaviour
     {
         Vector3 originalScale = transform.localScale;
         Vector3 popOutScale = originalScale * 1.1f;
-
+        Debug.Log("playing pickup anim");
         LeanTween.scale(gameObject, popOutScale, 0.2f).setEaseInOutBounce().setOnComplete(() =>
         {
             LeanTween.scale(gameObject, Vector3.zero, 0.2f).setEaseOutSine().setOnComplete(() =>

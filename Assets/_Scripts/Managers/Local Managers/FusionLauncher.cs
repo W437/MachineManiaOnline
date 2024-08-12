@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Fusion.Addons.Physics;
 using System.Linq;
 using System.Collections.Generic;
+using Cinemachine;
 
 // Starts any fusion connection
 public class FusionLauncher : MonoBehaviour
@@ -52,6 +53,11 @@ public class FusionLauncher : MonoBehaviour
     public NetworkPrefabRef GetPlayerNetPrefab()
     {
         return net_PlayerPrefab;
+    }
+
+    public GameObject GetCameraPrefab()
+    {
+        return cameraPrefab;
     }
 
     public async void InitializeNetwork(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)

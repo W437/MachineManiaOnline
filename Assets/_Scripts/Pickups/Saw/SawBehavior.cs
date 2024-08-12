@@ -31,7 +31,7 @@ public class SawBehavior : NetworkBehaviour
         currentForce = initialForce;
         isInitialized = true;
 
-        LeanTween.scale(gameObject, originalScale * 1.5f, 0.3f).setEaseOutBounce().setOnComplete(() =>
+        LeanTween.scale(gameObject, originalScale * 1.1f, 0.3f).setEaseOutBounce().setOnComplete(() =>
         {
             LeanTween.scale(gameObject, originalScale, 0.1f).setEaseOutBounce();
         });

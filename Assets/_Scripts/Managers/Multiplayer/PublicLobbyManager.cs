@@ -15,7 +15,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private static LobbyHubManager _hubManager;
 
     private const int MAX_PLAYERS = 6;
-    private const int LOBBY_TIMER_START = 15;
+    private const int LOBBY_TIMER_START = 3;
     [Networked] public bool net_IsSpawned { get; set; }
 
     private SceneRef _gameScene;
@@ -160,7 +160,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (HasStateAuthority)
         {
-            //RpcStartGame();
+            RpcStartGame();
         }
     }
 
