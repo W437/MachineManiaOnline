@@ -1437,9 +1437,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &280024588
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1921,9 +1918,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &312827414
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3565,9 +3559,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &500008341
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3845,9 +3836,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &513422617
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -6630,9 +6618,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &740616871
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -9031,9 +9016,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1014934620
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -13867,9 +13849,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1504646551
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -15245,9 +15224,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1727144603
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -15448,9 +15424,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1744302081
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -15960,9 +15933,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1781071960
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -17013,9 +16983,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1863555654
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -17349,9 +17316,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &1903744083
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -17800,8 +17764,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 00:24:51
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  m_sharedMaterial: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -17825,8 +17789,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
-  m_fontSizeBase: 18
+  m_fontSize: 23
+  m_fontSizeBase: 23
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -18334,9 +18298,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &2065377523
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -18508,9 +18469,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &2076223822
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -18759,9 +18717,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c9cad7887368a4ead0b9d87e8d9b05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupManager: {fileID: 1887013964}
-  playerRank: 0
-  totalPlayers: 0
 --- !u!212 &2116422654
 SpriteRenderer:
   m_ObjectHideFlags: 0
