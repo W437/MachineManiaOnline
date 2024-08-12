@@ -2,6 +2,7 @@
   "dependencies": {
     "com.coffee.ui-effect": "https://github.com/mob-sakai/UIEffect.git",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
+    "com.unity.2d.psdimporter": "8.0.5",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.burst": "1.8.15",
     "com.unity.cinemachine": "2.9.7",
