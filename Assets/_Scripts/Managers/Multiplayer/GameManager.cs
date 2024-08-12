@@ -38,7 +38,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void Awake()
     {
         // Cap fps
-        Application.targetFrameRate = 60;
+        //Application.targetFrameRate = 60;
 
         if (Instance == null)
         {
@@ -53,10 +53,14 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void Spawned()
     {
+        Debug.Log($"Spawned {this}");
         InitializeGame();
+
+        // Spawn the player prefab
+        NetworkObject playerObject = Runner.Spawn(FusionLauncher.Instance.GetPlayerNetPrefab());
     }
 
-    private void Update()
+    public override void FixedUpdateNetwork()
     {
         if (HasStateAuthority || FusionLauncher.Instance.GetNetworkRunner().IsSharedModeMasterClient)
         {
@@ -91,6 +95,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         gameState = 0;
         countdownTime = 3f;
+        GameUI.Instance.raceTimerText.text = "0:00:00";
     }
 
     private void UpdateCountdown()
@@ -104,10 +109,11 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcGameCountdown(float timeLeft)
     {
-        UIGame.Instance.DisplayCountdown(Mathf.CeilToInt(timeLeft));
+        GameUI.Instance.DisplayCountdown(Mathf.CeilToInt(timeLeft));
     }
 
     private void StartRace()
@@ -125,7 +131,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcUpdateRaceTimer(float elapsedTime)
     {
-        UIGame.Instance.UpdateRaceTimer(elapsedTime);
+        GameUI.Instance.UpdateRaceTimer(elapsedTime);
     }
 
     private void UpdatePostRaceTimer()
@@ -142,14 +148,14 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcUpdatePostRaceTimer(float timeLeft)
     {
-        UIGame.Instance.DisplayPostRaceCountdown(timeLeft);
+        GameUI.Instance.DisplayPostRaceCountdown(timeLeft);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcStartRace()
     {
-        UIGame.Instance.HideCountdown(); 
-        UIGame.Instance.StartRaceTimer();
+        GameUI.Instance.HideCountdown(); 
+        GameUI.Instance.StartRaceTimer();
     }
 
     public void PlayerFinished(PlayerRef player)
@@ -200,7 +206,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
             playerFinishTimes[playerRefs[i]] = finishTimes[i];
         }
 
-        UIGame.Instance.DisplayEndGameStats(playerFinishTimes);
+        GameUI.Instance.DisplayEndGameStats(playerFinishTimes);
     }
 
 
@@ -216,8 +222,32 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        runner.Spawn(FusionLauncher.Instance.GetPlayerNetPrefab());
+        Debug.Log($"Player joined: {player}");
+
+        // Determine the player's start position
+        int playerIndex = players.IndexOf(player);
+        Vector3 startPosition = playerIndex >= 0 && playerIndex < playerStartPositions.Count
+            ? playerStartPositions[playerIndex].position
+            : Vector3.zero; // Default position if not defined
+
+        // Spawn the player prefab
+        NetworkObject playerObject = runner.Spawn(
+            FusionLauncher.Instance.GetPlayerNetPrefab(),
+            startPosition,
+            Quaternion.identity,
+            player
+        );
+
+        // Initialize player controller
+        PlayerController controller = playerObject.GetComponent<PlayerController>();
+        if (controller != null)
+        {
+            playerControllers[player] = controller;
+        }
+
+        Debug.Log($"Spawned player {player} at position {startPosition}");
     }
+
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {

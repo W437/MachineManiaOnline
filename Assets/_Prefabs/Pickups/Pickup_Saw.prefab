@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 3645950741755807728}
   - component: {fileID: 2813152020833627882}
   - component: {fileID: 6932730089705758625}
-  - component: {fileID: 4164515824368421471}
   - component: {fileID: -6596726508899111762}
   - component: {fileID: 8864269459564124327}
+  - component: {fileID: 515245572918733152}
   m_Layer: 9
   m_Name: Pickup_Saw
   m_TagString: Untagged
@@ -257,22 +257,6 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 9.298357
---- !u!114 &4164515824368421471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8603551576790220712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35e66e512a219a144a117eb8d9f16576, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  initialForce: 3000
-  acceleration: 3000
-  rotationSpeed: -450
-  lifetime: 30
 --- !u!114 &-6596726508899111762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -290,8 +274,8 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 4164515824368421471}
   - {fileID: 8864269459564124327}
+  - {fileID: 515245572918733152}
 --- !u!114 &8864269459564124327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,10 +291,26 @@ MonoBehaviour:
   SyncScale: 1
   SyncParent: 1
   _interpolationTarget: {fileID: 0}
-  UsePreciseRotation: 0
-  UseRenderSleepThresholds: 1
+  UsePreciseRotation: 1
+  UseRenderSleepThresholds: 0
   RenderThresholds:
     UseEnergy: 1
     Position: 0.01
     Rotation: 0.01
     Scale: 0.01
+--- !u!114 &515245572918733152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8603551576790220712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73d6402a79c9c514dba644320e31a544, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialForce: 500
+  acceleration: 700
+  rotationSpeed: -170
+  lifetime: 30

@@ -5024,6 +5024,8 @@ GameObject:
   - component: {fileID: 3132460068256410123}
   - component: {fileID: 8402468643347810779}
   - component: {fileID: 2485367178947733121}
+  - component: {fileID: 976219052919833584}
+  - component: {fileID: 7081992712123276227}
   m_Layer: 3
   m_Name: MasterPlayer
   m_TagString: Player
@@ -5128,6 +5130,7 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 7835155397552032863}
   - {fileID: 8402468643347810779}
+  - {fileID: 976219052919833584}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5140,11 +5143,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5e690b5fb1084f5ab1c86457af401d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SyncScale: 0
+  SyncScale: 1
   SyncParent: 1
   _interpolationTarget: {fileID: 0}
   UsePreciseRotation: 0
-  UseRenderSleepThresholds: 1
+  UseRenderSleepThresholds: 0
   RenderThresholds:
     UseEnergy: 1
     Position: 0.001
@@ -5202,8 +5205,60 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 1
   m_SortAtRoot: 0
+--- !u!114 &976219052919833584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cdd02e25b57155459b5bb138f32bfb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _net_PlayerName: 
+  _net_Score: 0
+  _net_PlayerID: 0
+  _net_IsAlive: 0
+  _net_IsReady: 0
+--- !u!70 &7081992712123276227
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 0.5, y: 1}
+  m_Direction: 0
 --- !u!1 &4328776677701572124
 GameObject:
   m_ObjectHideFlags: 0

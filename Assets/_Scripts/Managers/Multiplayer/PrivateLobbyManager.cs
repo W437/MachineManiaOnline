@@ -8,8 +8,8 @@ using Fusion.Addons.Physics;
 public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static PrivateLobbyManager Instance;
-    private Transform[] lobbyPositionMarkers;
-    private Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
+    PrivateLobbyPosition[] lobbyPositionMarkers;
+    Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
 
     private void Awake()
     {
@@ -22,111 +22,131 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             Destroy(gameObject);
         }
-
-        InitializeLobbyPositions();
     }
 
     private void InitializeLobbyPositions()
     {
-        if (UIHome.Instance.PrivateLobbyPositions != null)
+        if (HomeUI.Instance != null)
         {
-            lobbyPositionMarkers = UIHome.Instance.PrivateLobbyPositions.GetComponentsInChildren<Transform>();
+            lobbyPositionMarkers = HomeUI.Instance.PrivateLobbyPositions;
         }
     }
 
     public override void Spawned()
     {
-        Runner.AddCallbacks(this);
-
-        // Spawn local player in private lobby
-        if (HasStateAuthority && !UILobby.Instance.lobbyPlatformScreen.activeSelf)
+        if (HasStateAuthority)
         {
-            SpawnLocalPlayer();
+            InitializeLobbyPositions();
+            Runner.AddCallbacks(this);
+
+            // handle local player spawning
+            if (Runner.IsSharedModeMasterClient)
+            {
+                OnPlayerJoined(Runner, Runner.LocalPlayer);
+            }
         }
     }
 
-    public void SpawnLocalPlayer()
+    public void PrintPlayerObjects()
     {
-        if (!playerObjects.ContainsKey(Runner.LocalPlayer))
+        Debug.Log("Printing Player Objects:");
+        foreach (var kvp in playerObjects)
         {
-            // local player's at pos1
-            NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-            var playerObject = Runner.Spawn(playerPrefab, lobbyPositionMarkers[1].position, Quaternion.identity, Runner.LocalPlayer);
-            playerObjects[Runner.LocalPlayer] = playerObject;
-            PrepareForMenu(playerObject.gameObject);
-
-            // Notify others 
-            RpcSetPlayerPosition(Runner.LocalPlayer, 1); // pos1 is index 1 ALWAYS
+            Debug.Log($"PlayerRef: {kvp.Key}, NetworkObject: {kvp.Value}");
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPrepareForMenu(NetworkObject playerObject)
+    {
+        PrepareForMenu(playerObject.gameObject);
     }
 
     private void PrepareForMenu(GameObject playerObject)
     {
-        /*var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
-                if (spriteRenderer != null)
-                {
-                    spriteRenderer.sortingLayerName = "UI";
-                    spriteRenderer.sortingOrder = 10;
-                    //playerObject.AddComponent<NetworkTransform>();
-                    Debug.Log($"Sort order: {spriteRenderer.sortingOrder}");
-        }*/
-
-        playerObject.transform.position += new Vector3(0, -0.38f, 3);
-        playerObject.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+        playerObject.transform.localScale = new Vector3(0.76f, 0.76f, 0.76f);
 
         NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
         if (networkRb != null)
         {
-            //Destroy(networkRb);
-            //Destroy(playerObject.GetComponent<NetworkRigidbody2D>());
-            //networkRb.enabled = false;
-            // Disabling this prevents setting position
-        }
 
-        /*        PlayerController playerController = playerObject.GetComponent<PlayerController>();
-                if (playerController != null)
-                {
-                    playerController.enabled = false;
-                }*/
+        }
 
         Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             rb.bodyType = RigidbodyType2D.Static;
         }
-
-        /*        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
-                if (runnerSimulate2D != null)
-                {
-                    Destroy(playerObject.GetComponent<RunnerSimulatePhysics2D>());
-                }*/
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
     {
         if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
         {
+            Vector3 fixedYPos;
+            Vector3 scale;
+
+            switch (positionIndex)
+            {
+                case 0:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.75f, 0);
+                    scale = new Vector3(0.85f, 0.85f, 0.85f);
+                    break;
+                case 1:
+                case 2:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.50f, 0);
+                    scale = new Vector3(0.75f, 0.75f, 0.75f);
+                    break;
+                case 3:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 1f, 0);
+                    scale = new Vector3(0.65f, 0.65f, 0.65f);
+                    break;
+                default:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
+                    scale = new Vector3(0.85f, 0.85f, 0.85f);
+                    break;
+            }
+
             if (!playerObjects.ContainsKey(player))
             {
-                // Spawn other players
                 NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-                var playerObject = Runner.Spawn(playerPrefab, lobbyPositionMarkers[positionIndex].position, Quaternion.identity, player);
+                Debug.Log($"Position for {player} at index {positionIndex} pos {lobbyPositionMarkers[positionIndex].Position.position}");
+
+                var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
                 playerObjects[player] = playerObject;
+
+                playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
+
+                playerObject.transform.localScale = scale;
+
+                Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.bodyType = RigidbodyType2D.Static;
+                }
+
+                lobbyPositionMarkers[positionIndex].IsOccupied = true;
+                lobbyPositionMarkers[positionIndex].Position.transform.GetComponentInChildren<SpriteRenderer>().color = ColorHelper.HexToColor("ffffff");
             }
             else
             {
-                // Update position for existing player objects
-                playerObjects[player].transform.position = lobbyPositionMarkers[positionIndex].position;
+                // Update players positions except local player
+                if (player != Runner.LocalPlayer)
+                {
+                    playerObjects[player].transform.position = lobbyPositionMarkers[positionIndex].Position.position;
+                }
             }
         }
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        int positionIndex = GetNextAvailablePosition();
-        if (positionIndex != -1)
+        int positionIndex = GetNextAvailablePosition(player);
+
+        if (positionIndex != -1 && !playerObjects.ContainsKey(player))
         {
+            Debug.Log($"Setting pos for {player} at {positionIndex}");
             RpcSetPlayerPosition(player, positionIndex);
         }
     }
@@ -140,16 +160,37 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 runner.Despawn(playerObject);
             }
+            // Find and free the position occupied by this player
+            foreach (var kvp in lobbyPositionMarkers)
+            {
+                if (playerObject.transform.position == kvp.Position.position)
+                {
+                    kvp.IsOccupied = false;
+                    kvp.Position.transform.GetComponentInChildren<SpriteRenderer>().color = ColorHelper.HexToColor("585858");
+                    break;
+                }
+            }
             playerObjects.Remove(player);
         }
     }
 
-    private int GetNextAvailablePosition()
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        // Find the first available position starting from pos2 (index 2)
-        for (int i = 2; i < lobbyPositionMarkers.Length; i++)
+        OnPlayerLeft(runner, runner.LocalPlayer);
+    }
+
+    private int GetNextAvailablePosition(PlayerRef player)
+    {
+        // Assign the master client to position 1, always
+        if (player == Runner.LocalPlayer && Runner.IsSharedModeMasterClient)
         {
-            if (IsPositionAvailable(i))
+            return 0;
+        }
+
+        // Find the first available position starting from pos2
+        for (int i = 1; i < lobbyPositionMarkers.Length; i++)
+        {
+            if (!lobbyPositionMarkers[i].IsOccupied)
             {
                 return i;
             }
@@ -157,21 +198,9 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         return -1;
     }
 
-    private bool IsPositionAvailable(int index)
-    {
-        foreach (var playerObject in playerObjects.Values)
-        {
-            if (playerObject.transform.position == lobbyPositionMarkers[index].position)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
+    #region unused callbacks
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnConnectedToServer(NetworkRunner runner) { }
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
@@ -186,4 +215,5 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+    #endregion
 }

@@ -45,8 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87fffe5e3ac65c445b62f683b33c5747, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _FinishTime: 0
-  players: []
+  _players: []
   playerStartPositions: []
   finishLine: {fileID: 0}
   raceDuration: 0
@@ -64,7 +63,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SortKey: 2154281334
   ObjectInterest: 1
-  Flags: 786433
+  Flags: 524289
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 4810015748367869591}

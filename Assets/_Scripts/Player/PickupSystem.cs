@@ -6,9 +6,17 @@ public class PickupSystem : NetworkBehaviour
     private Pickup currentPickup;
     private PlayerController player;
 
+    public int PlayerRank { get; set; }
+    public int TotalPlayers { get; set; }
+
     private void Awake()
     {
         player = GetComponent<PlayerController>();
+    }
+
+    public override void Spawned()
+    {
+        Debug.Log("Spawned PickupSys");
     }
 
     public void PickupItem(Pickup pickup)
@@ -17,7 +25,7 @@ public class PickupSystem : NetworkBehaviour
         Debug.Log($"Picked up item {pickup.PickupName}");
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcUsePickup()
     {
         if (currentPickup != null)
@@ -25,6 +33,14 @@ public class PickupSystem : NetworkBehaviour
             currentPickup.Use(player);
             Debug.Log("Used pickup");
             currentPickup = null;
+        }
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && currentPickup != null)
+        {
+            RpcUsePickup();
         }
     }
 }

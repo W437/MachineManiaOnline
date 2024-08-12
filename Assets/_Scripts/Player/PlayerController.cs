@@ -14,7 +14,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private FrameInput _frameInput; // Stores input for the current frame.
     private Vector2 _frameVelocity; // Stores the player's velocity for the current frame.
     private bool _cachedQueryStartInColliders; // Caches the default value of Physics2D.queriesStartInColliders.
-    
+    private bool _canMove = true; // Whether the player can move or not.
+    private bool _canMoveFreely = true; // Whether the player can move freely using movement keys.
+
     // move this
     public float FinishTime { get; set; }
 
@@ -45,6 +47,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         _time += Time.deltaTime; // Increment the elapsed time.
         GatherInput(); // Gather input from the player.
+        HandleJump(); // Handle jumping in Update to ensure responsiveness.
     }
 
     private void GatherInput()
@@ -52,9 +55,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
         // Gather input from Unity's Input system.
         _frameInput = new FrameInput
         {
-            JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.C), // Jump button pressed.
-            JumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.C), // Jump button held down.
-            Move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) // Movement input.
+            JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.C),
+            JumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.C),
+            Move = _canMove ? (_canMoveFreely ? new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) : new Vector2(1, 0)) : Vector2.zero
         };
 
         // Snap input to discrete values if SnapInput is enabled.
@@ -82,13 +85,18 @@ public class PlayerController : MonoBehaviour, IPlayerController
     /// </summary>
     private void FixedUpdate()
     {
-        CheckCollisions(); // Check for collisions with the ground and ceiling.
-
-        HandleJump(); // Handle jumping logic.
-        HandleDirection(); // Handle horizontal movement logic.
-        HandleGravity(); // Handle gravity and falling logic.
-
-        ApplyMovement(); // Apply the computed velocity to the Rigidbody2D.
+        if (_canMove)
+        {
+            CheckCollisions();
+            HandleDirection();
+            HandleGravity();
+            ApplyMovement();
+        }
+        else
+        {
+            // Stop all movement if not allowed to move.
+            _rb.velocity = Vector2.zero;
+        }
     }
 
     #region Collisions
@@ -150,14 +158,18 @@ public class PlayerController : MonoBehaviour, IPlayerController
         // End the jump early if the jump button is released.
         if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.velocity.y > 0) _endedJumpEarly = true;
 
-        // Return if there's no jump to consume and no buffered jump.
-        if (!_jumpToConsume && !HasBufferedJump) return;
-
-        // Execute the jump if grounded or using coyote time.
-        if (_grounded || CanUseCoyote) ExecuteJump();
-
-        _jumpToConsume = false; // Reset jump consumption flag.
+        // Check if jump input is available or buffered.
+        if (_jumpToConsume || HasBufferedJump)
+        {
+            // Execute the jump if grounded or using coyote time.
+            if (_grounded || CanUseCoyote)
+            {
+                ExecuteJump();
+            }
+            _jumpToConsume = false; // Reset jump consumption flag.
+        }
     }
+
 
     private void ExecuteJump()
     {
@@ -212,6 +224,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     // Apply the computed velocity to the Rigidbody2D.
     private void ApplyMovement() => _rb.velocity = _frameVelocity;
+
+    // Method to toggle free movement for testing purposes.
+    public void ToggleFreeMovement(bool enable)
+    {
+        _canMoveFreely = enable;
+    }
 
 #if UNITY_EDITOR
     // Validate the scriptable object assignment in the editor.

@@ -45,7 +45,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 973186ead3781c94e9a86d3502188aa4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  privateLobbyPositions: {fileID: 0}
 --- !u!114 &9140803345285835335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,7 +59,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SortKey: 1619627546
   ObjectInterest: 1
-  Flags: 1
+  Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 6912970604957305494}

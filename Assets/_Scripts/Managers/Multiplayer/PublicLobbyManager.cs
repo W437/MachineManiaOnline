@@ -5,54 +5,27 @@ using System.Collections.Generic;
 using System;
 using UnityEngine.SceneManagement;
 using TMPro;
-using System.Collections;
-using System.Linq;
+using UnityEngine.Rendering;
 using Fusion.Addons.Physics;
-using Random = UnityEngine.Random;
-using Assets.Scripts.TypewriterEffects;
-using System.Threading.Tasks;
+using System.Collections;
 
 public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static PublicLobbyManager Instance;
+    private static LobbyHubManager _hubManager;
+
+    private const int MAX_PLAYERS = 6;
+    private const int LOBBY_TIMER_START = 3;
+    [Networked] public bool net_IsSpawned { get; set; }
 
     private SceneRef _gameScene;
-    public bool isSpawned = false;
 
-    // Lobby stuff
-    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, NetworkBool> net_ReadyStates => default;
-    [Networked, Capacity(6)] private NetworkLinkedList<PlayerRef> net_PlayerList => default;
-    [Networked, Capacity(6)] private NetworkDictionary<PlayerRef, int> net_PlayerPositionsMap => default;
-    [Networked] private TickTimer net_GameStartLobbyTimer { get; set; }
-    [Networked, Capacity(6)] private NetworkArray<PlayerInfo> net_PlayerPositions => default;
-    [Networked] private NetworkBool net_NewsStarted { get; set; }
-    [Networked] private int net_CurrentNewsIndex { get; set; }
+    [Networked] private bool net_isTimerRunning { get; set; }
+    [Networked] private float net_remainingTime { get; set; }
 
-    private LTDescr currentNewsTween;
-    private bool isMessageCooldown = false;
+    public PublicLobbyPosition[] lobbyPositionMarkers;
+    private Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
 
-    private const int MaxPlayers = 6;
-    private const int LobbyTimerStart = 10;
-    private const int PlayerJoinTimeBonus = 3;
-
-    [Networked] private bool isTimerRunning { get; set; }
-    [Networked] private float remainingTime { get; set; }
-
-
-
-
-    /// <summary>
-    /// When game starts (from lobbymanager) we don't keep the lobby, we destroy it
-    /// and the masterclient spawns the gamemanager, that handles spawning of all players
-    /// GameManager spawns players by THEIR runner, providing them input/state authority
-    /// 
-    /// Lobby handles lobby stuff
-    /// Game handles game stuff
-    /// 
-    /// Make sure that masterclient/authority over the managers (lobby and game) is handled well if the master leaves.
-    /// 
-    /// Linear architecture, no complexities
-    /// </summary>
     private void Awake()
     {
         if (Instance == null)
@@ -65,108 +38,123 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             Destroy(gameObject);
         }
 
-        // game scene is 1 (at least the first level)
+        InitializeLobbyPositions();
         _gameScene = SceneRef.FromIndex(1);
+        _hubManager = new LobbyHubManager();
     }
+
 
     public override void Spawned()
     {
-        isSpawned = true;
-        Runner.AddCallbacks(this);
-
-        if (HasStateAuthority && UILobby.Instance.lobbyPlatformScreen.activeSelf)
+        if (HasStateAuthority)
         {
-            StartLobbyTimer();
-        }
-    }
+            Runner.AddCallbacks(this);
+            RpcSetIsSpawned();
 
-    public override void Despawned(NetworkRunner runner, bool hasState)
-    {
-        base.Despawned(runner, hasState);
-        isSpawned = false;
-    }
-
-    public override void FixedUpdateNetwork()
-    {
-        if (isTimerRunning && HasStateAuthority)
-        {
-            RpcUpdateTimer(remainingTime);
-        }
-    }
-
-    private void Update()
-    {
-        if (isSpawned)
-        {
-            UpdateLobbyTimer();
-        }
-    }
-
-    public void ShowLobbyUI()
-    {
-        AudioManager.Instance.SetCutoffFrequency(10000, 7000);
-        UILobby.Instance.ConnectToLobby();
-    }
-
-    public void StartLobbyTimer()
-    {
-        if (net_PlayerList.Count >= 0 && !isTimerRunning)
-        {
-            remainingTime = LobbyTimerStart;
-            isTimerRunning = true;
-        }
-    }
-
-    private void StopLobbyTimer()
-    {
-        isTimerRunning = false;
-        remainingTime = LobbyTimerStart;
-        UILobby.Instance.gameStartLobbyTimer.text = LobbyTimerStart.ToString();
-    }
-
-    private void UpdateLobbyTimer()
-    { 
-        if (net_PlayerList.Count < 0)
-        {
-            StopLobbyTimer();
-            return;
-        }
-
-        if (remainingTime > 0)
-        {
-            remainingTime -= Time.deltaTime;
-            int remainingSeconds = Mathf.CeilToInt(remainingTime);
-            UILobby.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
-
-            if (remainingSeconds <= 0)
+            // handle local player spawning
+            if (Runner.IsSharedModeMasterClient)
             {
-                ShowConnectingOverlay();
-                StartGame();
+                OnPlayerJoined(Runner, Runner.LocalPlayer);
             }
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcUpdateTimer(float newTime)
+    private void RpcSetIsSpawned()
     {
-        remainingTime = newTime;
-        int remainingSeconds = Mathf.CeilToInt(remainingTime);
-        UILobby.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString();
+        net_IsSpawned = true;
     }
 
-
-    private void AddTimeToLobbyTimer(int seconds)
+    private void InitializeLobbyPositions()
     {
-        if (net_GameStartLobbyTimer.RemainingTime(Runner) > 0)
+        if (LobbyUI.Instance != null)
         {
-            net_GameStartLobbyTimer = TickTimer.CreateFromSeconds(Runner, Mathf.CeilToInt((float)net_GameStartLobbyTimer.RemainingTime(Runner)) + seconds);
+            lobbyPositionMarkers = new PublicLobbyPosition[MAX_PLAYERS];
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                Transform slotTransform = LobbyUI.Instance.PlayerSlotsParent.GetChild(i);
+                lobbyPositionMarkers[i] = new PublicLobbyPosition
+                {
+                    Position = slotTransform,
+                    IsOccupied = false
+                };
+            }
+        }
+    }
+
+    private void Update()
+    {
+        if (net_IsSpawned && HasStateAuthority)
+        {
+            UpdateLobbyTimer();
+        }
+    }
+
+    public void StartLobbyTimer()
+    {
+        if (!net_isTimerRunning)
+        {
+            net_remainingTime = LOBBY_TIMER_START;
+            net_isTimerRunning = true;
+        }
+    }
+
+    public void StopLobbyTimer()
+    {
+        net_isTimerRunning = false;
+        net_remainingTime = LOBBY_TIMER_START;
+        UpdateTimerUI();
+    }
+
+    public void AddTimeToLobbyTimer(int seconds)
+    {
+        if (net_isTimerRunning)
+        {
+            net_remainingTime += seconds;
+            UpdateTimerUI();
+        }
+    }
+
+    private void UpdateLobbyTimer()
+    {
+        if (net_isTimerRunning)
+        {
+            net_remainingTime -= Time.deltaTime;
+            if (net_remainingTime <= 0)
+            {
+                net_remainingTime = 0;
+                StopLobbyTimer();
+                ShowConnectingOverlay();
+                StartGame();
+            }
+            UpdateTimerUI();
+        }
+    }
+
+    private void UpdateTimerUI()
+    {
+        int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
+        LobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
+
+        // Broadcast the updated time to all clients
+        RpcUpdateTimer(net_remainingTime);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcUpdateTimer(float newTime)
+    {
+        if (!HasStateAuthority)
+        {
+            net_remainingTime = newTime;
+            int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
+            LobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
         }
     }
 
     private void ShowConnectingOverlay()
     {
-        UILobby.Instance.ConnectingOverlay.SetActive(true);
-        UILobby.Instance.ConnectingText.text = "Joining Game";
+        LobbyUI.Instance.ConnectingOverlay.SetActive(true);
+        LobbyUI.Instance.ConnectingText.text = "Joining Game";
     }
 
     private void StartGame()
@@ -184,451 +172,50 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             if (FusionLauncher.Instance.GetNetworkRunner().IsRunning)
             {
-                FusionLauncher.Instance.GetNetworkRunner().Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
                 FusionLauncher.Instance.GetNetworkRunner().LoadScene(_gameScene, LoadSceneMode.Single);
+                FusionLauncher.Instance.GetNetworkRunner().Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
                 Destroy(gameObject);
             }
         }
     }
 
-    public void SetPlayerReadyState(PlayerRef player)
-    {
-        if (player == Runner.LocalPlayer)
-        {
-            RpcRequestToggleReadyState(player);
-        }
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RpcRequestToggleReadyState(PlayerRef player)
-    {
-        bool newReadyState;
-
-        if (net_ReadyStates.ContainsKey(player))
-        {
-            bool currentReadyState = net_ReadyStates[player];
-            newReadyState = !currentReadyState;
-            net_ReadyStates.Set(player, newReadyState);
-        }
-        else
-        {
-            newReadyState = true;
-            net_ReadyStates.Add(player, newReadyState);
-        }
-
-        RpcSyncReadyState(player, newReadyState);
-
-        // Check if all players are ready
-        bool allReady = true;
-        foreach (var entry in net_ReadyStates)
-        {
-            if (!entry.Value)
-            {
-                allReady = false;
-                break;
-            }
-        }
-
-        if (allReady)
-        {
-            StartGame();
-        }
-    }
-
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcSyncReadyState(PlayerRef player, bool isReady)
+    public void RpcToggleReadyState(PlayerRef player)
     {
-        if (net_ReadyStates.ContainsKey(player))
+        var playerObject = Runner.GetPlayerObject(player);
+        if (playerObject != null)
         {
-            net_ReadyStates.Set(player, isReady);
-        }
-        else
-        {
-            net_ReadyStates.Add(player, isReady);
-        }
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+            if (playerManager != null)
+            {
+                bool newReadyState = !playerManager.net_IsReady;
+                playerManager.SetPlayerReady(newReadyState);
 
-        UpdatePlayerList();
-    }
-
-    public bool IsPlayerReady(PlayerRef player)
-    {
-        return net_ReadyStates.ContainsKey(player) && net_ReadyStates[player];
-    }
-
-    public void ShowMessageAbovePlayer(string message)
-    {
-        if (isMessageCooldown)
-        {
-            return;
-        }
-
-        RpcTalkShit(Runner.LocalPlayer, message);
-    }
-
-    public void ShowEmoteAbovePlayer(string emote)
-    {
-        if (isMessageCooldown)
-        {
-            return;
-        }
-
-        RpcSendEmote(Runner.LocalPlayer, emote);
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RpcSendEmote(PlayerRef player, string emote)
-    {
-        isMessageCooldown = true;
-
-        switch (emote)
-        {
-            case "<sprite name=\"ManiaMoji_4\">":
-                PlayCustomAnimation(player, emote);
-            break;
-
-            default:
-                PlayDefaultEmoteAnimation(player, emote);
-            break;
+                // Update the UI for all clients
+                UpdateReadyStateUI(player, newReadyState);
+            }
         }
     }
 
-    private void PlayDefaultEmoteAnimation(PlayerRef player, string emote)
+    private void UpdateReadyStateUI(PlayerRef player, bool isReady)
     {
-        var runner = FusionLauncher.Instance.GetNetworkRunner();
         int playerIndex = FindPlayerPosition(player);
-
-        if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
+        if (playerIndex >= 0)
         {
-            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
-            var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-            if (emoteText != null)
+            Transform slotTransform = lobbyPositionMarkers[playerIndex].Position;
+            var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
+            if (statusText != null)
             {
-                LeanTween.cancel(emoteText.gameObject);
-                emoteText.gameObject.SetActive(false);
-
-                Vector3 originalPosition = emoteText.transform.localPosition;
-                Vector3 belowOriginalPosition = originalPosition + new Vector3(0, -100f, 0);
-
-                emoteText.fontSize = 63;
-                emoteText.transform.localPosition = belowOriginalPosition;
-                emoteText.transform.localScale = Vector3.zero;
-
-                emoteText.text = emote;
-                emoteText.gameObject.SetActive(true);
-
-                LeanTween.moveLocalY(emoteText.gameObject, originalPosition.y, 0.5f).setEase(LeanTweenType.easeInOutBack);
-                LeanTween.scale(emoteText.gameObject, Vector3.one, 0.5f).setEase(LeanTweenType.easeOutBounce).setOnComplete(() =>
-                {
-                    LeanTween.scale(emoteText.gameObject, Vector3.one * 1.2f, 0.3f).setEase(LeanTweenType.easeInOutSine).setLoopPingPong(4).setOnComplete(() =>
-                    {
-                        LeanTween.moveLocalY(emoteText.gameObject, belowOriginalPosition.y, 0.5f).setEase(LeanTweenType.easeInOutBack);
-                        LeanTween.scale(emoteText.gameObject, Vector3.zero, 0.5f).setEase(LeanTweenType.easeInOutBack).setOnComplete(() =>
-                        {
-                            emoteText.gameObject.SetActive(false);
-                            emoteText.transform.localPosition = originalPosition;
-                            isMessageCooldown = false;
-                        });
-                    });
-                });
+                statusText.text = isReady ? "Ready" : "Not Ready";
             }
         }
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RpcTalkShit(PlayerRef player, string message)
+    public int FindPlayerPosition(PlayerRef player)
     {
-        isMessageCooldown = true;
-
-        var runner = FusionLauncher.Instance.GetNetworkRunner();
-        int playerIndex = FindPlayerPosition(player);
-
-        if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
+        for (int i = 0; i < lobbyPositionMarkers.Length; i++)
         {
-            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
-            var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-            if (messageText != null)
-            {
-                var typewriter = messageText.GetComponent<Typewriter>();
-                var textEffects = messageText.GetComponent<TextEffects>();
-                LeanTween.cancel(messageText.gameObject);
-                messageText.gameObject.SetActive(false);
-
-                // Store original pos
-                Vector3 originalPosition = messageText.transform.localPosition;
-                Vector3 belowOriginalPosition = originalPosition + new Vector3(0, -100f, 0);
-
-                messageText.fontSize = 28;
-
-                messageText.gameObject.SetActive(true);
-                messageText.text = "";
-
-                typewriter.Animate(message);
-
-                textEffects.SetOnTypingEnd(() =>
-                {
-                    LeanTween.scale(messageText.gameObject, Vector3.one * 1.1f, 0.3f)
-                             .setEase(LeanTweenType.easeOutBack)
-                             .setOnComplete(() =>
-                             {
-                                 LeanTween.scale(messageText.gameObject, Vector3.one, 0.2f)
-                                          .setEase(LeanTweenType.easeInOutSine);
-                             });
-                });
-
-                // Delay before removing msg
-                LeanTween.value(messageText.gameObject, 0, 1, LobbyChatManager.MESSAGE_DISPLAY_TIME).setOnComplete(() =>
-                {
-                    // Animate the message popping down smoothly
-                    //LeanTween.moveLocalY(messageText.gameObject, belowOriginalPosition.y, 0.5f).setEase(LeanTweenType.easeInCirc);
-                    LeanTween.value(messageText.fontSize, 0, 0.3f).setEase(LeanTweenType.easeInOutSine).setOnUpdate((float value) => messageText.fontSize = value).setDelay(0.3f).setOnComplete(() =>
-                    {
-                        messageText.gameObject.SetActive(false);
-                        messageText.text = "";
-                        messageText.transform.localPosition = originalPosition;
-                        messageText.transform.localScale = Vector3.one;
-                        isMessageCooldown = false;
-                    });
-                });
-            }
-        }
-    }
-
-    public void StartManiaNews()
-    {
-        if (HasStateAuthority && !net_NewsStarted)
-        {
-            net_NewsStarted = true;
-            net_CurrentNewsIndex = 0;
-            RpcRequestUpdateNews(net_CurrentNewsIndex);
-        }
-    }
-
-    public void ScheduleNextNewsPage()
-    {
-        int newsCount = LobbyManiaNews.Instance.GetNewsCount();
-        int nextIndex = LobbyManiaNews.Instance._randomOrder ? Random.Range(0, newsCount) : (net_CurrentNewsIndex + 1) % newsCount;
-        net_CurrentNewsIndex = nextIndex;
-        RpcRequestUpdateNews(nextIndex);
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RpcRequestUpdateNews(int index)
-    {
-        if (net_NewsStarted)
-        {
-            RpcUpdateManiaNews(index);
-        }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RpcUpdateManiaNews(int index)
-    {
-        LobbyManiaNews.Instance.ShowNews(index);
-
-        if (currentNewsTween != null)
-        {
-            LeanTween.cancel(currentNewsTween.id);
-        }
-
-        currentNewsTween = LeanTween.delayedCall(LobbyManiaNews.Instance._displayDuration, ScheduleNextNewsPage);
-    }
-
-    private void PlayCustomAnimation(PlayerRef player, string emote)
-    {
-        var runner = FusionLauncher.Instance.GetNetworkRunner();
-        int playerIndex = FindPlayerPosition(player);
-
-        if (playerIndex >= 0 && playerIndex < net_PlayerPositions.Length)
-        {
-            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(playerIndex);
-            var emoteText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-            if (emoteText != null)
-            {
-                // Cancel any ongoing animations
-                LeanTween.cancel(emoteText.gameObject);
-                emoteText.gameObject.SetActive(false);
-
-                // Store the original position
-                Vector3 originalPosition = emoteText.transform.localPosition;
-                Vector3 belowOriginalPosition = originalPosition + new Vector3(0, -100f, 0);
-
-                // Set the font size for the emoji text
-                emoteText.fontSize = 55;
-
-                // Set initial position and scale
-                emoteText.transform.localPosition = belowOriginalPosition;
-                emoteText.transform.localScale = Vector3.zero;
-
-                // Set the emote text and activate the game object
-                emoteText.text = emote;
-                emoteText.gameObject.SetActive(true);
-
-                // Custom animation for "ManiaMoji_43"
-                LeanTween.moveLocalY(emoteText.gameObject, originalPosition.y, 0.5f).setEase(LeanTweenType.easeOutElastic);
-                LeanTween.scale(emoteText.gameObject, Vector3.one, 0.5f).setEase(LeanTweenType.easeOutElastic).setOnComplete(() =>
-                {
-                    // Custom wiggle and ping-pong scale animation
-                    LeanTween.rotateZ(emoteText.gameObject, 15f, 0.1f).setEase(LeanTweenType.easeInOutSine).setLoopPingPong(20).setOnComplete(() =>
-                    {
-                        // Move to center, scale up, and wiggle
-                        Vector3 centerPosition = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-                        emoteText.transform.SetParent(null); // Detach from the parent to move to screen center
-                        LeanTween.move(emoteText.gameObject, centerPosition, 2f).setEase(LeanTweenType.easeInOutExpo);
-                        LeanTween.scale(emoteText.gameObject, Vector3.one * 2f, 2f).setEase(LeanTweenType.easeInOutExpo).setOnComplete(() =>
-                        {
-                            LeanTween.rotateZ(emoteText.gameObject, 10f, 0.05f).setEase(LeanTweenType.easeInOutSine).setLoopPingPong(10);
-                            LeanTween.moveLocalY(emoteText.gameObject, Screen.height, 2f).setEase(LeanTweenType.easeInOutExpo).setOnComplete(() =>
-                            {
-                                emoteText.gameObject.SetActive(false);
-                                //emoteText.transform.SetParent(PlayerPositions[playerIndex]);
-                                emoteText.transform.localPosition = originalPosition;
-                                emoteText.fontSize = 55; // Reset font size
-                                isMessageCooldown = false;
-                            });
-                        });
-                    });
-                });
-            }
-        }
-    }
-
-    private void InitiateMasterClientTransfer()
-    {
-        if (net_PlayerList.Count > 0)
-        {
-            PlayerRef newMasterClient = net_PlayerList[0];
-            RpcNotifyNewMasterClient(newMasterClient);
-        }
-        else
-        {
-            Debug.Log("No players left to transfer authority to.");
-            return;
-        }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcNotifyNewMasterClient(PlayerRef newMasterClient)
-    {
-        NetworkObject lobbyManager = FindObjectOfType<PublicLobbyManager>().GetComponent<NetworkObject>();
-
-        if (Runner.LocalPlayer == newMasterClient)
-        {
-            lobbyManager.RequestStateAuthority();
-            Debug.Log($"Requested state authority for new master client: {newMasterClient}");
-        }
-    }
-
-    private void UpdatePlayerList()
-    {
-        foreach (var player in net_PlayerPositionsMap)
-        {
-            int positionIndex = player.Value;
-            Transform positionTransform = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
-            UpdatePlayerUI(positionTransform, player.Key);
-        }
-    }
-
-    private void PrepareForMenu(GameObject playerObject)
-    {
-        /*var spriteRenderer = playerObject.GetComponent<SpriteRenderer>();
-                if (spriteRenderer != null)
-                {
-                    spriteRenderer.sortingLayerName = "UI";
-                    spriteRenderer.sortingOrder = 10;
-                    //playerObject.AddComponent<NetworkTransform>();
-                    Debug.Log($"Sort order: {spriteRenderer.sortingOrder}");
-        }*/
-
-        playerObject.transform.position += new Vector3(0, -0.38f, 3);
-        playerObject.transform.localScale = new Vector3 (0.5f, 0.5f, 0.5f);
-
-        NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
-        if (networkRb != null)
-        {
-            //Destroy(networkRb);
-            //Destroy(playerObject.GetComponent<NetworkRigidbody2D>());
-            //networkRb.enabled = false;
-            // Disabling this prevents setting position
-        }
-
-/*        PlayerController playerController = playerObject.GetComponent<PlayerController>();
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }*/
-
-        Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.bodyType = RigidbodyType2D.Static;
-        }
-
-/*        RunnerSimulatePhysics2D runnerSimulate2D = playerObject.GetComponent<RunnerSimulatePhysics2D>();
-        if (runnerSimulate2D != null)
-        {
-            Destroy(playerObject.GetComponent<RunnerSimulatePhysics2D>());
-        }*/
-    }
-
-    private void UpdateUI(int positionIndex, PlayerRef player)
-    {
-        var playerInfo = net_PlayerPositions.Get(positionIndex);
-        Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
-
-        UpdatePlayerUI(position, player);
-    }
-
-    private void ClearUI(int positionIndex)
-    {
-        Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
-
-        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
-        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
-        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-        nameText.text = "";
-        statusText.text = "";
-        messageText.gameObject.SetActive(false);
-    }
-
-    private void UpdatePlayerUI(Transform position, PlayerRef player)
-    {
-        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
-        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
-        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-        nameText.color = new Color(1f, 1f, 1f);
-        bool isReady = net_ReadyStates.ContainsKey(player) && net_ReadyStates[player];
-        nameText.text = $"Player {player.PlayerId}";
-        statusText.text = isReady ? "Ready" : "Not Ready";
-        messageText.gameObject.SetActive(false);
-    }
-
-    private int GetNextAvailablePosition()
-    {
-        for (int i = 0; i < net_PlayerPositions.Length; i++)
-        {
-            if (IsDefault(net_PlayerPositions.Get(i)))
-            {
-                return i;
-            }
-        }
-        return -1; // Lobby is full
-    }
-
-    private bool IsDefault(PlayerInfo playerInfo)
-    {
-        return playerInfo.net_Player == default;
-    }
-
-    private int FindPlayerPosition(PlayerRef player)
-    {
-        for (int i = 0; i < net_PlayerPositions.Length; i++)
-        {
-            if (net_PlayerPositions.Get(i).net_Player == player)
+            if (playerObjects.ContainsKey(player) && playerObjects[player].transform.parent == lobbyPositionMarkers[i].Position)
             {
                 return i;
             }
@@ -636,83 +223,243 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         return -1;
     }
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    public void SetPlayerReadyState(PlayerRef player)
     {
+        if (HasStateAuthority)
+        {
+            RpcToggleReadyState(player);
+        }
     }
 
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    public bool IsPlayerReady(PlayerRef player)
     {
+        var playerObject = Runner.GetPlayerObject(player);
+        if (playerObject != null)
+        {
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+            if (playerManager != null)
+            {
+                return playerManager.net_IsReady;
+            }
+        }
+        return false;
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcShowEmoteAbovePlayer(PlayerRef player, string emote)
+    {
+        _hubManager.ShowEmote(player, emote);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcShowMessageAbovePlayer(PlayerRef player, string message)
+    {
+        _hubManager.ShowMessage(player, message);
+    }
+
+    private void UpdatePlayerUI(Transform slotTransform, PlayerRef player)
+    {
+        if (playerObjects.TryGetValue(player, out var playerObject))
+        {
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+            var nameText = slotTransform.Find("nameText").GetComponent<TextMeshProUGUI>();
+            var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
+            var messageText = slotTransform.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+            if (playerManager != null)
+            {
+                nameText.text = $"{playerManager.net_PlayerName} ({player.PlayerId})";
+                statusText.text = playerManager.net_IsReady ? "Ready" : "Not Ready";
+                messageText.text = ""; // Initially clear
+            }
+            else
+            {
+                Debug.LogError("PlayerManager component missing on the player object.");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Player object not found for player: {player.PlayerId}");
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
+    {
+        if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
+        {
+            Vector3 fixedYPos;
+            Vector3 scale;
+
+            // Organize positioning logic using a switch statement
+            switch (positionIndex)
+            {
+                case 0:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+                    scale = new Vector3(70, 70, 70);
+                    break;
+                case 1:
+                case 2:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+                    scale = new Vector3(70, 70, 70);
+                    break;
+                case 3:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+                    scale = new Vector3(70, 70, 70);
+                    break;
+                case 4:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+                    scale = new Vector3(70, 70, 70);
+                    break;
+                case 5:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+                    scale = new Vector3(70, 70, 70);
+                    break;
+                default:
+                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
+                    scale = new Vector3(70, 70, 70);
+                    break;
+            }
+
+            if (!playerObjects.ContainsKey(player))
+            {
+                NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
+                Debug.Log($"Spawning player object for player: {player.PlayerId} at position index: {positionIndex}");
+
+                var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
+
+                if (playerObject != null)
+                {
+                    Runner.SetPlayerObject(player, playerObject);
+                    playerObjects[player] = playerObject;
+
+                    // Parent and position the player object on all clients
+                    playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
+                    playerObject.transform.localScale = scale;
+                    playerObject.transform.localPosition = Vector3.zero; // Ensure it's correctly positioned relative to its parent
+
+                    // Further adjustments
+                    playerObject.transform.localPosition += new Vector3(0, -50f, 0);
+
+                    var sortingGroup = playerObject.GetComponent<SortingGroup>();
+                    if (sortingGroup != null)
+                    {
+                        sortingGroup.sortingOrder = 4;
+                    }
+
+                    var rb = playerObject.GetComponent<Rigidbody2D>();
+                    if (rb != null)
+                    {
+                        rb.bodyType = RigidbodyType2D.Static;
+                    }
+
+                    // Mark the slot as occupied
+                    lobbyPositionMarkers[positionIndex].IsOccupied = true;
+
+                    // Update UI elements for the player
+                    UpdatePlayerUI(lobbyPositionMarkers[positionIndex].Position, player);
+                    Debug.Log($"Player object set successfully for player: {player.PlayerId}");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to spawn player object for player: {player.PlayerId}");
+                }
+            }
+            else
+            {
+                // Update the position of the player object if it already exists
+                if (playerObjects.TryGetValue(player, out var existingPlayerObject))
+                {
+                    existingPlayerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
+                    existingPlayerObject.transform.localPosition = Vector3.zero;
+                    existingPlayerObject.transform.localScale = scale;
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("Lobby position markers are null or index is out of range.");
+        }
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        net_PlayerList.Add(player);
-
-        int positionIndex = GetNextAvailablePosition();
-        if (positionIndex != -1)
+        if (Runner.IsSharedModeMasterClient && HasStateAuthority)
         {
-            net_PlayerPositions.Set(positionIndex, new PlayerInfo
+            int positionIndex = GetNextAvailablePosition(player);
+            if (positionIndex != -1 && !playerObjects.ContainsKey(player))
             {
-                net_Player = player,
-                net_PlayerName = "Player " + player.PlayerId,
-                net_PlayerState = "Ready",
-                net_PlayerMessage = "Welcome"
-            });
+                RpcSetPlayerPosition(player, positionIndex);
+            }
 
-            NetworkPrefabRef net_playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-
-            NetworkObject playerObject = FusionLauncher.Instance.GetNetworkRunner().Spawn(net_playerPrefab, new Vector3(0, 0, 0), Quaternion.identity, player);
-            Transform position = UILobby.Instance.PlayerPositionsParent.GetChild(positionIndex);
-            playerObject.transform.position = position.position;
-
-            PrepareForMenu(playerObject.gameObject);
-            FusionLauncher.Instance.GetNetworkRunner().SetPlayerObject(player, playerObject);
-
-            AddTimeToLobbyTimer(PlayerJoinTimeBonus);
-
-            UpdateUI(positionIndex, player);
             StartLobbyTimer();
         }
     }
 
-
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        bool wasMasterClient = player.IsMasterClient || runner.IsSharedModeMasterClient && runner.LocalPlayer == player;
-
-        if (HasStateAuthority || runner.IsSharedModeMasterClient)
+        if (playerObjects.ContainsKey(player))
         {
-            int positionIndex = FindPlayerPosition(player);
-            if (positionIndex != -1)
+            var playerObject = playerObjects[player];
+            if (playerObject != null)
             {
-                net_PlayerPositions.Set(positionIndex, default);
-                ClearUI(positionIndex);
+                runner.Despawn(playerObject);
             }
+
+            for (int i = 0; i < lobbyPositionMarkers.Length; i++)
+            {
+                if (playerObject.transform.position == lobbyPositionMarkers[i].Position.position)
+                {
+                    lobbyPositionMarkers[i].IsOccupied = false;
+                    ClearUI(i);
+                    break;
+                }
+            }
+
+            playerObjects.Remove(player);
         }
-
-        net_PlayerList.Remove(player);
-
-        var playerObject = runner.GetPlayerObject(player);
-        if (playerObject != null)
-        {
-            runner.Despawn(playerObject);
-            Destroy(playerObject.gameObject);
-        }
-
-        if (wasMasterClient)
-        {
-            InitiateMasterClientTransfer();
-        }
-
-        UpdatePlayerList();
     }
 
+    private int GetNextAvailablePosition(PlayerRef player)
+    {
+        if (player == Runner.LocalPlayer && Runner.IsSharedModeMasterClient)
+        {
+            return 0;
+        }
+
+        for (int i = 1; i < lobbyPositionMarkers.Length; i++)
+        {
+            if (!lobbyPositionMarkers[i].IsOccupied)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void ClearUI(int positionIndex)
+    {
+        Transform position = lobbyPositionMarkers[positionIndex].Position;
+        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
+        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
+        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+        nameText.text = "";
+        statusText.text = "";
+        messageText.text = "";
+    }
+
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        OnPlayerLeft(runner, runner.LocalPlayer);
+    }
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         Debug.Log("[Lobby] Lobby scene loaded.");
     }
 
+    #region unused callbacks
     public void OnSceneLoadStart(NetworkRunner runner)
     {
 
@@ -726,9 +473,6 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
     }
 
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
-    {
-    }
 
     public void OnConnectedToServer(NetworkRunner runner)
     {
@@ -778,4 +522,15 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
 
     }
+
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+        throw new NotImplementedException();
+    }
+    #endregion
 }

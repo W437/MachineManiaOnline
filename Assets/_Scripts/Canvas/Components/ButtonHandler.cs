@@ -25,7 +25,6 @@ public class ButtonHandler : MonoBehaviour
 
     private Dictionary<Slider, Vector3> originalHandleScales = new Dictionary<Slider, Vector3>();
 
-
     private Vector3 _originalScale;
     private Vector3 _originalRotation;
 
@@ -74,13 +73,18 @@ public class ButtonHandler : MonoBehaviour
 
     private void OnButtonPressed(Button button, Transform buttonTransform, PointerEventData eventData)
     {
-        if (buttonCooldowns[button]) return;
-
-        AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
-
-        LeanTween.cancel(button.gameObject);
-
         var config = buttonConfigs[button];
+
+        if (config.CooldownEnabled && buttonCooldowns[button]) return;
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
+
+        LeanTween.cancel(button.gameObject); // Cancel any ongoing animations
+        LeanTween.cancel(button.transform.parent.gameObject); // Cancel parent animations too
+        buttonTransform.localScale = Vector3.one;
+        button.transform.parent.transform.localScale = Vector3.one;
+
         _originalScale = buttonTransform.localScale;
         initialPressPositions[button] = eventData.position;
         Transform parentTransform = button.transform.parent;
@@ -90,10 +94,10 @@ public class ButtonHandler : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(buttonTransform as RectTransform, eventData.position, eventData.pressEventCamera, out _localPoint);
         RectTransform buttonRectTransform = buttonTransform as RectTransform;
         Vector2 normalizedPoint = (_localPoint - (Vector2)buttonRectTransform.rect.center) / (buttonRectTransform.rect.size / 2);
+
         if (!config.RotationLock)
         {
             Vector3 targetPosition = parentOriginalPositions[button] + (Vector3)(normalizedPoint * config.PinchMoveDistance);
-
             LeanTween.moveLocal(parentTransform.gameObject, targetPosition, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
         }
 
@@ -113,8 +117,27 @@ public class ButtonHandler : MonoBehaviour
 
             LeanTween.rotate(parentTransform.gameObject, config.Rotation, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
         }
+
+        if (config.ActivateOnPress)
+        {
+            AnimateButtonPress(button);
+            buttonCallbacks[button]?.Invoke(button);
+        }
+
+        if (config.Toggle)
+        {
+            buttonCallbacks[button]?.Invoke(button);
+        }
     }
 
+    private void AnimateButtonPress(Button button)
+    {
+        LeanTween.cancel(button.gameObject); // Ensure no overlapping animations
+        LeanTween.scale(button.gameObject, _originalScale * 1.1f, 0.1f).setEase(LeanTweenType.easeOutExpo).setOnComplete(() =>
+        {
+            LeanTween.scale(button.gameObject, _originalScale, 0.05f).setEase(LeanTweenType.easeInExpo);
+        });
+    }
 
     private void OnButtonDragged(Button button, Transform buttonTransform, PointerEventData eventData)
     {
@@ -175,8 +198,9 @@ public class ButtonHandler : MonoBehaviour
 
     private void OnButtonReleased(Button button, Transform buttonTransform, PointerEventData eventData)
     {
-        if (buttonCooldowns[button]) return;
         var config = buttonConfigs[button];
+
+        if (config.CooldownEnabled && buttonCooldowns[button]) return;
 
         Transform parentTransform = button.transform.parent;
 
@@ -199,7 +223,7 @@ public class ButtonHandler : MonoBehaviour
 
                 buttonToggledStates[button] = !buttonToggledStates[button];
             }
-            else
+            else if (!config.ActivateOnPress)
             {
                 // Delay the callback to ensure animation completion
                 LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutBounce).setOnComplete(() =>
@@ -237,9 +261,11 @@ public class ButtonHandler : MonoBehaviour
             }
         }
 
-        StartCoroutine(ButtonCooldown(button));
+        if (config.CooldownEnabled)
+        {
+            StartCoroutine(ButtonCooldown(button));
+        }
     }
-
 
     private IEnumerator InvokeCallbackAfterDelay(Button button, float delay)
     {
@@ -282,7 +308,7 @@ public class ButtonHandler : MonoBehaviour
         StartCoroutine(SwitchCooldown(switchButton));
 
         bool currentState = switchStates[switchButton];
-        switchStates[switchButton] = !currentState; 
+        switchStates[switchButton] = !currentState;
         SetTogglePosition(switchButton, switchStates[switchButton]);
     }
 
@@ -334,7 +360,8 @@ public class ButtonHandler : MonoBehaviour
                         });
                 }
 
-                AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
             });
 
         Image toggleImageState = toggleRect.GetComponent<Image>();
@@ -404,8 +431,11 @@ public class ButtonConfig
     public bool RotationLock { get; set; } // Prevents rotation (of parent) during interaction
     public float PinchMoveDistance { get; set; } // Distance the parent can move when pinched
     public Vector3 Rotation { get; set; }
+    public bool ActivateOnPress { get; set; } // Determines if the action should occur on press
+    public bool CooldownEnabled { get; set; } // Enable or disable cooldown
 
-    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0.133f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3))
+
+    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0.133f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
     {
         YOffset = yOffset;
         ShrinkScale = shrinkScale;
@@ -419,9 +449,10 @@ public class ButtonConfig
         RotationLock = rotationLock;
         PinchMoveDistance = pinchMoveDistance;
         Rotation = rotation;
+        ActivateOnPress = activateOnPress;
+        CooldownEnabled = cooldownEnabled;
     }
 }
-
 
 public class SwitchConfig
 {
