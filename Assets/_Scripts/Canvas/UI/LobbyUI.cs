@@ -92,6 +92,7 @@ public class LobbyUI : MonoBehaviour
     private IEnumerator DelayedCheckIfLobbyIsSpawned()
     {
         // Adding a slight delay to allow everything to initialize properly
+        Debug.Log($"Delayed check for lobby spawn");
         yield return new WaitForSeconds(1.0f);
         StartCoroutine(CheckIfLobbyIsSpawned());
     }

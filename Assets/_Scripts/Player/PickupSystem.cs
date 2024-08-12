@@ -16,13 +16,11 @@ public class PickupSystem : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log("Spawned PickupSys");
     }
 
     public void PickupItem(Pickup pickup)
     {
         currentPickup = pickup;
-        Debug.Log($"Picked up item {pickup.PickupName}");
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -31,7 +29,6 @@ public class PickupSystem : NetworkBehaviour
         if (currentPickup != null)
         {
             currentPickup.Use(player);
-            Debug.Log("Used pickup");
             currentPickup = null;
         }
     }

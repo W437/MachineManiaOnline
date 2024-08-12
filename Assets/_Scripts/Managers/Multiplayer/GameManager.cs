@@ -53,7 +53,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void Spawned()
     {
-        Debug.Log($"Spawned {this}");
+        //Debug.Log($"Spawned {this}");
         InitializeGame();
 
         // Spawn the player prefab
