@@ -6,15 +6,9 @@ public class CloakPickup : Pickup
 {
     public override void Use(PlayerController player)
     {
-        NetworkRunner runner = player.GetComponent<NetworkObject>().Runner;
-
-        if (runner != null)
+        if (player != null)
         {
-            // Spawn the cloak pickup object
-            NetworkObject cloakObject = runner.Spawn(PickupPrefab, player.transform.position, Quaternion.identity, player.GetComponent<NetworkObject>().InputAuthority);
-
-            // Manually initialize the cloak behavior after spawning
-            CloakBehavior cloakBehavior = cloakObject.GetComponent<CloakBehavior>();
+            var cloakBehavior = player.GetComponent<CloakBehavior>();
             if (cloakBehavior != null)
             {
                 cloakBehavior.Initialize();

@@ -21,14 +21,37 @@ public class PickupSystem : NetworkBehaviour
     public void PickupItem(Pickup pickup)
     {
         currentPickup = pickup;
+        UpdateUISlotSprite(pickup);
+    }
+
+    public Pickup GetCurrentPickup()
+    {
+        return currentPickup; 
     }
 
     public void UsePickup()
     {
-        if (currentPickup != null)
+        if (currentPickup != null && Runner.IsPlayer)
         {
             currentPickup.Use(player);
+            ClearUISlotSprite();
             currentPickup = null;
+        }
+    }
+
+    private void UpdateUISlotSprite(Pickup pickup)
+    {
+        if (GameUI.Instance != null)
+        {
+            GameUI.Instance.SetSlotSprite(pickup.GetSprite());
+        }
+    }
+
+    private void ClearUISlotSprite()
+    {
+        if (GameUI.Instance != null)
+        {
+            GameUI.Instance.ClearSlotSprite();
         }
     }
 
@@ -40,9 +63,3 @@ public class PickupSystem : NetworkBehaviour
         }
     }
 }
-
-// problem with multiple players/objects spawning is because im using RPCs to spawn them Authoprity > all
-// which is wrong, I should only use RPC to position them, and spawn them onPlayerJoined
-// Spawn all joined players simply, then use RPC to position them.
-// RPCs only to change networked values
-// most networked objects are synced for scale and position, transform
