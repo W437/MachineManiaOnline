@@ -9,6 +9,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour, IPlayerController
 {
     [SerializeField] private ScriptableStats _stats; // Reference to the player's stats stored in a ScriptableObject.
+    [SerializeField] private Animator _animator;
     private Rigidbody2D _rb; // Reference to the Rigidbody2D component for physics interactions.
     private CapsuleCollider2D _col; // Reference to the CapsuleCollider2D component for collision detection.
     private FrameInput _frameInput; // Stores input for the current frame.
@@ -223,7 +224,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
     #endregion
 
     // Apply the computed velocity to the Rigidbody2D.
-    private void ApplyMovement() => _rb.velocity = _frameVelocity;
+    private void ApplyMovement()
+    {
+        _rb.velocity = _frameVelocity;
+        _animator.SetBool("IsRunning", true);
+    }
+
 
     // Method to toggle free movement for testing purposes.
     public void ToggleFreeMovement(bool enable)

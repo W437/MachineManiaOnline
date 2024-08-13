@@ -87,7 +87,8 @@ public class PlayerAnimator : MonoBehaviour
 
     private void OnJumped()
     {
-        _anim.SetTrigger(JumpKey);
+        Debug.Log("Jumped");
+        _anim.SetBool("IsJump",true);
         _anim.ResetTrigger(GroundedKey);
 
 
@@ -97,6 +98,11 @@ public class PlayerAnimator : MonoBehaviour
             SetColor(_launchParticles);
             _jumpParticles.Play();
         }
+    }
+
+    private void OnFalling()
+    {
+
     }
 
     private void OnGroundedChanged(bool grounded, float impact)
@@ -111,7 +117,8 @@ public class PlayerAnimator : MonoBehaviour
             _anim.SetTrigger(GroundedKey);
             _source.PlayOneShot(_footsteps[Random.Range(0, _footsteps.Length)]);
             _moveParticles.Play();
-
+            _anim.SetBool("IsJump", false);
+            _anim.SetBool("IsLand", true);
             _landParticles.transform.localScale = Vector3.one * Mathf.InverseLerp(0, 40, impact);
             _landParticles.Play();
         }
