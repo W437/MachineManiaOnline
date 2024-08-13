@@ -14,6 +14,7 @@
     "com.unity.postprocessing": "3.4.0",
     "com.unity.splines": "2.5.2",
     "com.unity.textmeshpro": "3.0.9",
+    "com.unity.uiextensions": "https://github.com/Unity-UI-Extensions/com.unity.uiextensions.git",
     "com.veriorpies.parrelsync": "https://github.com/VeriorPies/ParrelSync.git?path=/ParrelSync",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",

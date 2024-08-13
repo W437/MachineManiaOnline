@@ -4,6 +4,9 @@ using Fusion.Sockets;
 using System.Collections.Generic;
 using System;
 using Fusion.Addons.Physics;
+using System.Xml.Schema;
+using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
@@ -64,8 +67,6 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void PrepareForMenu(GameObject playerObject)
     {
-        playerObject.transform.localScale = new Vector3(0.76f, 0.76f, 0.76f);
-
         NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
         if (networkRb != null)
         {
@@ -91,21 +92,21 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 case 0:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.75f, 0);
-                    scale = new Vector3(0.85f, 0.85f, 0.85f);
-                    break;
+                    scale = new Vector3(1, 1, 1);
+                break;
                 case 1:
                 case 2:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.50f, 0);
-                    scale = new Vector3(0.75f, 0.75f, 0.75f);
-                    break;
+                    scale = new Vector3(1, 1, 1);
+                break;
                 case 3:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 1f, 0);
-                    scale = new Vector3(0.65f, 0.65f, 0.65f);
-                    break;
+                    scale = new Vector3(1, 1, 1);
+                break;
                 default:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
-                    scale = new Vector3(0.85f, 0.85f, 0.85f);
-                    break;
+                    scale = new Vector3(1, 1, 1);
+                break;
             }
 
             if (!playerObjects.ContainsKey(player))
@@ -115,8 +116,8 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
                 var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
                 playerObjects[player] = playerObject;
-
-                playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
+                Debug.Log($"Spawned {playerObject}");
+                //playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
 
                 playerObject.transform.localScale = scale;
 
@@ -126,8 +127,21 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
                     rb.bodyType = RigidbodyType2D.Static;
                 }
 
+                var sg = playerObject.GetComponent<SortingGroup>();
+                sg.sortingOrder = 2;
+
                 lobbyPositionMarkers[positionIndex].IsOccupied = true;
-                lobbyPositionMarkers[positionIndex].Position.transform.GetComponentInChildren<SpriteRenderer>().color = ColorHelper.HexToColor("ffffff");
+
+
+                Transform childTransform = lobbyPositionMarkers[positionIndex].Position.transform.Find("platformImg");
+                if (childTransform != null)
+                {
+                    Image imageComponent = childTransform.GetComponent<Image>();
+                    if (imageComponent != null)
+                    {
+                        imageComponent.color = ColorHelper.HexToColor("ffffff");
+                    }
+                }
             }
             else
             {
