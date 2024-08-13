@@ -5026,6 +5026,7 @@ GameObject:
   - component: {fileID: 2485367178947733121}
   - component: {fileID: 976219052919833584}
   - component: {fileID: 7081992712123276227}
+  - component: {fileID: 861208462154516230}
   m_Layer: 3
   m_Name: MasterPlayer
   m_TagString: Player
@@ -5131,6 +5132,7 @@ MonoBehaviour:
   - {fileID: 7835155397552032863}
   - {fileID: 8402468643347810779}
   - {fileID: 976219052919833584}
+  - {fileID: 861208462154516230}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5259,6 +5261,19 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
+--- !u!114 &861208462154516230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73750365d839e734881ebe31c168b0ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cloakDuration: 10
 --- !u!1 &4328776677701572124
 GameObject:
   m_ObjectHideFlags: 0

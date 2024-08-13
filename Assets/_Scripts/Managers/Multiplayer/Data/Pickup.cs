@@ -8,8 +8,14 @@ public interface IPickup
 public abstract class Pickup : ScriptableObject, IPickup
 {
     public string PickupName;
-    public Sprite PickupIcon;
+    public Sprite PickupSprite;
     public GameObject PickupPrefab;
     public float SpawnOffsetX;
+
     public abstract void Use(PlayerController player);
+
+    public Sprite GetSprite()
+    {
+        return PickupSprite;
+    }
 }

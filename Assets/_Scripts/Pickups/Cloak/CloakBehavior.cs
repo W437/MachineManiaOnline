@@ -9,19 +9,50 @@ public class CloakBehavior : NetworkBehaviour
 
     public void Initialize()
     {
-        player = GetComponentInParent<PlayerController>();
-        networkObject = player.GetComponent<NetworkObject>();
-        if (player != null && networkObject != null)
+        Debug.Log("Initializing Cloak");
+
+        player = GetComponent<PlayerController>();
+        if (player == null)
         {
-            RPC_ActivateCloak(networkObject.InputAuthority);
+            Debug.LogError("PlayerController component is missing on the GameObject.");
+            return;
         }
+
+        networkObject = GetComponent<NetworkObject>();
+        if (networkObject == null)
+        {
+            Debug.LogError("NetworkObject component is missing on the GameObject.");
+            return;
+        }
+
+        RPC_ActivateCloak(networkObject.InputAuthority);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     private void RPC_ActivateCloak(PlayerRef playerRef)
     {
-        player = Runner.GetPlayerObject(playerRef).GetComponent<PlayerController>();
-        var spriteRenderer = player.transform.Find("Visual/Sprite").GetComponent<SpriteRenderer>();
+        Debug.Log("Cloaking");
+
+        var playerObject = Runner.GetPlayerObject(playerRef);
+        if (playerObject == null)
+        {
+            Debug.LogError("Runner.GetPlayerObject returned null.");
+            return;
+        }
+
+        player = playerObject.GetComponent<PlayerController>();
+        if (player == null)
+        {
+            Debug.LogError("PlayerController component is missing on the player object.");
+            return;
+        }
+
+        var spriteRenderer = player.transform.Find("Visual/Sprite")?.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("SpriteRenderer component not found on player.");
+            return;
+        }
 
         if (networkObject.InputAuthority == playerRef)
         {
@@ -43,12 +74,29 @@ public class CloakBehavior : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.All)]
     private void RPC_DeactivateCloak(PlayerRef playerRef)
     {
-        player = Runner.GetPlayerObject(playerRef).GetComponent<PlayerController>();
-        var spriteRenderer = player.transform.Find("Visual/Sprite").GetComponent<SpriteRenderer>();
+        var playerObject = Runner.GetPlayerObject(playerRef);
+        if (playerObject == null)
+        {
+            Debug.LogError("Runner.GetPlayerObject returned null during deactivation.");
+            return;
+        }
+
+        player = playerObject.GetComponent<PlayerController>();
+        if (player == null)
+        {
+            Debug.LogError("PlayerController component is missing on the player object during deactivation.");
+            return;
+        }
+
+        var spriteRenderer = player.transform.Find("Visual/Sprite")?.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("SpriteRenderer component not found on player during deactivation.");
+            return;
+        }
 
         // Restore full visibility to all players
         SetSpriteOpacity(spriteRenderer, 1f);
-        Runner.Despawn(Object);
     }
 
     private void SetSpriteOpacity(SpriteRenderer spriteRenderer, float opacity)
@@ -58,6 +106,11 @@ public class CloakBehavior : NetworkBehaviour
             Color color = spriteRenderer.color;
             color.a = opacity;
             spriteRenderer.color = color;
+            Debug.Log($"Opacity set to: {color.a}");
+        }
+        else
+        {
+            Debug.LogError("SpriteRenderer is null when trying to set opacity.");
         }
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Fusion;
 using Cinemachine;
+using static Unity.Collections.Unicode;
 
 public class PlayerSpawner : MonoBehaviour
 {
@@ -35,21 +36,12 @@ public class PlayerSpawner : MonoBehaviour
     {
         if (_runner != null && playerPrefab != null)
         {
-            // Spawn the player and then attach the camera immediately after
             var playerObject = _runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, _runner.LocalPlayer);
             if (playerObject != null)
             {
                 AttachCamera(playerObject.gameObject);
-                Debug.Log("Player spawned in the network and camera attached.");
+                _runner.SetPlayerObject(_runner.LocalPlayer, playerObject);
             }
-            else
-            {
-                Debug.LogError("Failed to spawn player.");
-            }
-        }
-        else
-        {
-            Debug.LogError("NetworkRunner or PlayerPrefab is not set.");
         }
     }
 
@@ -57,6 +49,5 @@ public class PlayerSpawner : MonoBehaviour
     {
         var cameraInstance = Instantiate(_cam);
         cameraInstance.Follow = player.transform;
-        Debug.Log("Camera attached to the player.");
     }
 }

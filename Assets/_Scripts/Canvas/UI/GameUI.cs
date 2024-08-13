@@ -27,6 +27,7 @@ public class GameUI : MonoBehaviour
     [SerializeField] Button jumpButton;
     [SerializeField] Button slideButton;
     [SerializeField] Button slotButton;
+    [SerializeField] Image slotSprite;
 
     private ButtonHandler buttonHandler;
 
@@ -42,7 +43,7 @@ public class GameUI : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    // bass belka3 fik tibne asas llmostakbal
+
     private void Start()
     {
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
@@ -61,6 +62,23 @@ public class GameUI : MonoBehaviour
         buttonHandler.AddButtonEventTrigger(secondaryClosePanelButton, OnStayButtonClicked, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true, animationTime: 0.1f));
 
         leaveMatchPanel.SetActive(false);
+        slotSprite.gameObject.SetActive(false);
+    }
+
+    public void SetSlotSprite(Sprite sprite)
+    {
+        if (sprite != null)
+        {
+            Debug.Log(slotSprite.gameObject.activeSelf);
+            slotSprite.sprite = sprite;
+            slotSprite.gameObject.SetActive(true);
+            Debug.Log(slotSprite.gameObject.activeSelf);
+        }
+    }
+
+    public void ClearSlotSprite()
+    {
+        slotSprite.gameObject.SetActive(false);
     }
 
     private void OnLeaveMatchButtonClicked(Button button)

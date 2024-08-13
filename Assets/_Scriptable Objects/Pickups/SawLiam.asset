@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SawLiam
   m_EditorClassIdentifier: 
   PickupName: SawBlazer
-  PickupIcon: {fileID: 21300000, guid: 53a85d5dd306f0146a79f0e0a4ad0b3d, type: 3}
+  PickupSprite: {fileID: 21300000, guid: 1512145649cdb984e98dd7553850d470, type: 3}
   PickupPrefab: {fileID: 8603551576790220712, guid: 7aef0f7979b1eca468a121fb26c383f1, type: 3}
   SpawnOffsetX: 0
