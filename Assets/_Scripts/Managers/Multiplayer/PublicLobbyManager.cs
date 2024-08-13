@@ -282,98 +282,70 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    private void SpawnPlayer(PlayerRef player, int positionIndex)
+    {
+        if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
+        {
+            NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
+            Vector3 spawnPosition = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
+            Vector3 scale = new Vector3(70, 70, 70);
+
+            var playerObject = Runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, player);
+            if (playerObject != null)
+            {
+                Runner.SetPlayerObject(player, playerObject);
+                playerObjects[player] = playerObject;
+
+                // Position and configure the player
+                PositionPlayer(player, positionIndex, scale);
+            }
+            else
+            {
+                Debug.LogError($"Failed to spawn player object for player: {player.PlayerId}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Lobby position markers are null or index is out of range.");
+        }
+    }
+
+    private void PositionPlayer(PlayerRef player, int positionIndex, Vector3 scale)
+    {
+        if (playerObjects.TryGetValue(player, out var playerObject))
+        {
+            playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
+            playerObject.transform.localPosition = Vector3.zero;
+            playerObject.transform.localScale = scale;
+            playerObject.transform.localPosition += new Vector3(0, -50f, 0);
+
+            var sortingGroup = playerObject.GetComponent<SortingGroup>();
+            if (sortingGroup != null)
+            {
+                sortingGroup.sortingOrder = 4;
+            }
+
+            var rb = playerObject.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.bodyType = RigidbodyType2D.Static;
+            }
+
+            // Mark the slot as occupied
+            lobbyPositionMarkers[positionIndex].IsOccupied = true;
+
+            // Update UI elements for the player
+            UpdatePlayerUI(lobbyPositionMarkers[positionIndex].Position, player);
+        }
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
     {
         if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
         {
-            Vector3 fixedYPos;
-            Vector3 scale;
-
-            // Organize positioning logic using a switch statement
-            switch (positionIndex)
-            {
-                case 0:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
-                    scale = new Vector3(70, 70, 70);
-                    break;
-                case 1:
-                case 2:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
-                    scale = new Vector3(70, 70, 70);
-                    break;
-                case 3:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
-                    scale = new Vector3(70, 70, 70);
-                    break;
-                case 4:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
-                    scale = new Vector3(70, 70, 70);
-                    break;
-                case 5:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 50f, 0);
-                    scale = new Vector3(70, 70, 70);
-                    break;
-                default:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
-                    scale = new Vector3(70, 70, 70);
-                    break;
-            }
-
-            if (!playerObjects.ContainsKey(player))
-            {
-                NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-                Debug.Log($"Spawning player object for player: {player.PlayerId} at position index: {positionIndex}");
-
-                var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
-
-                if (playerObject != null)
-                {
-                    Runner.SetPlayerObject(player, playerObject);
-                    playerObjects[player] = playerObject;
-
-                    // Parent and position the player object on all clients
-                    playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
-                    playerObject.transform.localScale = scale;
-                    playerObject.transform.localPosition = Vector3.zero; // Ensure it's correctly positioned relative to its parent
-
-                    // Further adjustments
-                    playerObject.transform.localPosition += new Vector3(0, -50f, 0);
-
-                    var sortingGroup = playerObject.GetComponent<SortingGroup>();
-                    if (sortingGroup != null)
-                    {
-                        sortingGroup.sortingOrder = 4;
-                    }
-
-                    var rb = playerObject.GetComponent<Rigidbody2D>();
-                    if (rb != null)
-                    {
-                        rb.bodyType = RigidbodyType2D.Static;
-                    }
-
-                    // Mark the slot as occupied
-                    lobbyPositionMarkers[positionIndex].IsOccupied = true;
-
-                    // Update UI elements for the player
-                    UpdatePlayerUI(lobbyPositionMarkers[positionIndex].Position, player);
-                    Debug.Log($"Player object set successfully for player: {player.PlayerId}");
-                }
-                else
-                {
-                    Debug.LogError($"Failed to spawn player object for player: {player.PlayerId}");
-                }
-            }
-            else
-            {
-                // Update the position of the player object if it already exists
-                if (playerObjects.TryGetValue(player, out var existingPlayerObject))
-                {
-                    existingPlayerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
-                    existingPlayerObject.transform.localPosition = Vector3.zero;
-                    existingPlayerObject.transform.localScale = scale;
-                }
-            }
+            Vector3 scale = new Vector3(70, 70, 70);
+            PositionPlayer(player, positionIndex, scale);
         }
         else
         {
@@ -388,7 +360,8 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             int positionIndex = GetNextAvailablePosition(player);
             if (positionIndex != -1 && !playerObjects.ContainsKey(player))
             {
-                RpcSetPlayerPosition(player, positionIndex);
+                // Directly spawn the player here
+                SpawnPlayer(player, positionIndex);
             }
 
             StartLobbyTimer();

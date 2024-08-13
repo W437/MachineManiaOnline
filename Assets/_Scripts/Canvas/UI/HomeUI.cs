@@ -111,7 +111,7 @@ public class HomeUI : MonoBehaviour
             PrivateLobbyPositions = new PrivateLobbyPosition[childCount];
             for (int i = 0; i < childCount; i++)
             {
-                Transform child = PrivateLobbyPositionsParent.GetChild(i).GetChild(0);
+                Transform child = PrivateLobbyPositionsParent.GetChild(i);
                 PrivateLobbyPositions[i] = new PrivateLobbyPosition(child);
             }
         }
