@@ -92,20 +92,20 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 case 0:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.75f, 0);
-                    scale = new Vector3(1, 1, 1);
+                    scale = new Vector3(0.85f, 0.85f, 0.85f);
                 break;
                 case 1:
                 case 2:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.50f, 0);
-                    scale = new Vector3(1, 1, 1);
+                    scale = new Vector3(0.75f, 0.75f, 0.75f);
                 break;
                 case 3:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 1f, 0);
-                    scale = new Vector3(1, 1, 1);
+                    scale = new Vector3(0.68f, 0.68f, 0.68f);
                 break;
                 default:
                     fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
-                    scale = new Vector3(1, 1, 1);
+                    scale = new Vector3(0.85f, 0.85f, 0.85f);
                 break;
             }
 

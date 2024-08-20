@@ -23,6 +23,7 @@ public class HomeUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI diamondsText;
     [SerializeField] private TextMeshProUGUI playersOnlineText;
     [SerializeField] private TextMeshProUGUI playNowText;
+    [SerializeField] private TextMeshProUGUI playerName;
 
     [Header("Custom Session")]
     [SerializeField] TMP_InputField inputSessionName;
@@ -101,6 +102,9 @@ public class HomeUI : MonoBehaviour
 
         // private lobby
         InitializeLobbyPositions();
+
+        // Other data
+        playerName.text = PlayerData.Instance.PlayerName;
     }
 
     private void InitializeLobbyPositions()

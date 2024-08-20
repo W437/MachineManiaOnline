@@ -322,7 +322,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             var sortingGroup = playerObject.GetComponent<SortingGroup>();
             if (sortingGroup != null)
             {
-                sortingGroup.sortingOrder = 4;
+                sortingGroup.sortingOrder = 5;
             }
 
             var rb = playerObject.GetComponent<Rigidbody2D>();

@@ -3,6 +3,7 @@
 public static class SaveSystem
 {
     private static readonly string SaveKey = "PlayerSaveData";
+    private static readonly string FirstLaunchKey = "IsFirstLaunch";
 
     public static void Save(PlayerSaveData data)
     {
@@ -20,7 +21,7 @@ public static class SaveSystem
         }
         else
         {
-            // default values
+            // Default values for a new player
             return new PlayerSaveData
             {
                 playerName = "PlayaHater",
@@ -33,5 +34,16 @@ public static class SaveSystem
                 musicVolume = 1.0f
             };
         }
+    }
+
+    public static bool IsFirstLaunch()
+    {
+        return !PlayerPrefs.HasKey(FirstLaunchKey);
+    }
+
+    public static void SetFirstLaunchComplete()
+    {
+        PlayerPrefs.SetInt(FirstLaunchKey, 1);
+        PlayerPrefs.Save();
     }
 }
