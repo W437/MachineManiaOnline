@@ -57,7 +57,7 @@ public class PickupSystem : NetworkBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.LeftShift) && currentPickup != null)
+        if (Input.GetKeyDown(KeyCode.LeftShift) && currentPickup != null && player.CanMove)
         {
             UsePickup();
         }

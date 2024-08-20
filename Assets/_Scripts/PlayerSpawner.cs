@@ -37,6 +37,7 @@ public class PlayerSpawner : MonoBehaviour
         if (_runner != null && playerPrefab != null)
         {
             var playerObject = _runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, _runner.LocalPlayer);
+            
             if (playerObject != null)
             {
                 AttachCamera(playerObject.gameObject);

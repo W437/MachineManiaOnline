@@ -6,28 +6,15 @@ public class SpeedBoostPickup : Pickup
 {
     public override void Use(PlayerController player)
     {
-        NetworkRunner runner = player.GetComponent<NetworkObject>().Runner;
+        NetworkObject runner = player.GetComponent<NetworkObject>();
 
         if (runner != null)
         {
             // Spawn the speed boost pickup object
-            NetworkObject boostObject = runner.Spawn(PickupPrefab, player.transform.position, Quaternion.identity, player.GetComponent<NetworkObject>().InputAuthority);
+           SpeedBoostBehavior behavior = player.GetComponent<SpeedBoostBehavior>();
 
             // Manually initialize the speed boost behavior after spawning
-            InitializeSpeedBoost(boostObject);
-        }
-    }
-
-    private void InitializeSpeedBoost(NetworkObject boostObject)
-    {
-        SpeedBoostBehavior boost = boostObject.GetComponent<SpeedBoostBehavior>();
-        if (boost != null)
-        {
-            boost.Initialize();
-        }
-        else
-        {
-            Debug.LogError("SpeedBoostBehavior component not found on the spawned speed boost object.");
+            behavior.Initialize();
         }
     }
 }

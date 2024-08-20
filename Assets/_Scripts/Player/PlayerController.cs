@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,17 +9,22 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class PlayerController : MonoBehaviour, IPlayerController
 {
+   
     [SerializeField] private ScriptableStats _stats; // Reference to the player's stats stored in a ScriptableObject.
+    public ScriptableStats Stats { get { return _stats; } }
     [SerializeField] private Animator _animator;
+    public List<SpriteRenderer> PlayerParts = new List<SpriteRenderer>();
     private Rigidbody2D _rb; // Reference to the Rigidbody2D component for physics interactions.
     private CapsuleCollider2D _col; // Reference to the CapsuleCollider2D component for collision detection.
     private FrameInput _frameInput; // Stores input for the current frame.
     private Vector2 _frameVelocity; // Stores the player's velocity for the current frame.
     private bool _cachedQueryStartInColliders; // Caches the default value of Physics2D.queriesStartInColliders.
-    private bool _canMove = true; // Whether the player can move or not.
+    [SerializeField]private bool _canMove = true; // Whether the player can move or not.
+    public bool CanMove { get { return _canMove; } }
     private bool _canMoveFreely = true; // Whether the player can move freely using movement keys.
 
     // move this
+   
     public float FinishTime { get; set; }
 
     #region Interface
@@ -34,6 +40,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private float _time; // Keeps track of elapsed time.
 
+  
     private void Awake()
     {
         // Get references to the Rigidbody2D and CapsuleCollider2D components.
@@ -198,7 +205,13 @@ public class PlayerController : MonoBehaviour, IPlayerController
         else
         {
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
+            Debug.Log(_frameVelocity.x);
         }
+    }
+    public void ChangeSpeedAndAcceleration(float speedMultiplier,float accelertionMulitplier)
+    {
+        _stats.MaxSpeed = speedMultiplier;
+        _stats.Acceleration = accelertionMulitplier;
     }
 
     #endregion
@@ -232,9 +245,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
 
     // Method to toggle free movement for testing purposes.
-    public void ToggleFreeMovement(bool enable)
+    public void TogglePlayerMovement(bool enable)
     {
-        _canMoveFreely = enable;
+        _canMove = enable;
     }
 
 #if UNITY_EDITOR

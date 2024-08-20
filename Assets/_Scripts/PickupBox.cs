@@ -1,12 +1,27 @@
+using Fusion;
 using UnityEngine;
 
 public class PickupBox : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D collision)
     {
+      
         if (collision.gameObject.CompareTag("Player"))
         {
-            var playerPickupSystem = collision.gameObject.GetComponent<PickupSystem>();
+            var runner = collision.gameObject.GetComponent<NetworkObject>();
+            if (!runner.HasInputAuthority)
+            {
+                return;
+            }       
+    
+
+            //var playerPickupSystem = collision.gameObject.GetComponent<PickupSystem>();
+            if (!runner.transform.gameObject.TryGetComponent(out PickupSystem playerPickupSystem))
+            {
+                Debug.Log("Failed to get PickUpSystem");
+                
+            }
+            
             if (playerPickupSystem != null)
             {
                 if (playerPickupSystem.GetCurrentPickup() != null) return;
@@ -18,6 +33,7 @@ public class PickupBox : MonoBehaviour
                     PlayPickupAnimation();
                 }
             }
+           
         }
     }
 

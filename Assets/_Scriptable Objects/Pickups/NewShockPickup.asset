@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fa8505d2fd6f8744b9e0e1efa5e95e0, type: 3}
+  m_Name: NewShockPickup
+  m_EditorClassIdentifier: 
+  PickupName: Shock
+  PickupSprite: {fileID: 21300000, guid: e07278a8546d5b743b43fd7befc747a8, type: 3}
+  PickupPrefab: {fileID: 8917323629667344492, guid: 8cd908d364193654ca22f28c20f2a296, type: 3}
+  SpawnOffsetX: 0
+  shockBehavior: {fileID: 0}

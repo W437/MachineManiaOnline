@@ -25,15 +25,15 @@ public class CloakBehavior : NetworkBehaviour
             return;
         }
 
-        RPC_ActivateCloak(networkObject.InputAuthority);
+        RPC_ActivateCloak(networkObject);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_ActivateCloak(PlayerRef playerRef)
+    private void RPC_ActivateCloak(NetworkObject networkObject)
     {
         Debug.Log("Cloaking");
 
-        var playerObject = Runner.GetPlayerObject(playerRef);
+        var playerObject = Runner.GetPlayerObject(networkObject.InputAuthority);
         if (playerObject == null)
         {
             Debug.LogError("Runner.GetPlayerObject returned null.");
@@ -47,34 +47,30 @@ public class CloakBehavior : NetworkBehaviour
             return;
         }
 
-        var spriteRenderer = player.transform.Find("Visual/Sprite")?.GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("SpriteRenderer component not found on player.");
-            return;
-        }
 
-        if (networkObject.InputAuthority == playerRef)
+        
+        if (networkObject.HasInputAuthority)
         {
-            // This is the local player, set their opacity to 0.5
-            SetSpriteOpacity(spriteRenderer, 0.5f);
+            Debug.Log("Has Input");
+            //This is the local player, set their opacity to 0.5
+            SetSpriteOpacity(0.5f);
         }
         else
         {
-            // For all other players, set the opacity to 0 (invisible)
-            SetSpriteOpacity(spriteRenderer, 0f);
+            //For all other players, set the opacity to 0(invisible)
+            SetSpriteOpacity(0f);
         }
 
         LeanTween.delayedCall(cloakDuration, () =>
         {
-            RPC_DeactivateCloak(playerRef);
+            RPC_DeactivateCloak(networkObject);
         });
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_DeactivateCloak(PlayerRef playerRef)
+    private void RPC_DeactivateCloak(NetworkObject network)
     {
-        var playerObject = Runner.GetPlayerObject(playerRef);
+        var playerObject = Runner.GetPlayerObject(network.InputAuthority);
         if (playerObject == null)
         {
             Debug.LogError("Runner.GetPlayerObject returned null during deactivation.");
@@ -88,29 +84,25 @@ public class CloakBehavior : NetworkBehaviour
             return;
         }
 
-        var spriteRenderer = player.transform.Find("Visual/Sprite")?.GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("SpriteRenderer component not found on player during deactivation.");
-            return;
-        }
 
         // Restore full visibility to all players
-        SetSpriteOpacity(spriteRenderer, 1f);
+        SetSpriteOpacity(1f);
     }
 
-    private void SetSpriteOpacity(SpriteRenderer spriteRenderer, float opacity)
+    private void SetSpriteOpacity(float opacity)
     {
-        if (spriteRenderer != null)
+        Debug.Log(player);
+        foreach (var spriteRender in player.PlayerParts)
         {
-            Color color = spriteRenderer.color;
-            color.a = opacity;
-            spriteRenderer.color = color;
-            Debug.Log($"Opacity set to: {color.a}");
+            if (spriteRender != null)
+            {
+                Color color = spriteRender.color;
+                color.a = opacity;
+                spriteRender.color = color;
+                Debug.Log($"Opacity set to: {color.a}");
+            }
         }
-        else
-        {
-            Debug.LogError("SpriteRenderer is null when trying to set opacity.");
-        }
+       
+       
     }
 }

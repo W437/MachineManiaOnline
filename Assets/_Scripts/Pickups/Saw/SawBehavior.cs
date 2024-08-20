@@ -1,4 +1,5 @@
 using Fusion;
+using System.Collections;
 using UnityEngine;
 
 public class SawBehavior : NetworkBehaviour
@@ -12,6 +13,8 @@ public class SawBehavior : NetworkBehaviour
     private float currentForce;
     private bool isInitialized = false;
     private Vector3 originalScale;
+
+    private float deathTimer =2f;
 
     private void Awake()
     {
@@ -73,8 +76,29 @@ public class SawBehavior : NetworkBehaviour
             rotationSpeed = -rotationSpeed;
             currentForce = initialForce;
         }
+        if (collision.transform.CompareTag("Player"))
+        {
+            StartCoroutine(SawHitEffect(collision.gameObject));
+        }
+       
+        
     }
-
+    private IEnumerator SawHitEffect(GameObject transform)
+    {
+        DisablePlayerMovement(transform, false);
+        Debug.Log("Player has controls disabled");
+        yield return new WaitForSeconds(deathTimer);
+        DisablePlayerMovement(transform, true);
+        Debug.Log("Player has controls Enabled ");
+    }
+    private void DisablePlayerMovement(GameObject gameObject,bool state)
+    {
+        
+        if (gameObject.TryGetComponent(out PlayerController playerController))
+        {
+            playerController.TogglePlayerMovement(state);
+        }
+    }
     private void DestroySaw()
     {
         LeanTween.scale(gameObject, originalScale * 1.1f, 0.2f).setEaseOutBounce().setOnComplete(() =>
