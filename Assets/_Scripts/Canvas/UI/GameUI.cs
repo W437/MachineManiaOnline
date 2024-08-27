@@ -98,7 +98,7 @@ public class GameUI : MonoBehaviour
 
     private void OnLeaveButtonClicked(Button button)
     {
-        FusionLauncher.Instance.GetNetworkRunner().Shutdown();
+        FusionLauncher.Instance.Runner().Shutdown();
         UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScene");
     }
 

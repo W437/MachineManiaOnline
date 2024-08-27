@@ -267,7 +267,7 @@ public class LobbyHubUI : MonoBehaviour
 
     private void OnMessageClicked(string message)
     {
-        var player = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
+        var player = FusionLauncher.Instance.Runner  ().LocalPlayer;
         if (player != PlayerRef.None)
         {
             PublicLobbyManager.Instance.RpcShowMessageAbovePlayer(player, message);
@@ -280,7 +280,7 @@ public class LobbyHubUI : MonoBehaviour
 
     private void OnEmojiClicked(string emoji)
     {
-        var player = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
+        var player = FusionLauncher.Instance.Runner().LocalPlayer;
         if (player != PlayerRef.None)
         {
             PublicLobbyManager.Instance.RpcShowEmoteAbovePlayer(player, emoji);

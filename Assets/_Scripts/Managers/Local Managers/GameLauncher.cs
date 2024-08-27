@@ -7,7 +7,8 @@ public class GameLauncher : MonoBehaviour
 {
     public static GameLauncher Instance;
     [SerializeField] private GameObject LauncherPrefab;
-    private FusionLauncher launcher;
+
+    public static bool LoadingScreenActive { get; set; }
 
     private void Awake()
     {
@@ -42,6 +43,8 @@ public class GameLauncher : MonoBehaviour
 
     private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
+        FusionLauncher launcher = null;
+
         if (launcher != null)
         {
             Destroy(launcher.gameObject);

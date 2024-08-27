@@ -5,6 +5,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static FusionLauncher;
 
 public class LoadingUI : MonoBehaviour
 {
@@ -90,18 +91,6 @@ public class LoadingUI : MonoBehaviour
         AudioManager.Instance.SetCutoffFrequency(1000, 5000);
     }
 
-    public void ShowLoadingScreen(string message = "Connecting")
-    {
-        AudioManager.Instance.SetCutoffFrequency(22000, 1000, 0.1f);
-        loadingScreen.SetActive(true);
-
-        _currentLoadingMessage = message;
-        loadingText.text = _currentLoadingMessage;
-        loadingBar.value = 0f;
-
-        _loadingDotsCoroutine ??= StartCoroutine(AnimateLoadingDots());
-    }
-
     public void SetProgress(float progress)
     {
         loadingBar.value = progress;
@@ -175,5 +164,30 @@ public class LoadingUI : MonoBehaviour
             _dotCount = (_dotCount + 1) % 4;
             yield return new WaitForSeconds(0.5f);
         }
+    }
+
+    public void SetConnectionStatus(ConnectionStatus status, string message)
+    {
+        Debug.Log($"Connection status: {status}, message: {message}");
+
+        if (GameLauncher.LoadingScreenActive)
+            ShowLoadingScreen(message);
+
+        if (status == ConnectionStatus.Connected || (status == ConnectionStatus.Failed && GameLauncher.LoadingScreenActive))
+        {
+            HideLoadingScreen();
+        }
+    }
+
+    public void ShowLoadingScreen(string message = "Connecting")
+    {
+        AudioManager.Instance.SetCutoffFrequency(22000, 1000, 0.1f);
+        loadingScreen.SetActive(true);
+
+        _currentLoadingMessage = message;
+        loadingText.text = _currentLoadingMessage;
+        loadingBar.value = 0f;
+
+        _loadingDotsCoroutine ??= StartCoroutine(AnimateLoadingDots());
     }
 }

@@ -17,7 +17,6 @@ public class FusionLauncher : MonoBehaviour
     [SerializeField] private NetworkPrefabRef net_GameManagerPrefab;
     [SerializeField] private NetworkPrefabRef net_PlayerPrefab;
     [SerializeField] private GameObject cameraPrefab;
-    [SerializeField] private bool enableLoading = true;
 
     private NetworkRunner _runner;
     private NetInputHandler _inputHandler;
@@ -66,7 +65,7 @@ public class FusionLauncher : MonoBehaviour
         LoadingUI.Instance.PlayerUniqueID.text = sessionName;
 
         if (isInitialStart)
-            SetConnectionStatus(ConnectionStatus.Connecting, "Initiating Network");
+            LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connecting, "Initiating Network");
 
         if (_runner == null)
         {
@@ -96,12 +95,12 @@ public class FusionLauncher : MonoBehaviour
 
                 if (result.Ok)
                 {
-                    SetConnectionStatus(ConnectionStatus.Connected, "Initiated!");
+                    LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connected, "Initiated!");
                     await WaitForRunnerToBeReady(sessionType);
                 }
                 else
                 {
-                    SetConnectionStatus(ConnectionStatus.Failed, result.ShutdownReason.ToString());
+                    LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Failed, result.ShutdownReason.ToString());
                 }
             }
             else
@@ -127,34 +126,35 @@ public class FusionLauncher : MonoBehaviour
             await Task.Yield();
         }
 
-        if (_runner.IsRunning && _runner.IsSharedModeMasterClient)
+        switch (sessionType)
         {
-            if (sessionType == SessionType.Public)
-            {
+            case SessionType.Public:
+
                 if (PublicLobbyManager.Instance == null && net_PublicLobbyManagerPrefab != null)
-                {
                     _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-                }
-            }
-            else if (sessionType == SessionType.Private)
-            {
+
+            break;
+
+            case SessionType.Private:
+
                 if (PrivateLobbyManager.Instance == null && net_PrivateLobbyManagerPrefab != null)
-                {
                     _runner.Spawn(net_PrivateLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-                    //_runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-                }
 
                 if (net_ChatManagerPrefab != null)
-                {
                     _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-                }
-            }
+
+            break;
+
+            default:
+            break;
         }
     }
 
     private async Task<StartGameResult> StartGameWithProgress(StartGameArgs startGameArgs)
     {
-        if (enableLoading)
+        bool _loadingActive = GameLauncher.LoadingScreenActive;
+
+        if (_loadingActive)
         {
             LoadingUI.Instance.ShowLoadingScreen("Connecting");
         }
@@ -163,7 +163,7 @@ public class FusionLauncher : MonoBehaviour
 
         if (result.Ok)
         {
-            if (enableLoading)
+            if (_loadingActive)
             {
                 LoadingUI.Instance.SetLoadingMessage("Loading Assets");
                 await LoadAssetsWithProgress();
@@ -172,7 +172,7 @@ public class FusionLauncher : MonoBehaviour
             }
         }
 
-        if (enableLoading)
+        if (GameLauncher.LoadingScreenActive)
             LoadingUI.Instance.HideLoadingScreen();
 
         return result;
@@ -188,21 +188,8 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-    public NetworkRunner GetNetworkRunner()
+    public NetworkRunner Runner()
     {
         return _runner;
-    }
-
-    public void SetConnectionStatus(ConnectionStatus status, string message)
-    {
-        Debug.Log($"Connection status: {status}, message: {message}");
-
-        if (enableLoading)
-            LoadingUI.Instance.ShowLoadingScreen(message);
-
-        if (status == ConnectionStatus.Connected || (status == ConnectionStatus.Failed && enableLoading))
-        {
-            LoadingUI.Instance.HideLoadingScreen();
-        }
     }
 }

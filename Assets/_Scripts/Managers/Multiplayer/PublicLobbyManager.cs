@@ -8,6 +8,7 @@ using TMPro;
 using UnityEngine.Rendering;
 using Fusion.Addons.Physics;
 using System.Collections;
+using System.Linq;
 
 public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
@@ -15,7 +16,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     private static LobbyHubManager _hubManager;
 
     private const int MAX_PLAYERS = 6;
-    private const int LOBBY_TIMER_START = 3;
+    private const int LOBBY_TIMER_START = 35;
     [Networked] public bool net_IsSpawned { get; set; }
 
     private SceneRef _gameScene;
@@ -169,10 +170,10 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (HasStateAuthority)
         {
-            if (FusionLauncher.Instance.GetNetworkRunner().IsRunning)
+            if (Runner.IsRunning)
             {
-                FusionLauncher.Instance.GetNetworkRunner().LoadScene(_gameScene, LoadSceneMode.Single);
-                FusionLauncher.Instance.GetNetworkRunner().Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
+                Runner.LoadScene(_gameScene, LoadSceneMode.Single);
+                Runner.Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
                 Destroy(gameObject);
             }
         }
@@ -322,7 +323,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             var sortingGroup = playerObject.GetComponent<SortingGroup>();
             if (sortingGroup != null)
             {
-                sortingGroup.sortingOrder = 5;
+                sortingGroup.sortingOrder = 6;
             }
 
             var rb = playerObject.GetComponent<Rigidbody2D>();
@@ -344,7 +345,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
         {
-            Vector3 scale = new Vector3(70, 70, 70);
+            Vector3 scale = new Vector3(45, 45, 45);
             PositionPlayer(player, positionIndex, scale);
         }
         else
@@ -373,24 +374,31 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (playerObjects.ContainsKey(player))
         {
             var playerObject = playerObjects[player];
+
             if (playerObject != null)
             {
                 runner.Despawn(playerObject);
-            }
 
-            for (int i = 0; i < lobbyPositionMarkers.Length; i++)
-            {
-                if (playerObject.transform.position == lobbyPositionMarkers[i].Position.position)
+                for (int i = 0; i < lobbyPositionMarkers.Length; i++)
                 {
-                    lobbyPositionMarkers[i].IsOccupied = false;
-                    ClearUI(i);
-                    break;
+                    if (playerObject.transform.position == lobbyPositionMarkers[i].Position.position)
+                    {
+                        lobbyPositionMarkers[i].IsOccupied = false;
+                        ClearUI(i);
+                        break;
+                    }
                 }
             }
 
             playerObjects.Remove(player);
         }
+
+        if (player.IsMasterClient)
+        {
+            InitiateMasterClientTransfer();
+        }
     }
+
 
     private int GetNextAvailablePosition(PlayerRef player)
     {
@@ -419,6 +427,36 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         nameText.text = "";
         statusText.text = "";
         messageText.text = "";
+    }
+
+    private void InitiateMasterClientTransfer()
+    {
+        if (playerObjects.Count > 0)
+        {
+            PlayerRef newMasterClient = playerObjects.Keys.FirstOrDefault();
+
+            if (newMasterClient != null)
+            {
+                RPC_NotifyNewMasterClient(newMasterClient);
+            }
+        }
+        else
+        {
+            Debug.Log("No players left to transfer authority to.");
+            return;
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_NotifyNewMasterClient(PlayerRef newMasterClient)
+    {
+        NetworkObject lobbyManager = FindObjectOfType<PublicLobbyManager>().GetComponent<NetworkObject>();
+
+        if (Runner.LocalPlayer == newMasterClient)
+        {
+            lobbyManager.RequestStateAuthority();
+            Debug.Log($"Requested state authority for new master: {newMasterClient}");
+        }
     }
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)

@@ -127,10 +127,10 @@ public class LobbyUI : MonoBehaviour
 
     private void OnLobbyReady(Button button)
     {
-        if (!(FusionLauncher.Instance.GetNetworkRunner() != null && FusionLauncher.Instance.GetNetworkRunner().IsRunning)) return;
+        if (!(FusionLauncher.Instance.Runner() != null && FusionLauncher.Instance.Runner().IsRunning)) return;
 
-        PlayerRef localPlayerRef = FusionLauncher.Instance.GetNetworkRunner().LocalPlayer;
-        var playerObject = FusionLauncher.Instance.GetNetworkRunner().GetPlayerObject(localPlayerRef);
+        PlayerRef localPlayerRef = FusionLauncher.Instance.Runner().LocalPlayer;
+        var playerObject = FusionLauncher.Instance.Runner().GetPlayerObject(localPlayerRef);
         Debug.Log($"Clicked ready {playerObject != null}");
         if (localPlayerRef != null)
         {

@@ -67,7 +67,7 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void FixedUpdateNetwork()
     {
-        if (HasStateAuthority || FusionLauncher.Instance.GetNetworkRunner().IsSharedModeMasterClient)
+        if (HasStateAuthority || Runner.IsSharedModeMasterClient)
         {
             HandleGameFlow();
         }
