@@ -65,12 +65,11 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<color=#ff0000>Pro tip:</color> Buttons won\u2019t break if you press
-    them harder. \U0001F579\uFE0F \U0001F602<size=\"50\"><sprite name=\"ManiaMojis_4\"><sprite
-    name=\"ManiaMojis_13\"></size>"
+  m_text: Remember, the real MVP is your internet connection! <size="50"><sprite
+    name="ManiaMojis_44"><sprite name="ManiaMojis_8"></size>
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  m_sharedMaterial: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: a20830a87d0c3e64387fb76cf8d58f94, type: 2}
+  m_sharedMaterial: {fileID: 9052875641770028444, guid: a20830a87d0c3e64387fb76cf8d58f94, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -146,7 +145,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1568043113798080544}
   m_Layer: 5
-  m_Name: ManiaNewsEntry 7
+  m_Name: ManiaNewsEntry 11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

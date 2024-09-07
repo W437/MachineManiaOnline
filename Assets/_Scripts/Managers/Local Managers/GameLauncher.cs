@@ -7,13 +7,16 @@ public class GameLauncher : MonoBehaviour
 {
     public static GameLauncher Instance;
     [SerializeField] private GameObject LauncherPrefab;
+    FusionLauncher launcher;
 
     public static bool LoadingScreenActive { get; set; }
 
     private void Awake()
     {
         Application.targetFrameRate = 60;
+        LeanTween.init(2000);
 
+        LoadingScreenActive = true;
         if (Instance == null)
         {
             Instance = this;
@@ -43,11 +46,10 @@ public class GameLauncher : MonoBehaviour
 
     private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
-        FusionLauncher launcher = null;
-
         if (launcher != null)
         {
             Destroy(launcher.gameObject);
+            Debug.Log("Destroying current session..");
 
             while (launcher != null)
             {
@@ -57,7 +59,7 @@ public class GameLauncher : MonoBehaviour
 
         launcher = Instantiate(LauncherPrefab).GetComponent<FusionLauncher>();
         launcher.name = "[Session]" + sessionName;
-        launcher.InitializeNetwork(sessionName, isInitialStart, sessionType, maxPlayers);
+        launcher.InitializeNetworkAsync(sessionName, isInitialStart, sessionType, maxPlayers);
 
         if (HomeUI.Instance != null)
             HomeUI.Instance.SetSessionNameUI(sessionName);

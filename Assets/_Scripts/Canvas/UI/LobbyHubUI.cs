@@ -270,7 +270,7 @@ public class LobbyHubUI : MonoBehaviour
         var player = FusionLauncher.Instance.Runner  ().LocalPlayer;
         if (player != PlayerRef.None)
         {
-            PublicLobbyManager.Instance.RpcShowMessageAbovePlayer(player, message);
+            PublicLobbyManager.Instance.RpcShowMessage(player, message);
         }
         else
         {
@@ -283,7 +283,7 @@ public class LobbyHubUI : MonoBehaviour
         var player = FusionLauncher.Instance.Runner().LocalPlayer;
         if (player != PlayerRef.None)
         {
-            PublicLobbyManager.Instance.RpcShowEmoteAbovePlayer(player, emoji);
+            PublicLobbyManager.Instance.RpcShowEmote(player, emoji);
         }
         else
         {

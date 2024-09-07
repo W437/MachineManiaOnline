@@ -71,7 +71,7 @@ public class LobbyHubManager
     private TextMeshProUGUI InitializeText(PlayerRef player, string content, float fontSize, bool startWithScaleZero)
     {
         int playerIndex = PublicLobbyManager.Instance.FindPlayerPosition(player);
-        if (playerIndex >= 0 && playerIndex < PublicLobbyManager.Instance.lobbyPositionMarkers.Length)
+        if (playerIndex >= 0 && playerIndex < PublicLobbyManager.Instance.playerPosition.Length)
         {
             Transform position = LobbyUI.Instance.PlayerSlotsParent.GetChild(playerIndex);
             var textComponent = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();

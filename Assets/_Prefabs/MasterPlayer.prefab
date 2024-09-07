@@ -5133,7 +5133,6 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 7835155397552032863}
   - {fileID: 8402468643347810779}
-  - {fileID: 976219052919833584}
   - {fileID: 861208462154516230}
   - {fileID: 1032004316717073286}
   - {fileID: 1937721012469942538}
@@ -5184,6 +5183,7 @@ MonoBehaviour:
   - {fileID: 2953474455044720246}
   - {fileID: 3155533988743076992}
   - {fileID: 1049835169599332481}
+  _canMove: 1
 --- !u!114 &3132460068256410123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5237,11 +5237,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cdd02e25b57155459b5bb138f32bfb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _net_PlayerName: 
-  _net_Score: 0
-  _net_PlayerID: 0
-  _net_IsAlive: 0
-  _net_IsReady: 0
 --- !u!70 &7081992712123276227
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

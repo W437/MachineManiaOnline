@@ -7,25 +7,12 @@ using UnityEngine;
 
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
-
-    /// <summary>
-    /// must continue linking stuff together, playermanager, gamemanager, lobby
-    /// move Spawned() start game timer to Lobby. Whoever has state authority of lobby, spawns the gamemanager.
-    /// figure other playermanager stats.
-    /// 
-    /// NEW::
-    /// 
-    /// gamemanager has to talk with level manager to get:
-    /// 1. Finish line
-    /// 2. Start Line
-    /// 3. Player Start Positionss
-    /// </summary>
     public static GameManager Instance { get; private set; }
-    [Networked] private float countdownTime { get; set; } // Time remaining for countdown
-    [Networked] private float elapsedTime { get; set; } // Elapsed game time
-    [Networked] private float postRaceTime { get; set; } // Time remaining after race finishes
+    [Networked] private float countdownTime { get; set; }
+    [Networked] private float elapsedTime { get; set; } 
+    [Networked] private float postRaceTime { get; set; } 
 
-    [Networked] private int gameState { get; set; }  // 0: Waiting, 1: Countdown, 2: Racing, 3: Finished
+    [Networked] private int gameState { get; set; }
     [Networked, Capacity(6)] public NetworkLinkedList<PlayerRef> players => default;
 
     public List<Transform> playerStartPositions = new List<Transform>();
@@ -38,9 +25,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void Awake()
     {
-        // Cap fps
-        //Application.targetFrameRate = 60;
-
         if (Instance == null)
         {
             Instance = this;

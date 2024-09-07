@@ -65,11 +65,11 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Noob today, pro tomorrow! Keep grinding! \U0001F31F \U0001F602<size=\"50\"><sprite
-    name=\"ManiaMojis_4\"><sprite name=\"ManiaMojis_13\"></size>"
+  m_text: Who needs enemies when you have teammates like these? <size="50"><sprite
+    name="ManiaMojis_36"><sprite name="ManiaMojis_37"><sprite name="ManiaMojis_37"></size></size>
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  m_sharedMaterial: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -145,7 +145,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1568043113798080544}
   m_Layer: 5
-  m_Name: ManiaNewsEntry 8
+  m_Name: ManiaNewsEntry 5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

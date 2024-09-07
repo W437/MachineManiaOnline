@@ -12,7 +12,8 @@ public class LobbyUI : MonoBehaviour
     public static LobbyUI Instance;
 
     [Header("Lobby")]
-    [SerializeField] public GameObject lobbyPlatformScreen;
+    public GameObject lobbyPlatformScreen;
+    public Transform maniaNewsParent;
     public Transform PlayerSlotsParent;
     public TextMeshProUGUI gameStartLobbyTimer;
     [SerializeField] Button lobbyReadyButton;
@@ -23,9 +24,6 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] public TextMeshProUGUI ConnectingText;
     Coroutine connectingCoroutine;
     ButtonHandler buttonHandler;
-
-    [Header("Mania News")]
-    [SerializeField] ManiaNews maniaNews;
 
     [Header("Private Lobby Chat")]
     public GameObject ChatPanel;
@@ -127,36 +125,18 @@ public class LobbyUI : MonoBehaviour
 
     private void OnLobbyReady(Button button)
     {
-        if (!(FusionLauncher.Instance.Runner() != null && FusionLauncher.Instance.Runner().IsRunning)) return;
-
         PlayerRef localPlayerRef = FusionLauncher.Instance.Runner().LocalPlayer;
         var playerObject = FusionLauncher.Instance.Runner().GetPlayerObject(localPlayerRef);
-        Debug.Log($"Clicked ready {playerObject != null}");
+
         if (localPlayerRef != null)
         {
             var playerManager = playerObject.GetComponent<PlayerManager>();
-            Debug.Log($"player manager {playerManager}");
+
             if (playerManager != null)
             {
                 bool currentReadyState = playerManager.net_IsReady;
-                playerManager.SetPlayerReady(!currentReadyState);
-
-                Debug.Log($"[!] Status: {playerManager.net_IsReady}");
-                UpdateReadyStateUI(localPlayerRef, !currentReadyState);
-            }
-        }
-    }
-
-    private void UpdateReadyStateUI(PlayerRef player, bool isReady)
-    {
-        int playerIndex = PublicLobbyManager.Instance.FindPlayerPosition(player);
-        if (playerIndex >= 0)
-        {
-            Transform slotTransform = PlayerSlotsParent.GetChild(playerIndex);
-            var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
-            if (statusText != null)
-            {
-                statusText.text = isReady ? "Ready" : "Not Ready";
+                Debug.Log($"current ready state {currentReadyState}");
+                PublicLobbyManager.Instance.SetPlayerReadyState(localPlayerRef);
             }
         }
     }

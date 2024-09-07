@@ -65,10 +65,11 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Remember: Losing builds character!<size="50"><sprite name="ManiaMojis_0"></size>'
+  m_text: "Who's the real hero? You are! \nKeep pushing forward! <size=\"50\"><sprite
+    name=\"ManiaMojis_4\"><sprite name=\"ManiaMojis_4\"></size>"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  m_sharedMaterial: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -144,12 +145,12 @@ GameObject:
   m_Component:
   - component: {fileID: 1568043113798080544}
   m_Layer: 5
-  m_Name: ManiaNewsEntry 2
+  m_Name: ManiaNewsEntry 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1568043113798080544
 RectTransform:
   m_ObjectHideFlags: 0

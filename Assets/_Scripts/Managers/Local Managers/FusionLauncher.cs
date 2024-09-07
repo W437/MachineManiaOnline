@@ -59,13 +59,22 @@ public class FusionLauncher : MonoBehaviour
         return cameraPrefab;
     }
 
-    public async void InitializeNetwork(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
+    public async Task InitializeNetworkAsync(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
-        Debug.Log($"Joining Session: {sessionName}");
         LoadingUI.Instance.PlayerUniqueID.text = sessionName;
 
         if (isInitialStart)
-            LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connecting, "Initiating Network");
+        {
+            LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connecting, "Connecting to network");
+        }
+
+        if (_runner != null)
+        {
+            Debug.Log("Shutting down current session...");
+            await _runner.Shutdown();
+            Destroy(_runner.gameObject);
+            _runner = null; 
+        }
 
         if (_runner == null)
         {
@@ -73,14 +82,14 @@ public class FusionLauncher : MonoBehaviour
             _runner.name = name;
             _runner.ProvideInput = true;
 
-            _inputHandler = FindObjectOfType<NetInputHandler>();
+            var inputHandler = FindObjectOfType<NetInputHandler>();
 
-            if (_inputHandler != null)
+            if (inputHandler != null)
             {
-                _runner.AddCallbacks(_inputHandler);
+                _runner.AddCallbacks(inputHandler);
             }
 
-            var startGameArgs = new StartGameArgs()
+            var startGameArgs = new StartGameArgs
             {
                 GameMode = GameMode.Shared,
                 SessionName = sessionName,
@@ -91,12 +100,12 @@ public class FusionLauncher : MonoBehaviour
 
             if (isInitialStart)
             {
-                var result = await StartGameWithProgress(startGameArgs);
+                var result = await StartGameWithProgressAsync(startGameArgs);
 
                 if (result.Ok)
                 {
-                    LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connected, "Initiated!");
-                    await WaitForRunnerToBeReady(sessionType);
+                    LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connected, "Connected to network");
+                    await WaitForRunnerToBeReadyAsync(sessionType);
                 }
                 else
                 {
@@ -105,11 +114,12 @@ public class FusionLauncher : MonoBehaviour
             }
             else
             {
+                Debug.Log("Starting game normally...");
                 var result = await _runner.StartGame(startGameArgs);
 
                 if (result.Ok)
                 {
-                    await WaitForRunnerToBeReady(sessionType);
+                    await WaitForRunnerToBeReadyAsync(sessionType);
                 }
                 else
                 {
@@ -119,38 +129,28 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
-    private async Task WaitForRunnerToBeReady(SessionType sessionType)
+    private async Task WaitForRunnerToBeReadyAsync(SessionType sessionType)
     {
         while (!_runner.IsRunning)
         {
             await Task.Yield();
         }
 
-        switch (sessionType)
+
+        // REVERTED BACK TO SPAWNING MANAGER ON ALL CLIENTS FOR EASE OF USE
+        if (sessionType == SessionType.Public && PublicLobbyManager.Instance == null && net_PublicLobbyManagerPrefab != null)
         {
-            case SessionType.Public:
-
-                if (PublicLobbyManager.Instance == null && net_PublicLobbyManagerPrefab != null)
-                    _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-
-            break;
-
-            case SessionType.Private:
-
-                if (PrivateLobbyManager.Instance == null && net_PrivateLobbyManagerPrefab != null)
-                    _runner.Spawn(net_PrivateLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-
-                if (net_ChatManagerPrefab != null)
-                    _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-
-            break;
-
-            default:
-            break;
+            //if(_runner.IsSharedModeMasterClient)
+                _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+        }
+        else if (sessionType == SessionType.Private && PrivateLobbyManager.Instance == null && net_PrivateLobbyManagerPrefab != null)
+        {
+                _runner.Spawn(net_PrivateLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
+                _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
         }
     }
 
-    private async Task<StartGameResult> StartGameWithProgress(StartGameArgs startGameArgs)
+    private async Task<StartGameResult> StartGameWithProgressAsync(StartGameArgs startGameArgs)
     {
         bool _loadingActive = GameLauncher.LoadingScreenActive;
 
