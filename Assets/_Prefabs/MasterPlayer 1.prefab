@@ -5130,6 +5130,7 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 7835155397552032863}
   - {fileID: 8402468643347810779}
+  - {fileID: 976219052919833584}
   - {fileID: 6662955104968191014}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
@@ -5222,6 +5223,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cdd02e25b57155459b5bb138f32bfb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlayerName: 
+  _Level: 0
+  _Gold: 0
+  _Diamonds: 0
+  _PlayerID: 0
 --- !u!70 &7081992712123276227
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

@@ -85,6 +85,7 @@ public class PlayerAnimator : NetworkBehaviour
         _anim.SetFloat(IdleSpeedKey, IdleSpeed);
         _anim.SetBool("IsRunning",IsRunning);
         _anim.SetBool("IsIdle", IsIdle);
+        _anim.SetBool("IsLand", IsGrounded);
     }
 
     private void HandleSpriteFlip()
@@ -152,9 +153,10 @@ public class PlayerAnimator : NetworkBehaviour
             IsGrounded = grounded;
         }
 
-        _anim.SetBool("Grounded", IsGrounded);
+       
         if (grounded)
         {
+            Debug.Log("Grounded");
             DetectGroundColor();
             SetColor(_landParticles);
 
@@ -162,7 +164,6 @@ public class PlayerAnimator : NetworkBehaviour
             _source.PlayOneShot(_footsteps[Random.Range(0, _footsteps.Length)]);
             _moveParticles.Play();
             IsJumping = false;
-            _anim.SetBool("IsLand", true);
             _landParticles.transform.localScale = Vector3.one * Mathf.InverseLerp(0, 40, impact);
             _landParticles.Play();
         }

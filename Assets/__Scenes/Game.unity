@@ -57607,17 +57607,17 @@ MonoBehaviour:
     baseProbability: 80
   - pickup: {fileID: 11400000, guid: 3abbc30e4dadaf347a636218ef104eff, type: 2}
     baseProbability: 70
-  - pickup: {fileID: 11400000, guid: b31a58c92117a854a9e436839363a7bd, type: 2}
+  - pickup: {fileID: 11400000, guid: c48a1d1b4bfbc454a98fed2b0e6091e7, type: 2}
     baseProbability: 55
-  - pickup: {fileID: 11400000, guid: 2a91ec87a21f5324281af4b7eaf47929, type: 2}
+  - pickup: {fileID: 11400000, guid: c48a1d1b4bfbc454a98fed2b0e6091e7, type: 2}
     baseProbability: 75
-  - pickup: {fileID: 11400000, guid: 735335f5a178e2d4f969b89ff9fcf0ca, type: 2}
+  - pickup: {fileID: 11400000, guid: 3abbc30e4dadaf347a636218ef104eff, type: 2}
     baseProbability: 75
   - pickup: {fileID: 11400000, guid: cd00618f187be6442b661f34f60f5bfa, type: 2}
     baseProbability: 60
   - pickup: {fileID: 11400000, guid: 7393c06c4698ce04c8b0e4d651d68dc2, type: 2}
     baseProbability: 60
-  - pickup: {fileID: 11400000, guid: a7b3fa8aa3e1a1d4e841bdfba9cfa4e8, type: 2}
+  - pickup: {fileID: 11400000, guid: 0b193f9629279f34fba2b3864049266d, type: 2}
     baseProbability: 60
 --- !u!4 &1887013965
 Transform:
