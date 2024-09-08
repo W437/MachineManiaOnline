@@ -201,15 +201,13 @@ public class PlayerController : MonoBehaviour, IPlayerController
         {
             var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
-            _animator.SetBool("IsRunning", false);
-            _animator.SetBool("IsIdle", true);
+           
         }
         // Accelerate towards the input direction.
         else
         {
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
-            _animator.SetBool("IsRunning", true);
-            _animator.SetBool("IsIdle", false);
+           
 
         }
     }

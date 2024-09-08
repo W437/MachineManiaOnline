@@ -4,11 +4,18 @@ using Fusion;
 /// <summary>
 /// VERY primitive animator example.
 /// </summary>
-public class PlayerAnimator : MonoBehaviour
+public class PlayerAnimator : NetworkBehaviour
 {
     [Header("References")]
     [SerializeField]
     private Animator _anim;
+
+    [Networked] private bool IsJumping { get; set; }
+    [Networked] private float IdleSpeed { get; set; }
+    [Networked] private bool IsGrounded { get; set; }
+    [Networked] private bool IsRunning { get; set; }
+    [Networked] private bool IsIdle { get; set; }
+
 
     [SerializeField] private SpriteRenderer _sprite;
 
@@ -61,24 +68,42 @@ public class PlayerAnimator : MonoBehaviour
 
     private void Update()
     {
-       
         if (_player == null) return;
-        if (!networkObject.HasStateAuthority)
+
+        // Check if we have authority only for input handling; animations should be synced across all clients.
+        if (HasStateAuthority)
         {
-            return;
+            DetectGroundColor();
+            HandleSpriteFlip();
+            HandleIdleSpeed();
+            HandleCharacterTilt();
+            HandleRunAnimation();
         }
-        DetectGroundColor();
 
-        HandleSpriteFlip();
-
-        HandleIdleSpeed();
-
-        HandleCharacterTilt();
+        // Apply the synced states to the animation controller on all clients
+        _anim.SetBool("IsJump", IsJumping);
+        _anim.SetFloat(IdleSpeedKey, IdleSpeed);
+        _anim.SetBool("IsRunning",IsRunning);
+        _anim.SetBool("IsIdle", IsIdle);
     }
 
     private void HandleSpriteFlip()
     {
         if (_player.FrameInput.x != 0) _sprite.flipX = _player.FrameInput.x < 0;
+        
+    }
+    private void HandleRunAnimation()
+    {
+        if (Mathf.Abs(_player.FrameInput.x)>0)
+        {
+            IsRunning = true;
+            IsIdle = false;
+        }
+        else
+        {
+            IsRunning = false;
+            IsIdle = true;
+        }
     }
 
     private void HandleIdleSpeed()
@@ -96,8 +121,13 @@ public class PlayerAnimator : MonoBehaviour
 
     private void OnJumped()
     {
-        Debug.Log("Jumped");
-        _anim.SetBool("IsJump",true);
+        if (HasStateAuthority) // Check if this client has authority
+        {
+            IsJumping = true;
+            IdleSpeed = _player.FrameInput.x;  // Example of syncing IdleSpeed
+        }
+
+        
         _anim.ResetTrigger(GroundedKey);
 
 
@@ -117,7 +147,12 @@ public class PlayerAnimator : MonoBehaviour
     private void OnGroundedChanged(bool grounded, float impact)
     {
         _grounded = grounded;
+        if (HasStateAuthority) // Ensure only the authoritative client sets this
+        {
+            IsGrounded = grounded;
+        }
 
+        _anim.SetBool("Grounded", IsGrounded);
         if (grounded)
         {
             DetectGroundColor();
@@ -126,7 +161,7 @@ public class PlayerAnimator : MonoBehaviour
             _anim.SetTrigger(GroundedKey);
             _source.PlayOneShot(_footsteps[Random.Range(0, _footsteps.Length)]);
             _moveParticles.Play();
-            _anim.SetBool("IsJump", false);
+            IsJumping = false;
             _anim.SetBool("IsLand", true);
             _landParticles.transform.localScale = Vector3.one * Mathf.InverseLerp(0, 40, impact);
             _landParticles.Play();
