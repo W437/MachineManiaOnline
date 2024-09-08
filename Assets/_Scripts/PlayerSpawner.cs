@@ -1,16 +1,15 @@
 using UnityEngine;
 using Fusion;
 using Cinemachine;
-using static Unity.Collections.Unicode;
 
 public class PlayerSpawner : MonoBehaviour
 {
     public NetworkPrefabRef playerPrefab;
     public Vector3 spawnPosition = Vector3.zero;
-    [SerializeField] private CinemachineVirtualCamera _cam;
-    private NetworkRunner _runner;
+    [SerializeField] CinemachineVirtualCamera _cam;
+    NetworkRunner _runner;
 
-    private async void Start()
+    async void Start()
     {
         _runner = FindObjectOfType<NetworkRunner>();
 
@@ -32,7 +31,7 @@ public class PlayerSpawner : MonoBehaviour
         SpawnPlayer();
     }
 
-    private void SpawnPlayer()
+    void SpawnPlayer()
     {
         if (_runner != null && playerPrefab != null)
         {
@@ -46,7 +45,7 @@ public class PlayerSpawner : MonoBehaviour
         }
     }
 
-    private void AttachCamera(GameObject player)
+    void AttachCamera(GameObject player)
     {
         var cameraInstance = Instantiate(_cam);
         cameraInstance.Follow = player.transform;

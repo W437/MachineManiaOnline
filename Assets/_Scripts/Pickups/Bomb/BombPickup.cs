@@ -8,7 +8,7 @@ public class BombPickup : Pickup
     {
         NetworkRunner runner = player.GetComponent<NetworkObject>().Runner;
 
-        Vector3 spawnPosition = player.transform.position + Vector3.forward * 2; // Adjust spawn position
+        Vector3 spawnPosition = player.transform.position;
         NetworkObject bombInstance = runner.Spawn(PickupPrefab, spawnPosition, Quaternion.identity);
         BombBehavior bomb = bombInstance.GetComponent<BombBehavior>();
 

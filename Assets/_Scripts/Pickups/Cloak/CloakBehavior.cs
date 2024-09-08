@@ -4,8 +4,8 @@ using UnityEngine;
 public class CloakBehavior : NetworkBehaviour
 {
     public float cloakDuration = 10f;
-    private PlayerController player;
-    private NetworkObject networkObject;
+    PlayerController player;
+    NetworkObject networkObject;
 
     public void Initialize()
     {
@@ -29,7 +29,7 @@ public class CloakBehavior : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_ActivateCloak(NetworkObject networkObject)
+    void RPC_ActivateCloak(NetworkObject networkObject)
     {
         Debug.Log("Cloaking");
 
@@ -52,12 +52,12 @@ public class CloakBehavior : NetworkBehaviour
         if (networkObject.HasInputAuthority)
         {
             Debug.Log("Has Input");
-            //This is the local player, set their opacity to 0.5
+            // local player
             SetSpriteOpacity(0.5f);
         }
         else
         {
-            //For all other players, set the opacity to 0(invisible)
+            //all other players
             SetSpriteOpacity(0f);
         }
 
@@ -68,7 +68,7 @@ public class CloakBehavior : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RPC_DeactivateCloak(NetworkObject network)
+    void RPC_DeactivateCloak(NetworkObject network)
     {
         var playerObject = Runner.GetPlayerObject(network.InputAuthority);
         if (playerObject == null)
@@ -84,12 +84,10 @@ public class CloakBehavior : NetworkBehaviour
             return;
         }
 
-
-        // Restore full visibility to all players
         SetSpriteOpacity(1f);
     }
 
-    private void SetSpriteOpacity(float opacity)
+    void SetSpriteOpacity(float opacity)
     {
         Debug.Log(player);
         foreach (var spriteRender in player.PlayerParts)
@@ -102,7 +100,5 @@ public class CloakBehavior : NetworkBehaviour
                 Debug.Log($"Opacity set to: {color.a}");
             }
         }
-       
-       
     }
 }

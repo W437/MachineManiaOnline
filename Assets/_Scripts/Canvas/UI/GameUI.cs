@@ -29,9 +29,9 @@ public class GameUI : MonoBehaviour
     [SerializeField] Button slotButton;
     [SerializeField] Image slotSprite;
 
-    private ButtonHandler buttonHandler;
+    ButtonHandler buttonHandler;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -44,7 +44,7 @@ public class GameUI : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
 
@@ -81,14 +81,14 @@ public class GameUI : MonoBehaviour
         slotSprite.gameObject.SetActive(false);
     }
 
-    private void OnLeaveMatchButtonClicked(Button button)
+    void OnLeaveMatchButtonClicked(Button button)
     {
         leaveMatchPanel.SetActive(true);
         leaveMatchPanel.transform.localScale = Vector3.zero;
         LeanTween.scale(leaveMatchPanel, Vector3.one, 0.3f).setEase(LeanTweenType.easeOutBack);
     }
 
-    private void OnStayButtonClicked(Button button)
+    void OnStayButtonClicked(Button button)
     {
         LeanTween.scale(leaveMatchPanel, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInBack).setOnComplete(() =>
         {
@@ -96,10 +96,13 @@ public class GameUI : MonoBehaviour
         });
     }
 
-    private void OnLeaveButtonClicked(Button button)
+    void OnLeaveButtonClicked(Button button)
     {
         FusionLauncher.Instance.Runner().Shutdown();
-        UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScene");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Main Menu");
+        AudioManager.Instance.PlayRandomMusic();
+        GameLauncher.Instance.StartInitialGameSession();
+        Destroy(gameObject);
     }
 
     public void DisplayCountdown(int seconds)
@@ -112,13 +115,13 @@ public class GameUI : MonoBehaviour
         }
     }
 
-    private IEnumerator HideCountdownCoroutine()
+    IEnumerator HideCountdownCoroutine()
     {
         yield return new WaitForSeconds(1f);
         countdownText.gameObject.SetActive(false);
     }
 
-    private IEnumerator CountdownCoroutine(int seconds)
+    IEnumerator CountdownCoroutine(int seconds)
     {
         while (seconds > 0)
         {
@@ -146,7 +149,7 @@ public class GameUI : MonoBehaviour
         raceTimerText.text = FormatTime(elapsedTime);
     }
 
-    private IEnumerator RaceTimerCoroutine()
+    IEnumerator RaceTimerCoroutine()
     {
         float startTime = Time.time;
         while (true)
@@ -163,7 +166,7 @@ public class GameUI : MonoBehaviour
         postRaceTimerText.text = "Next Race in: " + Mathf.CeilToInt(timeLeft).ToString();
     }
 
-    private string FormatTime(float time)
+    string FormatTime(float time)
     {
         int minutes = Mathf.FloorToInt(time / 60F);
         int seconds = Mathf.FloorToInt(time - minutes * 60);

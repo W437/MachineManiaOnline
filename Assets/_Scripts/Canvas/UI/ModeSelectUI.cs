@@ -6,12 +6,12 @@ using UnityEngine.UI;
 public class ModeSelectUI : MonoBehaviour
 {
     public static ModeSelectUI Instance;
-    [SerializeField] private TextMeshProUGUI modeText;
-    [SerializeField] private TextMeshProUGUI modeInfoText;
+    [SerializeField] TextMeshProUGUI modeText;
+    [SerializeField] TextMeshProUGUI modeInfoText;
 
-    private GameMode currentMode;
+    GameMode currentMode;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -24,7 +24,7 @@ public class ModeSelectUI : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
         UpdateModeText();
     }
@@ -34,19 +34,6 @@ public class ModeSelectUI : MonoBehaviour
         CycleMode();
         UpdateModeText();
         SetGameMode(currentMode);
-    }
-
-    private void CycleMode()
-    {
-        int nextIndex = (System.Array.IndexOf(gameModes, currentMode) + 1) % gameModes.Length;
-        currentMode = gameModes[nextIndex];
-    }
-
-    public enum GameMode
-    {
-        FFA,    // Free For All
-        TVT,    // Team vs Team
-        Custom  // PvP or custom setting
     }
 
     public GameMode CurrentGameMode { get; private set; }
@@ -62,13 +49,24 @@ public class ModeSelectUI : MonoBehaviour
     {
         CurrentGameMode = mode;
     }
-
+    
+    public enum GameMode
+    {
+        FFA,    // Free For All
+        TVT,    // Team vs Team
+        Custom  // PvP or custom setting
+    }
     public GameMode GetGameMode()
     {
         return currentMode;
     }
 
-    private void UpdateModeText()
+    void CycleMode()
+    {
+        int nextIndex = (System.Array.IndexOf(gameModes, currentMode) + 1) % gameModes.Length;
+        currentMode = gameModes[nextIndex];
+    }
+    void UpdateModeText()
     {
         switch (currentMode)
         {

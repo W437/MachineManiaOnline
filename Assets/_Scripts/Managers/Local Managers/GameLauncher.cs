@@ -6,12 +6,12 @@ using Fusion;
 public class GameLauncher : MonoBehaviour
 {
     public static GameLauncher Instance;
-    [SerializeField] private GameObject LauncherPrefab;
+    [SerializeField] GameObject LauncherPrefab;
     FusionLauncher launcher;
 
     public static bool LoadingScreenActive { get; set; }
 
-    private void Awake()
+    void Awake()
     {
         Application.targetFrameRate = 60;
         LeanTween.init(2000);
@@ -28,23 +28,27 @@ public class GameLauncher : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
-        StartGameSession();
+        StartInitialGameSession();
+    }
+    
+    public void Launch(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
+    {
+        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart, sessionType, maxPlayers));
+    }
+    public string GenerateUniqueSessionName()
+    {
+        return System.Guid.NewGuid().ToString();
     }
 
-    private void StartGameSession()
+    public void StartInitialGameSession()
     {
         // Start a private session for the player's home lobby
         Launch(GenerateUniqueSessionName(), true, SessionType.Private, 4);
     }
 
-    public void Launch(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
-    {
-        StartCoroutine(LaunchCoroutine(sessionName, isInitialStart, sessionType, maxPlayers));
-    }
-
-    private IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
+    IEnumerator LaunchCoroutine(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
         if (launcher != null)
         {
@@ -65,10 +69,6 @@ public class GameLauncher : MonoBehaviour
             HomeUI.Instance.SetSessionNameUI(sessionName);
     }
 
-    public string GenerateUniqueSessionName()
-    {
-        return System.Guid.NewGuid().ToString();
-    }
 }
 
 public enum SessionType

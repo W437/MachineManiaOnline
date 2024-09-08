@@ -13,7 +13,7 @@ public class PickupManager : MonoBehaviour
     public PickupProbability[] allPickupProbabilities;
     public static PickupManager Instance;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -55,7 +55,7 @@ public class PickupManager : MonoBehaviour
         return null;
     }
 
-    private float AdjustProbabilityBasedOnRank(float baseProbability, string pickupName, int playerRank, int totalPlayers)
+    float AdjustProbabilityBasedOnRank(float baseProbability, string pickupName, int playerRank, int totalPlayers)
     {
         float rankFactor = 1f;
 
@@ -74,5 +74,4 @@ public class PickupManager : MonoBehaviour
         }
         return baseProbability * rankFactor;
     }
-
 }

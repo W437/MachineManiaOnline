@@ -8,25 +8,23 @@ using UnityEngine.UI;
 public class ButtonHandler : MonoBehaviour
 {
     // button-related
-    private Dictionary<Button, float> originalYPositions = new Dictionary<Button, float>();
-    private Dictionary<Button, ButtonConfig> buttonConfigs = new Dictionary<Button, ButtonConfig>();
-    private Dictionary<Button, Action<Button>> buttonCallbacks = new Dictionary<Button, Action<Button>>();
-    private Dictionary<Button, bool> buttonToggledStates = new Dictionary<Button, bool>();
-    private Dictionary<Button, Vector2> initialPressPositions = new Dictionary<Button, Vector2>();
-    private Dictionary<Button, Vector3> parentOriginalPositions = new Dictionary<Button, Vector3>();
-    private Dictionary<Button, bool> withinThreshold = new Dictionary<Button, bool>();
-    private Dictionary<Button, bool> buttonCooldowns = new Dictionary<Button, bool>();
+    Dictionary<Button, float> originalYPositions = new Dictionary<Button, float>();
+    Dictionary<Button, ButtonConfig> buttonConfigs = new Dictionary<Button, ButtonConfig>();
+    Dictionary<Button, Action<Button>> buttonCallbacks = new Dictionary<Button, Action<Button>>();
+    Dictionary<Button, bool> buttonToggledStates = new Dictionary<Button, bool>();
+    Dictionary<Button, Vector2> initialPressPositions = new Dictionary<Button, Vector2>();
+    Dictionary<Button, Vector3> parentOriginalPositions = new Dictionary<Button, Vector3>();
+    Dictionary<Button, bool> withinThreshold = new Dictionary<Button, bool>();
+    Dictionary<Button, bool> buttonCooldowns = new Dictionary<Button, bool>();
 
     // Switch-related
-    private Dictionary<Button, bool> switchStates = new Dictionary<Button, bool>();
-    private Dictionary<Button, SwitchConfig> switchConfigs = new Dictionary<Button, SwitchConfig>();
-    private Dictionary<Button, RectTransform> toggleRects = new Dictionary<Button, RectTransform>();
-    private Dictionary<Button, bool> switchCooldowns = new Dictionary<Button, bool>();
-
-    private Dictionary<Slider, Vector3> originalHandleScales = new Dictionary<Slider, Vector3>();
-
-    private Vector3 _originalScale;
-    private Vector3 _originalRotation;
+    Dictionary<Button, bool> switchStates = new Dictionary<Button, bool>();
+    Dictionary<Button, SwitchConfig> switchConfigs = new Dictionary<Button, SwitchConfig>();
+    Dictionary<Button, RectTransform> toggleRects = new Dictionary<Button, RectTransform>();
+    Dictionary<Button, bool> switchCooldowns = new Dictionary<Button, bool>();
+    Dictionary<Slider, Vector3> originalHandleScales = new Dictionary<Slider, Vector3>();
+    Vector3 _originalScale;
+    Vector3 _originalRotation;
 
     public void AddButtonEventTrigger(Button button, Action<Button> onButtonReleased, ButtonConfig config = null)
     {
@@ -70,8 +68,49 @@ public class ButtonHandler : MonoBehaviour
 
         SetTogglePosition(switchButton, false);
     }
+    public void AddSliderEventTrigger(Slider slider, float growFactor = 1.5f, float animationTime = 0.1f)
+    {
+        EventTrigger trigger = slider.handleRect.gameObject.GetComponent<EventTrigger>();
+        if (trigger == null)
+        {
+            trigger = slider.handleRect.gameObject.AddComponent<EventTrigger>();
+        }
 
-    private void OnButtonPressed(Button button, Transform buttonTransform, PointerEventData eventData)
+        EventTrigger.Entry pointerDownEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+        pointerDownEntry.callback.AddListener((eventData) => { OnSliderHandlePressed(slider, growFactor, animationTime); });
+        trigger.triggers.Add(pointerDownEntry);
+
+        EventTrigger.Entry dragEntry = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
+        dragEntry.callback.AddListener((eventData) => { OnSliderHandleDragged(slider, eventData as PointerEventData); });
+        trigger.triggers.Add(dragEntry);
+
+        EventTrigger.Entry pointerUpEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
+        pointerUpEntry.callback.AddListener((eventData) => { OnSliderHandleReleased(slider, animationTime); });
+        trigger.triggers.Add(pointerUpEntry);
+
+        originalHandleScales[slider] = slider.handleRect.localScale;
+    }
+    public void ResetButtonToggleState(Button button)
+    {
+        if (buttonToggledStates.ContainsKey(button) && buttonToggledStates[button])
+        {
+            var config = buttonConfigs[button];
+
+            LeanTween.moveLocal(button.transform.parent.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+
+            if (config.CustomAnimation)
+            {
+                LeanTween.scale(button.transform.parent.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+                LeanTween.rotate(button.transform.parent.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
+            }
+
+            buttonToggledStates[button] = false;
+        }
+    }
+
+    void OnButtonPressed(Button button, Transform buttonTransform, PointerEventData eventData)
     {
         var config = buttonConfigs[button];
 
@@ -130,7 +169,7 @@ public class ButtonHandler : MonoBehaviour
         }
     }
 
-    private void AnimateButtonPress(Button button)
+    void AnimateButtonPress(Button button)
     {
         LeanTween.cancel(button.gameObject); // Ensure no overlapping animations
         LeanTween.scale(button.gameObject, _originalScale * 1.1f, 0.1f).setEase(LeanTweenType.easeOutExpo).setOnComplete(() =>
@@ -139,7 +178,7 @@ public class ButtonHandler : MonoBehaviour
         });
     }
 
-    private void OnButtonDragged(Button button, Transform buttonTransform, PointerEventData eventData)
+    void OnButtonDragged(Button button, Transform buttonTransform, PointerEventData eventData)
     {
         if (buttonCooldowns[button]) return;
         var config = buttonConfigs[button];
@@ -188,7 +227,7 @@ public class ButtonHandler : MonoBehaviour
         }
     }
 
-    private void ApplyCustomAnimation(Button button, Transform parentTransform, Vector2 normalizedPoint, float animationTime)
+    void ApplyCustomAnimation(Button button, Transform parentTransform, Vector2 normalizedPoint, float animationTime)
     {
         float rotationDirection = normalizedPoint.x >= 0 ? 1 : -1;
         float randomRotation = rotationDirection * UnityEngine.Random.Range(2f, 5f);
@@ -196,7 +235,7 @@ public class ButtonHandler : MonoBehaviour
         LeanTween.rotateZ(parentTransform.gameObject, randomRotation, animationTime).setEase(LeanTweenType.easeInExpo);
     }
 
-    private void OnButtonReleased(Button button, Transform buttonTransform, PointerEventData eventData)
+    void OnButtonReleased(Button button, Transform buttonTransform, PointerEventData eventData)
     {
         var config = buttonConfigs[button];
 
@@ -267,41 +306,8 @@ public class ButtonHandler : MonoBehaviour
         }
     }
 
-    private IEnumerator InvokeCallbackAfterDelay(Button button, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        buttonCallbacks[button]?.Invoke(button);
-    }
-
-    public void ResetButtonToggleState(Button button)
-    {
-        if (buttonToggledStates.ContainsKey(button) && buttonToggledStates[button])
-        {
-            var config = buttonConfigs[button];
-
-            LeanTween.moveLocal(button.transform.parent.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-
-            if (config.CustomAnimation)
-            {
-                LeanTween.scale(button.transform.parent.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.rotate(button.transform.parent.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            }
-
-            buttonToggledStates[button] = false;
-        }
-    }
-
-    private IEnumerator ButtonCooldown(Button button)
-    {
-        buttonCooldowns[button] = true;
-        yield return new WaitForSeconds(.533f);
-        buttonCooldowns[button] = false;
-    }
-
     // for handling switch buttons
-    private void OnSwitchClicked(Button switchButton)
+    void OnSwitchClicked(Button switchButton)
     {
         if (switchCooldowns[switchButton]) return;
 
@@ -312,14 +318,7 @@ public class ButtonHandler : MonoBehaviour
         SetTogglePosition(switchButton, switchStates[switchButton]);
     }
 
-    private IEnumerator SwitchCooldown(Button switchButton)
-    {
-        switchCooldowns[switchButton] = true;
-        yield return new WaitForSeconds(0.5f);
-        switchCooldowns[switchButton] = false;
-    }
-
-    private void SetTogglePosition(Button switchButton, bool isOn)
+    void SetTogglePosition(Button switchButton, bool isOn)
     {
         RectTransform toggleRect = toggleRects[switchButton];
         RectTransform containerRect = toggleRect.parent.GetComponent<RectTransform>();
@@ -377,43 +376,40 @@ public class ButtonHandler : MonoBehaviour
         }
     }
 
-    public void AddSliderEventTrigger(Slider slider, float growFactor = 1.5f, float animationTime = 0.1f)
-    {
-        EventTrigger trigger = slider.handleRect.gameObject.GetComponent<EventTrigger>();
-        if (trigger == null)
-        {
-            trigger = slider.handleRect.gameObject.AddComponent<EventTrigger>();
-        }
-
-        EventTrigger.Entry pointerDownEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
-        pointerDownEntry.callback.AddListener((eventData) => { OnSliderHandlePressed(slider, growFactor, animationTime); });
-        trigger.triggers.Add(pointerDownEntry);
-
-        EventTrigger.Entry dragEntry = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
-        dragEntry.callback.AddListener((eventData) => { OnSliderHandleDragged(slider, eventData as PointerEventData); });
-        trigger.triggers.Add(dragEntry);
-
-        EventTrigger.Entry pointerUpEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
-        pointerUpEntry.callback.AddListener((eventData) => { OnSliderHandleReleased(slider, animationTime); });
-        trigger.triggers.Add(pointerUpEntry);
-
-        originalHandleScales[slider] = slider.handleRect.localScale;
-    }
-
-    private void OnSliderHandlePressed(Slider slider, float growFactor, float animationTime)
+    void OnSliderHandlePressed(Slider slider, float growFactor, float animationTime)
     {
         LeanTween.scale(slider.handleRect.gameObject, originalHandleScales[slider] * growFactor, animationTime).setEase(LeanTweenType.easeOutExpo);
     }
 
-    private void OnSliderHandleDragged(Slider slider, PointerEventData eventData)
+    void OnSliderHandleDragged(Slider slider, PointerEventData eventData)
     {
         // Allow the slider to be dragged normally
         slider.OnDrag(eventData);
     }
 
-    private void OnSliderHandleReleased(Slider slider, float animationTime)
+    void OnSliderHandleReleased(Slider slider, float animationTime)
     {
         LeanTween.scale(slider.handleRect.gameObject, originalHandleScales[slider], animationTime).setEase(LeanTweenType.easeOutExpo);
+    }
+    
+    IEnumerator SwitchCooldown(Button switchButton)
+    {
+        switchCooldowns[switchButton] = true;
+        yield return new WaitForSeconds(0.5f);
+        switchCooldowns[switchButton] = false;
+    }
+    
+    IEnumerator InvokeCallbackAfterDelay(Button button, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        buttonCallbacks[button]?.Invoke(button);
+    }
+    
+    IEnumerator ButtonCooldown(Button button)
+    {
+        buttonCooldowns[button] = true;
+        yield return new WaitForSeconds(.533f);
+        buttonCooldowns[button] = false;
     }
 }
 
@@ -434,7 +430,7 @@ public class ButtonConfig
     public bool ActivateOnPress { get; set; } // Determines if the action should occur on press
     public bool CooldownEnabled { get; set; } // Enable or disable cooldown
 
-
+    // kONSTRUCTOR
     public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0.133f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
     {
         YOffset = yOffset;
@@ -458,7 +454,6 @@ public class SwitchConfig
 {
     public float AnimationTime { get; set; }
     public Color OffColor { get; set; }
-
     public SwitchConfig(float animationTime = 0.2f)
     {
         AnimationTime = animationTime;

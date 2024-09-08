@@ -8,22 +8,22 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static GameManager Instance { get; private set; }
-    [Networked] private float countdownTime { get; set; }
-    [Networked] private float elapsedTime { get; set; } 
-    [Networked] private float postRaceTime { get; set; } 
+    [Networked] float countdownTime { get; set; }
+    [Networked] float elapsedTime { get; set; } 
+    [Networked] float postRaceTime { get; set; } 
 
-    [Networked] private int gameState { get; set; }
+    [Networked] int gameState { get; set; } // 0: Waiting, 1: Countdown, 2: Racing, 3: Finished
     [Networked, Capacity(6)] public NetworkLinkedList<PlayerRef> players => default;
 
     public List<Transform> playerStartPositions = new List<Transform>();
     public Transform finishLine;
 
-    private Dictionary<PlayerRef, PlayerController> playerControllers = new Dictionary<PlayerRef, PlayerController>();
+    Dictionary<PlayerRef, PlayerController> playerControllers = new Dictionary<PlayerRef, PlayerController>();
 
     public float raceDuration;
-    private bool isRaceStarted = false;
+    bool isRaceStarted = false;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -38,13 +38,21 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void Spawned()
     {
-        //Debug.Log($"Spawned {this}");
         InitializeGame();
-
+        LoadLevel();
+        AudioManager.Instance.PlaySpecificSoundtrack(AudioManager.Instance.yaketySax);
+        AudioManager.Instance.SetCutoffFrequency(5500, 1.5f);
+//
         // Spawn the player prefab
-        NetworkObject playerObject = Runner.Spawn(FusionLauncher.Instance.GetPlayerNetPrefab());
-        var cameraPrefab = Instantiate(FusionLauncher.Instance.GetCameraPrefab());
+        Vector3 playerPos = new Vector3(-4.06118011f, 43.3153305f, 3);
+        NetworkObject playerObject = Runner.Spawn(FusionLauncher.Instance.GetPlayerNetPrefab(), playerPos, Quaternion.identity, Runner.LocalPlayer);
 
+
+        if (playerObject != null)
+            Runner.SetPlayerObject(Runner.LocalPlayer, playerObject);
+
+        // assign kamm
+        var cameraPrefab = Instantiate(FusionLauncher.Instance.GetCameraPrefab());
         var virtualCam = cameraPrefab.GetComponent<CinemachineVirtualCamera>();
         virtualCam.Follow = playerObject.transform;
     }
@@ -57,29 +65,6 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void HandleGameFlow()
-    {
-        switch (gameState)
-        {
-            case 1: // Countdown state
-                UpdateCountdown();
-            break;
-
-            case 2: // Racing state
-                if (!isRaceStarted)
-                {
-                    isRaceStarted = true;
-                    elapsedTime = 0f;
-                }
-                UpdateRaceTimer();
-            break;
-
-            case 3: // Finished state
-                UpdatePostRaceTimer();
-            break;
-        }
-    }
-
     public void InitializeGame()
     {
         gameState = 0;
@@ -87,86 +72,20 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         GameUI.Instance.raceTimerText.text = "0:00:00";
     }
 
-    private void UpdateCountdown()
-    {
-        countdownTime -= Time.deltaTime;
-        RpcGameCountdown(countdownTime);
-
-        if (countdownTime <= 0f)
-        {
-            StartRace();
-        }
-    }
-
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcGameCountdown(float timeLeft)
-    {
-        GameUI.Instance.DisplayCountdown(Mathf.CeilToInt(timeLeft));
-    }
-
-    private void StartRace()
-    {
-        gameState = 2;
-        RpcStartRace();
-    }
-
-    private void UpdateRaceTimer()
-    {
-        elapsedTime += Time.deltaTime;
-        RpcUpdateRaceTimer(elapsedTime);
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcUpdateRaceTimer(float elapsedTime)
-    {
-        GameUI.Instance.UpdateRaceTimer(elapsedTime);
-    }
-
-    private void UpdatePostRaceTimer()
-    {
-        postRaceTime -= Time.deltaTime;
-        RpcUpdatePostRaceTimer(postRaceTime);
-
-        if (postRaceTime <= 0f)
-        {
-            // Handle post-race logic here
-        }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcUpdatePostRaceTimer(float timeLeft)
-    {
-        GameUI.Instance.DisplayPostRaceCountdown(timeLeft);
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcStartRace()
-    {
-        GameUI.Instance.HideCountdown(); 
-        GameUI.Instance.StartRaceTimer();
-    }
-
     public void PlayerFinished(PlayerRef player)
     {
         if (!playerControllers.ContainsKey(player)) return;
 
         playerControllers[player].FinishTime = elapsedTime;
-        RpcPlayerFinished(playerControllers[player].FinishTime);
+        RpcPlayerFinished(player, playerControllers[player].FinishTime);
 
         if (playerControllers.Count == players.Count)
         {
-            postRaceTime = 25f; // 25-second post-race countdown
             gameState = 3;
+            postRaceTime = 25f;
         }
     }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcPlayerFinished(float finishTime)
-    {
-        // Update finish time UI for all players
-    }
-
+    
     public void EndGame(Dictionary<PlayerRef, float> playerFinishTimes)
     {
         gameState = 0;
@@ -185,9 +104,169 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         RpcEndGame(playerRefs, finishTimes);
     }
 
+    void StartRace()
+    {
+        gameState = 2;
+        RpcStartRace();
+    }
+
+    void UpdateRaceTimer()
+    {
+        elapsedTime += Time.deltaTime;
+        RpcUpdateRaceTimer(elapsedTime);
+    }
+
+    void LoadLevel()
+    {
+        // Load the level prefab from Resources/Levels
+        string levelName = "Level1"; // Replace with logic to choose different levels
+        var levelPrefab = Resources.Load<GameObject>($"Levels/{levelName}");
+        if (levelPrefab != null)
+        {
+            Instantiate(levelPrefab);
+            // Find Start and Finish lines within the level
+            Transform startLine = GameObject.Find("StartLine").transform;
+            finishLine = GameObject.Find("FinishLine").transform;
+
+            // Populate the playerStartPositions list
+            for (int i = 0; i < 6; i++)
+            {
+                Vector3 startPos = startLine.position - new Vector3(i * 2.0f, 0, 0); // Players spaced behind each other
+                var tempPos = new GameObject($"PlayerStartPos{i}").transform;
+                tempPos.position = startPos;
+                playerStartPositions.Add(tempPos);
+            }
+        }
+    }
+
+    void HandleGameFlow()
+    {
+        switch (gameState)
+        {
+            case 0: // Waiting for players
+                if (players.Count == Runner.SessionInfo.MaxPlayers)
+                {
+                    ShowWaitingScreen();
+                    PositionPlayers();
+                    StartCountdown();
+                }
+                break;
+            case 1: // Countdown state
+                UpdateCountdown();
+                break;
+
+            case 2: // Racing state
+                if (!isRaceStarted)
+                {
+                    isRaceStarted = true;
+                    elapsedTime = 0f;
+                }
+                UpdateRaceTimer();
+                break;
+
+            case 3: // Finished state
+                UpdatePostRaceTimer();
+                break;
+        }
+    }
+
+    void ShowWaitingScreen()
+    {
+        GameUI.Instance.DisplayCountdown(3); // Display "Waiting for Players" message
+        // Disable player objects (hide them) until countdown finishes
+        foreach (var playerController in playerControllers.Values)
+        {
+            playerController.gameObject.SetActive(false);
+        }
+    }
+
+    void PositionPlayers()
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerRef player = players[i];
+            if (playerControllers.TryGetValue(player, out PlayerController controller))
+            {
+                controller.transform.position = playerStartPositions[i].position;
+                controller.transform.rotation = playerStartPositions[i].rotation;
+            }
+        }
+    }
+
+    void StartCountdown()
+    {
+        gameState = 1;
+        countdownTime = 3f;
+    }
+
+    void UpdateCountdown()
+    {
+        countdownTime -= Time.deltaTime;
+        RpcGameCountdown(countdownTime);
+
+        if (countdownTime <= 0f)
+        {
+            StartRace();
+        }
+    }
+    
+    void UpdatePostRaceTimer()
+    {
+        postRaceTime -= Time.deltaTime;
+        RpcUpdatePostRaceTimer(postRaceTime);
+
+        if (postRaceTime <= 0f)
+        {
+            // Handle post-race logic here
+        }
+    }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcEndGame(PlayerRef[] playerRefs, float[] finishTimes)
+    void RpcGameCountdown(float timeLeft)
+    {
+        GameUI.Instance.DisplayCountdown(Mathf.CeilToInt(timeLeft));
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcPlayerFinished(PlayerRef player, float finishTime)
+    {
+        GameUI.Instance.DisplayEndGameStats(new Dictionary<PlayerRef, float> { { player, finishTime } });
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcUpdateRaceTimer(float elapsedTime)
+    {
+        GameUI.Instance.UpdateRaceTimer(elapsedTime);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcUpdatePostRaceTimer(float timeLeft)
+    {
+        GameUI.Instance.DisplayPostRaceCountdown(timeLeft);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcStartRace()
+    {
+        GameUI.Instance.HideCountdown();
+        GameUI.Instance.StartRaceTimer();
+
+        // Enable player objects and allow them to move
+        foreach (var playerController in playerControllers.Values)
+        {
+            playerController.gameObject.SetActive(true);
+            playerController.CanMove = true; // Allow players to move
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcPlayerFinished(float finishTime)
+    {
+        // Update finish time UI for all players
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcEndGame(PlayerRef[] playerRefs, float[] finishTimes)
     {
         var playerFinishTimes = new Dictionary<PlayerRef, float>();
         for (int i = 0; i < playerRefs.Length; i++)
@@ -198,7 +277,30 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         GameUI.Instance.DisplayEndGameStats(playerFinishTimes);
     }
 
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        if (HasStateAuthority)
+        {
+            players.Add(player);
 
+            int playerIndex = players.IndexOf(player);
+        }
+    }
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        if (playerControllers.ContainsKey(player))
+        {
+            playerControllers.Remove(player);
+        }
+    }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        //Destroy(runner);
+        Destroy(this);
+    }
+
+    #region unused callbacks
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
         throw new NotImplementedException();
@@ -209,51 +311,12 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
         throw new NotImplementedException();
     }
 
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
-    {
-        Debug.Log($"Player joined: {player}");
-
-        // Determine the player's start position
-        int playerIndex = players.IndexOf(player);
-        Vector3 startPosition = playerIndex >= 0 && playerIndex < playerStartPositions.Count
-            ? playerStartPositions[playerIndex].position
-            : Vector3.zero; // Default position if not defined
-
-        // Spawn the player prefab
-        NetworkObject playerObject = runner.Spawn(
-            FusionLauncher.Instance.GetPlayerNetPrefab(),
-            startPosition,
-            Quaternion.identity,
-            player
-        );
-
-        // Initialize player controller
-        PlayerController controller = playerObject.GetComponent<PlayerController>();
-        if (controller != null)
-        {
-            playerControllers[player] = controller;
-        }
-
-        Debug.Log($"Spawned player {player} at position {startPosition}");
-    }
-
-
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
-    {
-        throw new NotImplementedException();
-    }
-
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         throw new NotImplementedException();
     }
 
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
         throw new NotImplementedException();
     }
@@ -317,4 +380,5 @@ public class GameManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         throw new NotImplementedException();
     }
+    #endregion
 }

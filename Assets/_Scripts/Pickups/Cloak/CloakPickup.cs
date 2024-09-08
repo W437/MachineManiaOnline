@@ -4,6 +4,8 @@ using Fusion;
 [CreateAssetMenu(fileName = "NewCloakPickup", menuName = "Pickup/Cloak")]
 public class CloakPickup : Pickup
 {
+    float spawnOffsetX = 0f;
+
     public override void Use(PlayerController player)
     {
         if (player != null)

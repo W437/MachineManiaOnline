@@ -7,15 +7,15 @@ using UnityEngine.UI;
 
 public class LobbyHubUI : MonoBehaviour
 {
-    [SerializeField] private GameObject messagePrefab;
-    [SerializeField] private GameObject emojiPrefab;
-    [SerializeField] private GameObject categoryPrefab;
-    [SerializeField] private Transform messageListParent;
-    [SerializeField] private Transform emojiListParent;
-    [SerializeField] private ScrollRect messageScrollRect;
-    [SerializeField] private ScrollRect emojiScrollRect;
+    [SerializeField] GameObject messagePrefab;
+    [SerializeField] GameObject emojiPrefab;
+    [SerializeField] GameObject categoryPrefab;
+    [SerializeField] Transform messageListParent;
+    [SerializeField] Transform emojiListParent;
+    [SerializeField] ScrollRect messageScrollRect;
+    [SerializeField] ScrollRect emojiScrollRect;
 
-    private Dictionary<string, List<string>> categorizedMessages = new Dictionary<string, List<string>>()
+    Dictionary<string, List<string>> categorizedMessages = new Dictionary<string, List<string>>()
     {
         {
             "Friendly", new List<string> 
@@ -60,8 +60,8 @@ public class LobbyHubUI : MonoBehaviour
         }
     };
 
-    private List<string> emojis = new List<string>
-{
+    List<string> emojis = new List<string>
+    {
     "<size=80><sprite name=\"ManiaMojis 1_0\">",
     "<size=80><sprite name=\"ManiaMojis 1_1\">",
     "<sprite name=\"ManiaMojis 1_2\">",
@@ -140,54 +140,13 @@ public class LobbyHubUI : MonoBehaviour
     "<size=80><sprite name=\"ManiaMojis 1_75\">"
     };
 
-
-    private void UpdateSpriteSizes()
-    {
-        foreach (var category in categorizedMessages.Keys.ToList())
-        {
-            for (int i = 0; i < categorizedMessages[category].Count; i++)
-            {
-                categorizedMessages[category][i] = InsertSizeTag(categorizedMessages[category][i]);
-            }
-        }
-    }
-
-    private string InsertSizeTag(string message)
-    {
-        return System.Text.RegularExpressions.Regex.Replace(
-            message,
-            @"<sprite",
-            "<size=36><sprite"
-        );
-    }
-
-    private void Start()
+    void Start()
     {
         UpdateSpriteSizes();
         PopulateMessages();
         PopulateEmojis();
     }
-
-    private void PopulateMessages()
-    {
-        foreach (var category in categorizedMessages)
-        {
-            AddCategory(category.Key);
-            foreach (var msg in category.Value)
-            {
-                AddMessage(msg);
-            }
-        }
-    }
-
-    private void PopulateEmojis()
-    {
-        foreach (var emoji in emojis)
-        {
-            AddEmoji(emoji);
-        }
-    }
-
+    
     public void AddCategory(string category)
     {
         GameObject newCategory = Instantiate(categoryPrefab, messageListParent);
@@ -230,7 +189,47 @@ public class LobbyHubUI : MonoBehaviour
         return System.Text.RegularExpressions.Regex.Replace(input, pattern, string.Empty);
     }
 
-    private void UpdateGridContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
+    void PopulateMessages()
+    {
+        foreach (var category in categorizedMessages)
+        {
+            AddCategory(category.Key);
+            foreach (var msg in category.Value)
+            {
+                AddMessage(msg);
+            }
+        }
+    }
+
+    void PopulateEmojis()
+    {
+        foreach (var emoji in emojis)
+        {
+            AddEmoji(emoji);
+        }
+    }
+
+    void UpdateSpriteSizes()
+    {
+        foreach (var category in categorizedMessages.Keys.ToList())
+        {
+            for (int i = 0; i < categorizedMessages[category].Count; i++)
+            {
+                categorizedMessages[category][i] = InsertSizeTag(categorizedMessages[category][i]);
+            }
+        }
+    }
+
+    string InsertSizeTag(string message)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            message,
+            @"<sprite",
+            "<size=36><sprite"
+        );
+    }
+
+    void UpdateGridContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
     {
         RectTransform contentRectTransform = listParent.GetComponent<RectTransform>();
         GridLayoutGroup gridLayoutGroup = listParent.GetComponent<GridLayoutGroup>();
@@ -253,7 +252,7 @@ public class LobbyHubUI : MonoBehaviour
         Canvas.ForceUpdateCanvases();
     }
 
-    private void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
+    void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
     {
         RectTransform contentRectTransform = listParent.GetComponent<RectTransform>();
         float itemHeight = prefab.GetComponent<RectTransform>().rect.height;
@@ -265,7 +264,7 @@ public class LobbyHubUI : MonoBehaviour
         Canvas.ForceUpdateCanvases();
     }
 
-    private void OnMessageClicked(string message)
+    void OnMessageClicked(string message)
     {
         var player = FusionLauncher.Instance.Runner  ().LocalPlayer;
         if (player != PlayerRef.None)
@@ -278,7 +277,7 @@ public class LobbyHubUI : MonoBehaviour
         }
     }
 
-    private void OnEmojiClicked(string emoji)
+    void OnEmojiClicked(string emoji)
     {
         var player = FusionLauncher.Instance.Runner().LocalPlayer;
         if (player != PlayerRef.None)

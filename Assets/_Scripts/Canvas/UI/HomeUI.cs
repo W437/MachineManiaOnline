@@ -1,29 +1,24 @@
-using Coffee.UIExtensions;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static Fusion.Sockets.NetBitBuffer;
 
 public class HomeUI : MonoBehaviour
 {
     public static HomeUI Instance;
 
     [Header("Buttons")]
-    [SerializeField] private Button[] buttons;
-    [SerializeField] private Button playButton;
-    [SerializeField] private Button modeSelectButton;
+    [SerializeField] Button[] buttons;
+    [SerializeField] Button playButton;
+    [SerializeField] Button modeSelectButton;
 
 
     [Header("Player Stats")]
-    [SerializeField] private TextMeshProUGUI playerLevelText;
-    [SerializeField] private TextMeshProUGUI goldText;
-    [SerializeField] private TextMeshProUGUI diamondsText;
-    [SerializeField] private TextMeshProUGUI playersOnlineText;
-    [SerializeField] private TextMeshProUGUI playNowText;
-    [SerializeField] private TextMeshProUGUI playerName;
+    [SerializeField] TextMeshProUGUI playerLevelText;
+    [SerializeField] TextMeshProUGUI goldText;
+    [SerializeField] TextMeshProUGUI diamondsText;
+    [SerializeField] TextMeshProUGUI playersOnlineText;
+    [SerializeField] TextMeshProUGUI playNowText;
+    [SerializeField] TextMeshProUGUI playerName;
 
     [Header("Custom Session")]
     [SerializeField] TMP_InputField inputSessionName;
@@ -37,19 +32,19 @@ public class HomeUI : MonoBehaviour
     float originalAlpha;
 
     [Header("Players Online Settings")]
-    [SerializeField] private float joinLeaveRatio = 1.0f;
-    [SerializeField] private int currentPlayerCount;
-    [SerializeField] private int targetPlayerCount;
-    [SerializeField] private int initialPlayerCount = 7817;
+    [SerializeField] float joinLeaveRatio = 1.0f;
+    [SerializeField] int currentPlayerCount;
+    [SerializeField] int targetPlayerCount;
+    [SerializeField] int initialPlayerCount = 7817;
     
     [Header("Private Lobby")]
     public Transform PrivateLobbyPositionsParent;
     [SerializeField] TextMeshProUGUI sessionNameText;
     public PrivateLobbyPosition[] PrivateLobbyPositions { get; private set; }
 
-    private ButtonHandler buttonHandler;
+    ButtonHandler buttonHandler;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -64,7 +59,7 @@ public class HomeUI : MonoBehaviour
         playButton.interactable = false;
     }
 
-    private void Start()
+    void Start()
     {
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
 
@@ -103,11 +98,11 @@ public class HomeUI : MonoBehaviour
         // private lobby
         InitializeLobbyPositions();
 
-        // Other data
+        // Load player data
         playerName.text = PlayerData.Instance.PlayerName;
     }
 
-    private void InitializeLobbyPositions()
+    void InitializeLobbyPositions()
     {
         if (PrivateLobbyPositionsParent != null)
         {
@@ -121,7 +116,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    private void OnPlayButtonClick(Button button)
+    void OnPlayButtonClick(Button button)
     {
         var selectedMode = ModeSelectUI.Instance.CurrentGameMode;
         switch (selectedMode)
@@ -146,7 +141,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    private void OnButtonReleased(Button button)
+    void OnButtonReleased(Button button)
     {
         switch (button.name)
         {
@@ -189,7 +184,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    private void OnCreateCustomSession(Button button)
+    void OnCreateCustomSession(Button button)
     {
         string sessionName = inputSessionName.text;
         string sessionPassword = inputSessionPassword.text;
@@ -207,7 +202,7 @@ public class HomeUI : MonoBehaviour
         ToggleCustomSessionPanel();
     }
 
-    private void OnExitCustomSessionPanel(Button button)
+    void OnExitCustomSessionPanel(Button button)
     {
         ToggleCustomSessionPanel();
     }
@@ -236,7 +231,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    private void UpdateBGAlpha(float alpha)
+    void UpdateBGAlpha(float alpha)
     {
         Color color = customSessionPanelBG.color;
         color.a = alpha;
@@ -253,28 +248,28 @@ public class HomeUI : MonoBehaviour
         playButton.interactable = true;
     }
 
-    private void UpdatePlayerLevel(int newLevel)
+    void UpdatePlayerLevel(int newLevel)
     {
         playerLevelText.text = $"Level: {newLevel}";
     }
 
-    private void UpdateGold(int newGold)
+    void UpdateGold(int newGold)
     {
         goldText.text = $"Gold: {newGold}";
     }
 
-    private void UpdateDiamonds(int newDiamonds)
+    void UpdateDiamonds(int newDiamonds)
     {
         diamondsText.text = $"Diamonds: {newDiamonds}";
     }
 
-    private void UpdatePlayersOnline(int newPlayersOnline)
+    void UpdatePlayersOnline(int newPlayersOnline)
     {
         string playersOnlineColored = $"<color=#6E6404>{newPlayersOnline}</color> PLAYERS ONLINE!";
         playersOnlineText.text = playersOnlineColored;
     }
 
-    private void AnimatePlayersOnline()
+    void AnimatePlayersOnline()
     {
         float delay = Random.Range(1, 4) * 2;
 
@@ -300,7 +295,7 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    private void AnimatePlayNowText()
+    void AnimatePlayNowText()
     {
         float originalSize = playNowText.fontSize;
         float targetSize = originalSize * 1.1f;
@@ -322,7 +317,7 @@ public class HomeUI : MonoBehaviour
         sessionNameText.text = $"<color=#59B4F7>session:</color> {sessionName}";
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         // Unsubscribe from events
 /*        PlayerStats playerStats = ServiceLocator.GetPlayerStats();

@@ -13,12 +13,10 @@ public class SettingsUI : MonoBehaviour
 
     [Header("Settings Panel")]
     [SerializeField] Button switchButton;
-    private ButtonHandler buttonHandler;
-
     [SerializeField] Slider musicSlider;
+    ButtonHandler buttonHandler;
 
-
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -33,7 +31,7 @@ public class SettingsUI : MonoBehaviour
         buttonHandler = gameObject.GetComponent<ButtonHandler>();
     }
 
-    private void Start()
+    void Start()
     {
         buttonHandler.AddSwitch(switchButton, new SwitchConfig(animationTime: 0.2f));
         buttonHandler.AddSliderEventTrigger(musicSlider, 1.2f, 0.1f);

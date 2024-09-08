@@ -4,6 +4,9 @@ using Fusion.Sockets;
 using System.Collections.Generic;
 using System;
 
+/// <summary>
+/// not used.
+/// </summary>
 public class NetInputHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
     private NetworkRunner runner;

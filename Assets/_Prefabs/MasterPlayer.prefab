@@ -5029,6 +5029,7 @@ GameObject:
   - component: {fileID: 861208462154516230}
   - component: {fileID: 1032004316717073286}
   - component: {fileID: 1937721012469942538}
+  - component: {fileID: 4875756220674680783}
   m_Layer: 3
   m_Name: MasterPlayer
   m_TagString: Player
@@ -5112,7 +5113,7 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0.7}
-  m_Size: {x: 0.9, y: 1.4}
+  m_Size: {x: 1.19, y: 1.88}
   m_Direction: 0
 --- !u!114 &1819417312281767562
 MonoBehaviour:
@@ -5133,9 +5134,11 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 7835155397552032863}
   - {fileID: 8402468643347810779}
+  - {fileID: 976219052919833584}
   - {fileID: 861208462154516230}
   - {fileID: 1032004316717073286}
   - {fileID: 1937721012469942538}
+  - {fileID: 4875756220674680783}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5223,7 +5226,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 5
   m_SortAtRoot: 0
 --- !u!114 &976219052919833584
 MonoBehaviour:
@@ -5237,6 +5240,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cdd02e25b57155459b5bb138f32bfb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlayerName: 
+  _Level: 0
+  _Gold: 0
+  _Diamonds: 0
+  _PlayerID: 0
 --- !u!70 &7081992712123276227
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -5270,7 +5278,7 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.5, y: 1}
+  m_Size: {x: 0.81, y: 1}
   m_Direction: 0
 --- !u!114 &861208462154516230
 MonoBehaviour:
@@ -5312,6 +5320,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e4843353a221ac45ba0d1e3fdcf92fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4875756220674680783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 506319458, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 5252638350429244611}
+  TotalWords: 1
+  ApplyTiming: 2
+  SyncSettings: 79
+  StateHashes: 00000000d7c25bd709691ab4aa6884dab76f439dad9d535173361232199921fbc7326098a0e0f2732dd28d5daf6b2bbd71c06ade526039e92f6c0622
+  TriggerHashes: 0000000062efc4e1
 --- !u!1 &4328776677701572124
 GameObject:
   m_ObjectHideFlags: 0

@@ -4,11 +4,11 @@ using TMPro;
 
 public class MessageButton : ButtonHandler
 {
-    [SerializeField] private TextMeshProUGUI _messageText;
+    [SerializeField] TextMeshProUGUI _messageText;
 
-    private Button button;
+    Button button;
 
-    private void Awake()
+    void Awake()
     {
         button = GetComponent<Button>();
     }

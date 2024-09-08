@@ -20,20 +20,20 @@ using System.Linq;
 public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static PublicLobbyManager Instance;
-    public ManiaNews maniaNews;
-    private static LobbyHubManager _hubManager;
-    private SceneRef _gameScene;
-
-    private const int MAX_PLAYERS = 6;
-    private const int LOBBY_TIMER_START = 11;
-    [Networked] public bool net_IsSpawned { get; set; }
-    [Networked] private bool net_isTimerRunning { get; set; }
-    [Networked] private float net_remainingTime { get; set; }
-
+    public ManiaNews ManiaNews;
     public PublicLobbyPosition[] playerPosition;
     public Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
 
-    private void Awake()
+    const int MAX_PLAYERS = 6;
+    const int LOBBY_TIMER_START = 25;
+    static LobbyHubManager _hubManager;
+    SceneRef _gameScene;
+
+    [Networked] public bool net_isSpawned { get; set; }
+    [Networked] private bool net_isTimerRunning { get; set; }
+    [Networked] private float net_remainingTime { get; set; }
+
+    void Awake()
     {
         if (Instance == null)
         {
@@ -50,46 +50,23 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         _hubManager = new LobbyHubManager();
     }
 
+    void Update()
+    {
+        if (net_isSpawned && HasStateAuthority)
+        {
+            UpdateLobbyTimer();
+        }
+    }
+    
     public override void Spawned()
     {
         Runner.AddCallbacks(this);
         if (HasStateAuthority)
         {
-            maniaNews = new ManiaNews(LobbyUI.Instance.maniaNewsParent, 3.5f);
-            maniaNews.OnNewsChanged += OnNewsChanged;
+            ManiaNews = new ManiaNews(LobbyUI.Instance.maniaNewsParent, 3.5f);
+            ManiaNews.OnNewsChanged += OnNewsChanged;
             RpcSetIsSpawned();
             SelectRandomNews();
-        }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcSetIsSpawned()
-    {
-        net_IsSpawned = true;
-    }
-
-    private void InitializeLobbyPositions()
-    {
-        if (LobbyUI.Instance != null)
-        {
-            playerPosition = new PublicLobbyPosition[MAX_PLAYERS];
-            for (int i = 0; i < MAX_PLAYERS; i++)
-            {
-                Transform slotTransform = LobbyUI.Instance.PlayerSlotsParent.GetChild(i);
-                playerPosition[i] = new PublicLobbyPosition
-                {
-                    Position = slotTransform,
-                    IsOccupied = false
-                };
-            }
-        }
-    }
-
-    private void Update()
-    {
-        if (net_IsSpawned && HasStateAuthority)
-        {
-            UpdateLobbyTimer();
         }
     }
 
@@ -117,8 +94,56 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             UpdateTimerUI();
         }
     }
+   
+    public int FindPlayerPosition(PlayerRef player)
+    {
+        for (int i = 0; i < playerPosition.Length; i++)
+        {
+            if (playerObjects.ContainsKey(player) && playerPosition[i].PlayerRef == player)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 
-    private void UpdateLobbyTimer()
+    public void SetPlayerReadyState(PlayerRef player)
+    {
+        RpcToggleReadyState(player);
+    }
+
+    public bool IsPlayerReady(PlayerRef player)
+    {
+        var playerObject = Runner.GetPlayerObject(player);
+        if (playerObject != null)
+        {
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+            if (playerManager != null)
+            {
+                return playerManager.IsReady;
+            }
+        }
+        return false;
+    }
+    
+    void InitializeLobbyPositions()
+    {
+        if (LobbyUI.Instance != null)
+        {
+            playerPosition = new PublicLobbyPosition[MAX_PLAYERS];
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                Transform slotTransform = LobbyUI.Instance.PlayerSlotsParent.GetChild(i);
+                playerPosition[i] = new PublicLobbyPosition
+                {
+                    Position = slotTransform,
+                    IsOccupied = false
+                };
+            }
+        }
+    }
+
+    void UpdateLobbyTimer()
     {
         if (net_isTimerRunning)
         {
@@ -134,7 +159,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void UpdateTimerUI()
+    void UpdateTimerUI()
     {
         int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
         LobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
@@ -143,8 +168,111 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         RpcUpdateTimer(net_remainingTime);
     }
 
+    void ShowConnectingOverlay()
+    {
+        LobbyUI.Instance.ConnectingOverlay.SetActive(true);
+        LobbyUI.Instance.ConnectingText.text = "Joining Game";
+    }
+
+    void StartGame()
+    {
+        if (HasStateAuthority)
+        {
+            RpcStartGame();
+        }
+    }
+
+    void UpdatePlayerUI(Transform slotTransform, PlayerRef player)
+    {
+        if (playerObjects.TryGetValue(player, out var playerObject))
+        {
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+            var nameText = slotTransform.Find("nameText").GetComponent<TextMeshProUGUI>();
+            var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
+            var messageText = slotTransform.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+            if (playerManager != null)
+            {
+                nameText.text = $"{playerManager.PlayerName} ({player.PlayerId})";
+                statusText.text = playerManager.IsReady ? "Ready" : "Not Ready";
+                messageText.text = "";
+            }
+        }
+        else
+        {
+            Debug.LogError($"Player object not found for player: {player.PlayerId}");
+        }
+    }
+
+    void SpawnPlayer(PlayerRef player, int positionIndex)
+    {
+        if (playerPosition != null && positionIndex < playerPosition.Length)
+        {
+            NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
+            Vector3 spawnPos = playerPosition[positionIndex].Position.position - new Vector3(0, 50f, 0);
+
+            var playerObject = Runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            playerObjects.Add(player, playerObject);
+            Runner.SetPlayerObject(player, playerObject);
+
+            RpcPositionPlayer(player, positionIndex);
+        }
+        else
+        {
+            Debug.LogError("Lobby position markers are null or index is out of range.");
+        }
+    }
+
+    int GetNextAvailablePosition(PlayerRef player)
+    {
+        if (player == Runner.LocalPlayer && HasStateAuthority)
+        {
+            return 0;
+        }
+
+        for (int i = 1; i < playerPosition.Length; i++)
+        {
+            if (!playerPosition[i].IsOccupied)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    void ClearUI(int positionIndex)
+    {
+        Transform position = playerPosition[positionIndex].Position;
+        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
+        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
+        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
+
+        nameText.text = "";
+        statusText.text = "";
+        messageText.text = "";
+    }
+
+    void InitiateMasterClientTransfer()
+    {
+        if (playerObjects.Count > 0)
+        {
+            PlayerRef newMasterClient = playerObjects.Keys.FirstOrDefault();
+
+            if (newMasterClient != null)
+            { 
+                RpcNotifyNewMasterClient(newMasterClient);
+
+            }
+        }
+        else
+        {
+            Debug.Log("No players left to transfer authority to.");
+            return;
+        }
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcUpdateTimer(float newTime)
+    void RpcUpdateTimer(float newTime)
     {
         if (!HasStateAuthority)
         {
@@ -154,18 +282,10 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void ShowConnectingOverlay()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcSetIsSpawned()
     {
-        LobbyUI.Instance.ConnectingOverlay.SetActive(true);
-        LobbyUI.Instance.ConnectingText.text = "Joining Game";
-    }
-
-    private void StartGame()
-    {
-        if (HasStateAuthority)
-        {
-            RpcStartGame();
-        }
+        net_isSpawned = true;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -193,56 +313,10 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
             if (playerManager != null)
             {
-                bool newReadyState = playerManager.net_IsReady;
+                bool newReadyState = playerManager.IsReady;
                 RpcUpdateReadyStateUI(player, newReadyState);
             }
         }
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RpcUpdateReadyStateUI(PlayerRef player, bool isReady)
-    {
-        int playerIndex = FindPlayerPosition(player);
-        if (playerIndex >= 0)
-        {
-            Transform slotTransform = playerPosition[playerIndex].Position;
-            var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
-            if (statusText != null)
-            {
-                statusText.text = isReady ? "Ready" : "Not Ready";
-            }
-        }
-    }
-
-    public int FindPlayerPosition(PlayerRef player)
-    {
-        for (int i = 0; i < playerPosition.Length; i++)
-        {
-            if (playerObjects.ContainsKey(player) && playerPosition[i].PlayerRef == player)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    public void SetPlayerReadyState(PlayerRef player)
-    {
-        RpcToggleReadyState(player);
-    }
-
-    public bool IsPlayerReady(PlayerRef player)
-    {
-        var playerObject = Runner.GetPlayerObject(player);
-        if (playerObject != null)
-        {
-            var playerManager = playerObject.GetComponent<PlayerManager>();
-            if (playerManager != null)
-            {
-                return playerManager.net_IsReady;
-            }
-        }
-        return false;
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
@@ -269,50 +343,24 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         _hubManager.ShowMessage(player, message);
     }
-
-    private void UpdatePlayerUI(Transform slotTransform, PlayerRef player)
+    
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    void RpcUpdateReadyStateUI(PlayerRef player, bool isReady)
     {
-        if (playerObjects.TryGetValue(player, out var playerObject))
+        int playerIndex = FindPlayerPosition(player);
+        if (playerIndex >= 0)
         {
-            var playerManager = playerObject.GetComponent<PlayerManager>();
-            var nameText = slotTransform.Find("nameText").GetComponent<TextMeshProUGUI>();
+            Transform slotTransform = playerPosition[playerIndex].Position;
             var statusText = slotTransform.Find("statusText").GetComponent<TextMeshProUGUI>();
-            var messageText = slotTransform.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-            if (playerManager != null)
+            if (statusText != null)
             {
-                nameText.text = $"{playerManager.net_PlayerName} ({player.PlayerId})";
-                statusText.text = playerManager.net_IsReady ? "Ready" : "Not Ready";
-                messageText.text = "";
+                statusText.text = isReady ? "Ready" : "Not Ready";
             }
-        }
-        else
-        {
-            Debug.LogError($"Player object not found for player: {player.PlayerId}");
-        }
-    }
-
-    private void SpawnPlayer(PlayerRef player, int positionIndex)
-    {
-        if (playerPosition != null && positionIndex < playerPosition.Length)
-        {
-            NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-            Vector3 spawnPos = playerPosition[positionIndex].Position.position - new Vector3(0, 50f, 0);
-
-            var playerObject = Runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
-            playerObjects.Add(player, playerObject);
-            Runner.SetPlayerObject(player, playerObject);
-
-            RpcPositionPlayer(player, positionIndex);
-        }
-        else
-        {
-            Debug.LogError("Lobby position markers are null or index is out of range.");
         }
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    private void RpcPositionPlayer(PlayerRef player, int posIndex)
+    void RpcPositionPlayer(PlayerRef player, int posIndex)
     {
         if (playerObjects.TryGetValue(player, out var playerObj))
         { 
@@ -335,25 +383,20 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private int GetNextAvailablePosition(PlayerRef player)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    void RpcNotifyNewMasterClient(PlayerRef newMasterClient)
     {
-        if (player == Runner.LocalPlayer && HasStateAuthority)
-        {
-            return 0;
-        }
+        NetworkObject lobbyManager = FindObjectOfType<PublicLobbyManager>().GetComponent<NetworkObject>();
 
-        for (int i = 1; i < playerPosition.Length; i++)
+        if (Runner.LocalPlayer == newMasterClient)
         {
-            if (!playerPosition[i].IsOccupied)
-            {
-                return i;
-            }
+            lobbyManager.RequestStateAuthority();
+            Debug.Log($"Requested state authority for new master: {newMasterClient}");
         }
-        return -1;
     }
 
-    #region maniaNews
-    private void OnNewsChanged(int newsIndex)
+    #region Mania News
+    void OnNewsChanged(int newsIndex)
     {
         if (HasStateAuthority && Runner.IsSharedModeMasterClient)
         {
@@ -369,18 +412,18 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcShowNewsItem(int newsIndex)
+    void RpcShowNewsItem(int newsIndex)
     {
-        maniaNews.ShowSpecificNews(newsIndex);
+        ManiaNews.ShowSpecificNews(newsIndex);
     }
 
-    private void SelectRandomNews()
+    void SelectRandomNews()
     {
         if (HasStateAuthority && Runner.IsSharedModeMasterClient)
         {
-            if (!maniaNews.IsTransitioning())
+            if (!ManiaNews.IsTransitioning())
             {
-                int randomIndex = UnityEngine.Random.Range(0, maniaNews.GetNewsPrefabsCount());
+                int randomIndex = UnityEngine.Random.Range(0, ManiaNews.GetNewsPrefabsCount());
                 RpcShowNewsItem(randomIndex); 
             }
         }
@@ -405,7 +448,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             Debug.Log($"Player joined. {player}");
         }
     }
-
+    
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         if (playerObjects.ContainsKey(player))
@@ -436,60 +479,18 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void ClearUI(int positionIndex)
-    {
-        Transform position = playerPosition[positionIndex].Position;
-        var nameText = position.Find("nameText").GetComponent<TextMeshProUGUI>();
-        var statusText = position.Find("statusText").GetComponent<TextMeshProUGUI>();
-        var messageText = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
-
-        nameText.text = "";
-        statusText.text = "";
-        messageText.text = "";
-    }
-
-    private void InitiateMasterClientTransfer()
-    {
-        if (playerObjects.Count > 0)
-        {
-            PlayerRef newMasterClient = playerObjects.Keys.FirstOrDefault();
-
-            if (newMasterClient != null)
-            { 
-                RPC_NotifyNewMasterClient(newMasterClient);
-
-            }
-        }
-        else
-        {
-            Debug.Log("No players left to transfer authority to.");
-            return;
-        }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_NotifyNewMasterClient(PlayerRef newMasterClient)
-    {
-        NetworkObject lobbyManager = FindObjectOfType<PublicLobbyManager>().GetComponent<NetworkObject>();
-
-        if (Runner.LocalPlayer == newMasterClient)
-        {
-            lobbyManager.RequestStateAuthority();
-            Debug.Log($"Requested state authority for new master: {newMasterClient}");
-        }
-    }
-
+    // Callbacks
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
         OnPlayerLeft(runner, runner.LocalPlayer);
     }
 
+    #region unused callbacks
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         Debug.Log("[Lobby] Lobby scene loaded.");
     }
-
-    #region unused callbacks
+    
     public void OnSceneLoadStart(NetworkRunner runner)
     {
 

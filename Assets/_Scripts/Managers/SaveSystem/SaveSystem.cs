@@ -2,8 +2,8 @@
 
 public static class SaveSystem
 {
-    private static readonly string SaveKey = "PlayerSaveData";
-    private static readonly string FirstLaunchKey = "IsFirstLaunch";
+    static readonly string SaveKey = "PlayerSaveData";
+    static readonly string FirstLaunchKey = "IsFirstLaunch";
 
     public static void Save(PlayerSaveData data)
     {

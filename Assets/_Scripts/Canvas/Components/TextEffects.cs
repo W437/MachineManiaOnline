@@ -7,7 +7,7 @@ using Assets.Scripts.TypewriterEffects.Notifiables;
 // using custom library to typewrite messages.
 public class TextEffects : MonoBehaviour, ITypingNotifiable
 {
-    private Action onTypingEndAction;
+    Action onTypingEndAction;
 
     void Awake()
     {

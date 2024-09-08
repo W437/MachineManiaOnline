@@ -14,7 +14,7 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     PrivateLobbyPosition[] lobbyPositionMarkers;
     Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -27,7 +27,7 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void InitializeLobbyPositions()
+    void InitializeLobbyPositions()
     {
         if (HomeUI.Instance != null)
         {
@@ -60,12 +60,12 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcPrepareForMenu(NetworkObject playerObject)
+    void RpcPrepareForMenu(NetworkObject playerObject)
     {
         PrepareForMenu(playerObject.gameObject);
     }
 
-    private void PrepareForMenu(GameObject playerObject)
+    void PrepareForMenu(GameObject playerObject)
     {
         NetworkRigidbody2D networkRb = playerObject.GetComponent<NetworkRigidbody2D>();
         if (networkRb != null)
@@ -81,7 +81,7 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
+    void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
     {
         if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
         {
@@ -153,7 +153,27 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             }
         }
     }
+    
+    int GetNextAvailablePosition(PlayerRef player)
+    {
+        // Assign the master client to position 1, always
+        if (player == Runner.LocalPlayer && Runner.IsSharedModeMasterClient)
+        {
+            return 0;
+        }
 
+        // Find the first available position starting from pos2
+        for (int i = 1; i < lobbyPositionMarkers.Length; i++)
+        {
+            if (!lobbyPositionMarkers[i].IsOccupied)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    /// Callbacks
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
         int positionIndex = GetNextAvailablePosition(player);
@@ -191,25 +211,6 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
         OnPlayerLeft(runner, runner.LocalPlayer);
-    }
-
-    private int GetNextAvailablePosition(PlayerRef player)
-    {
-        // Assign the master client to position 1, always
-        if (player == Runner.LocalPlayer && Runner.IsSharedModeMasterClient)
-        {
-            return 0;
-        }
-
-        // Find the first available position starting from pos2
-        for (int i = 1; i < lobbyPositionMarkers.Length; i++)
-        {
-            if (!lobbyPositionMarkers[i].IsOccupied)
-            {
-                return i;
-            }
-        }
-        return -1;
     }
 
     #region unused callbacks

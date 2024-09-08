@@ -5,31 +5,21 @@ using UnityEngine;
 public class ManiaNews
 {
     public event Action<int> OnNewsChanged;
-    private List<GameObject> newsPrefabs = new List<GameObject>();
-    private Transform newsParent;
-    private GameObject currentNewsPrefab;
-    private int lastIndex = -1;
-    private float displayTime = 3.5f;
-    private bool isTransitioning = false;
+    List<GameObject> newsPrefabs = new List<GameObject>();
+    Transform newsParent;
+    GameObject currentNewsPrefab;
+    int lastIndex = -1;
+    float displayTime = 3.5f;
+    bool isTransitioning = false;
 
-    private const string FOLDER_PATH = "News";
+    const string FOLDER_PATH = "News";
 
+    // konstructor
     public ManiaNews(Transform parent, float displayTime)
     {
         this.newsParent = parent;
         this.displayTime = displayTime;
         LoadNewsPrefabs();
-    }
-
-    private void LoadNewsPrefabs()
-    {
-        var loadedPrefabs = Resources.LoadAll<GameObject>(FOLDER_PATH);
-        newsPrefabs = new List<GameObject>(loadedPrefabs);
-
-        if (newsPrefabs == null || newsPrefabs.Count == 0)
-        {
-            Debug.LogError($"No news prefabs found in folder: {FOLDER_PATH}");
-        }
     }
 
     public int GetNewsPrefabsCount()
@@ -72,7 +62,7 @@ public class ManiaNews
         });
     }
 
-    private void HideCurrentNews(Action onComplete)
+    void HideCurrentNews(Action onComplete)
     {
         if (currentNewsPrefab != null)
         {
@@ -84,6 +74,17 @@ public class ManiaNews
                     isTransitioning = false;
                     onComplete?.Invoke();
                 });
+        }
+    }
+    
+    void LoadNewsPrefabs()
+    {
+        var loadedPrefabs = Resources.LoadAll<GameObject>(FOLDER_PATH);
+        newsPrefabs = new List<GameObject>(loadedPrefabs);
+
+        if (newsPrefabs == null || newsPrefabs.Count == 0)
+        {
+            Debug.LogError($"No news prefabs found in folder: {FOLDER_PATH}");
         }
     }
 }

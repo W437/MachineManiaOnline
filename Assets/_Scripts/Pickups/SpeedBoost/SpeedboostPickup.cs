@@ -10,11 +10,8 @@ public class SpeedBoostPickup : Pickup
 
         if (runner != null)
         {
-            // Spawn the speed boost pickup object
            SpeedBoostBehavior behavior = player.GetComponent<SpeedBoostBehavior>();
-
-            // Manually initialize the speed boost behavior after spawning
-            behavior.Initialize();
+           behavior.Initialize();
         }
     }
 }

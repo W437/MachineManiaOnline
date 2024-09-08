@@ -5,19 +5,19 @@ using System.Collections;
 
 public class CurrencyEmitter : MonoBehaviour
 {
-    [SerializeField] private Button emitCoinsButton;
-    [SerializeField] private Button emitCrystalsButton;
+    [SerializeField] Button emitCoinsButton;
+    [SerializeField] Button emitCrystalsButton;
 
-    [SerializeField] private UIParticle coinUiParticle;
-    [SerializeField] private ParticleSystem coinParticleSystem;
+    [SerializeField] UIParticle coinUiParticle;
+    [SerializeField] ParticleSystem coinParticleSystem;
 
-    [SerializeField] private UIParticle crystalUiParticle;
-    [SerializeField] private ParticleSystem crystalParticleSystem;
+    [SerializeField] UIParticle crystalUiParticle;
+    [SerializeField] ParticleSystem crystalParticleSystem;
 
-    private int _coinEmitCount = 100;
-    private int _crystalEmitCount = 100;
+    int _coinEmitCount = 100;
+    int _crystalEmitCount = 100;
 
-    private void Start()
+    void Start()
     {
         if (emitCoinsButton != null)
         {
@@ -30,7 +30,7 @@ public class CurrencyEmitter : MonoBehaviour
         }
     }
 
-    private void EmitCoins()
+    void EmitCoins()
     {
         if (coinUiParticle != null && coinParticleSystem != null)
         {
@@ -39,7 +39,7 @@ public class CurrencyEmitter : MonoBehaviour
         }
     }
 
-    private void EmitCrystals()
+    void EmitCrystals()
     {
         if (crystalUiParticle != null && crystalParticleSystem != null)
         {
@@ -48,7 +48,7 @@ public class CurrencyEmitter : MonoBehaviour
         }
     }
 
-    private IEnumerator EmitParticlesOverTime(ParticleSystem particleSystem, int totalParticles)
+    IEnumerator EmitParticlesOverTime(ParticleSystem particleSystem, int totalParticles)
     {
         int emittedParticles = 0;
         while (emittedParticles < totalParticles)

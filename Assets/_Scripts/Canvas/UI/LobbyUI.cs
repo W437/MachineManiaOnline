@@ -41,7 +41,7 @@ public class LobbyUI : MonoBehaviour
 
     public ButtonHandler ButtonHandler { get { return buttonHandler; } }
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -54,7 +54,7 @@ public class LobbyUI : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
         if(buttonHandler == null)
         {
@@ -63,39 +63,13 @@ public class LobbyUI : MonoBehaviour
         buttonHandler.AddButtonEventTrigger(lobbyReadyButton, OnLobbyReady, new ButtonConfig(toggle: true,  yOffset: -14f, rotationLock: false));
         buttonHandler.AddButtonEventTrigger(lobbyLeaveButton, OnLobbyLeave, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
     }
-
-    private IEnumerator CheckIfLobbyIsSpawned()
-    {
-        connectingCoroutine = StartCoroutine(AnimateConnectingText());
-        while (true)
-        {
-            yield return new WaitForSeconds(0.5f);
-
-            if (PublicLobbyManager.Instance != null && PublicLobbyManager.Instance.net_IsSpawned)
-            {
-                HideConnectingOverlay();
-                yield break;
-            }
-        }
-    }
-
-
     public void ConnectToLobby()
     {
         lobbyPlatformScreen.SetActive(true);
         ConnectingOverlay.SetActive(true);
         StartCoroutine(DelayedCheckIfLobbyIsSpawned());
     }
-
-    private IEnumerator DelayedCheckIfLobbyIsSpawned()
-    {
-        // Adding a slight delay to allow everything to initialize properly
-        Debug.Log($"Delayed check for lobby spawn");
-        yield return new WaitForSeconds(1.0f);
-        StartCoroutine(CheckIfLobbyIsSpawned());
-    }
-
-
+    
     public void HideConnectingOverlay()
     {
         if (ConnectingOverlay != null)
@@ -109,7 +83,57 @@ public class LobbyUI : MonoBehaviour
         }
     }
 
-    private IEnumerator AnimateConnectingText()
+    void OnLobbyReady(Button button)
+    {
+        PlayerRef localPlayerRef = FusionLauncher.Instance.Runner().LocalPlayer;
+        var playerObject = FusionLauncher.Instance.Runner().GetPlayerObject(localPlayerRef);
+
+        if (localPlayerRef != null)
+        {
+            var playerManager = playerObject.GetComponent<PlayerManager>();
+
+            if (playerManager != null)
+            {
+                bool currentReadyState = playerManager.IsReady;
+                Debug.Log($"current ready state {currentReadyState}");
+                PublicLobbyManager.Instance.SetPlayerReadyState(localPlayerRef);
+            }
+        }
+    }
+
+    void OnLobbyLeave(Button button)
+    {
+        AudioManager.Instance.SetCutoffFrequency(7000, 1);
+        buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
+        lobbyPlatformScreen.SetActive(false);
+        string uniqueSessionName = GameLauncher.Instance.GenerateUniqueSessionName();
+        GameLauncher.Instance.Launch(uniqueSessionName, false);
+    }
+  
+    IEnumerator CheckIfLobbyIsSpawned()
+    {
+        connectingCoroutine = StartCoroutine(AnimateConnectingText());
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            if (PublicLobbyManager.Instance != null && PublicLobbyManager.Instance.net_isSpawned)
+            {
+                HideConnectingOverlay();
+                yield break;
+            }
+        }
+    }
+
+    IEnumerator DelayedCheckIfLobbyIsSpawned()
+    {
+        // Adding a slight delay to allow everything to initialize properly
+        Debug.Log($"Delayed check for lobby spawn");
+        yield return new WaitForSeconds(1.0f);
+        StartCoroutine(CheckIfLobbyIsSpawned());
+    }
+
+    IEnumerator AnimateConnectingText()
     {
         string baseText = "Starting Session";
         int dotCount = 0;
@@ -121,32 +145,5 @@ public class LobbyUI : MonoBehaviour
             dotCount = (dotCount + 1) % 4;
             yield return new WaitForSeconds(0.5f);
         }
-    }
-
-    private void OnLobbyReady(Button button)
-    {
-        PlayerRef localPlayerRef = FusionLauncher.Instance.Runner().LocalPlayer;
-        var playerObject = FusionLauncher.Instance.Runner().GetPlayerObject(localPlayerRef);
-
-        if (localPlayerRef != null)
-        {
-            var playerManager = playerObject.GetComponent<PlayerManager>();
-
-            if (playerManager != null)
-            {
-                bool currentReadyState = playerManager.net_IsReady;
-                Debug.Log($"current ready state {currentReadyState}");
-                PublicLobbyManager.Instance.SetPlayerReadyState(localPlayerRef);
-            }
-        }
-    }
-
-    private void OnLobbyLeave(Button button)
-    {
-        AudioManager.Instance.SetCutoffFrequency(7000, 10000);
-        buttonHandler.ResetButtonToggleState(lobbyLeaveButton);
-        lobbyPlatformScreen.SetActive(false);
-        string uniqueSessionName = GameLauncher.Instance.GenerateUniqueSessionName();
-        GameLauncher.Instance.Launch(uniqueSessionName, false);
     }
 }

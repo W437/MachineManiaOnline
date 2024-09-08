@@ -10,22 +10,22 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour, IPlayerController
 {
    
-    [SerializeField] private ScriptableStats _stats; // Reference to the player's stats stored in a ScriptableObject.
+    [SerializeField] private ScriptableStats _stats;
     public ScriptableStats Stats { get { return _stats; } }
     [SerializeField] private Animator _animator;
     public List<SpriteRenderer> PlayerParts = new List<SpriteRenderer>();
-    private Rigidbody2D _rb; // Reference to the Rigidbody2D component for physics interactions.
-    private CapsuleCollider2D _col; // Reference to the CapsuleCollider2D component for collision detection.
+    private Rigidbody2D _rb;
+    private CapsuleCollider2D _col;
     private FrameInput _frameInput; // Stores input for the current frame.
     private Vector2 _frameVelocity; // Stores the player's velocity for the current frame.
-    private bool _cachedQueryStartInColliders; // Caches the default value of Physics2D.queriesStartInColliders.
-    [SerializeField]private bool _canMove = true; // Whether the player can move or not.
-    public bool CanMove { get { return _canMove; } }
-    private bool _canMoveFreely = true; // Whether the player can move freely using movement keys.
+    private bool _cachedQueryStartInColliders;
 
-    // move this
-   
+    // Gameplay properties.
+    [SerializeField] private bool _canMove = true;
+    public bool CanMove { get { return _canMove; } set { _canMove = value; } }
+    private bool _canMoveFreely = true; 
     public float FinishTime { get; set; }
+
 
     #region Interface
 
@@ -38,42 +38,55 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     #endregion
 
-    private float _time; // Keeps track of elapsed time.
+    private float _time; 
 
-  
+    // for tracking animation states
+    private bool _isFalling;
+    private bool _isRunning;
+    private bool _isIdle;
+    private bool _isLanding;
+    private bool _isJumping;
+
+
     private void Awake()
     {
-        // Get references to the Rigidbody2D and CapsuleCollider2D components.
         _rb = GetComponent<Rigidbody2D>();
         _col = GetComponent<CapsuleCollider2D>();
 
-        // Cache the default value of Physics2D.queriesStartInColliders.
         _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
     }
 
     private void Update()
     {
-        _time += Time.deltaTime; // Increment the elapsed time.
-        GatherInput(); // Gather input from the player.
-        HandleJump(); // Handle jumping in Update to ensure responsiveness.
+        _time += Time.deltaTime; 
+        GatherInput();
+        HandleJump(); 
+    }
+
+
+    private void FixedUpdate()
+    {
+        if (_canMove)
+        {
+            CheckCollisions();
+            HandleGravity();
+            ApplyMovement(); // Automatically move to the right
+            HandleAnimations(); // Manage animations based on the player's state
+        }
+        else
+        {
+            _rb.velocity = Vector2.zero;
+        }
     }
 
     private void GatherInput()
     {
-        // Gather input from Unity's Input system.
         _frameInput = new FrameInput
         {
             JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.C),
             JumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.C),
-            Move = _canMove ? (_canMoveFreely ? new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) : new Vector2(1, 0)) : Vector2.zero
+            Move = _canMove ? new Vector2(1, 0) : Vector2.zero 
         };
-
-        // Snap input to discrete values if SnapInput is enabled.
-        if (_stats.SnapInput)
-        {
-            _frameInput.Move.x = Mathf.Abs(_frameInput.Move.x) < _stats.HorizontalDeadZoneThreshold ? 0 : Mathf.Sign(_frameInput.Move.x);
-            _frameInput.Move.y = Mathf.Abs(_frameInput.Move.y) < _stats.VerticalDeadZoneThreshold ? 0 : Mathf.Sign(_frameInput.Move.y);
-        }
 
         // Record jump input time for buffered jump handling.
         if (_frameInput.JumpDown)
@@ -83,29 +96,60 @@ public class PlayerController : MonoBehaviour, IPlayerController
         }
     }
 
-
-    /// <summary>
-    /// We're going to limit movement to only horizontally, we want the player
-    /// to always move to the right direction continously without stopping, 
-    /// we also want a flag to control whether he moves or not, for freezing the game before the game starts
-    /// after he finishes, so we can manipuklate his position and movement.
-    /// Some state system perhaps for animations, and custom stuff etc?
-    /// </summary>
-    private void FixedUpdate()
+    private void HandleAnimations()
     {
-        if (_canMove)
+        // player is grounded
+        if (_grounded && _frameVelocity.y <= 0)
         {
-            CheckCollisions();
-            HandleDirection();
-            HandleGravity();
-            ApplyMovement();
+            if (_isFalling)
+            {
+                _isFalling = false;
+                _isLanding = true;
+                _animator.SetBool("IsFalling", false);
+                _animator.SetBool("IsLand", true);
+            }
+
+            if (_frameVelocity.x > 0)
+            {
+                // Player is running
+                _isRunning = true;
+                _isIdle = false;
+                _animator.SetBool("IsRunning", true);
+                _animator.SetBool("IsIdle", false);
+            }
+            else
+            {
+                // Player is idle
+                _isRunning = false;
+                _isIdle = true;
+                _animator.SetBool("IsRunning", false);
+                _animator.SetBool("IsIdle", true);
+            }
         }
-        else
+
+        // player is jumping
+        if (_isJumping)
         {
-            // Stop all movement if not allowed to move.
-            _rb.velocity = Vector2.zero;
+            _animator.SetBool("IsJump", true);
+            _isJumping = false;
+        }
+
+        if (_rb.velocity.y < 0 && !_grounded)
+        {
+            _isFalling = true;
+            _animator.SetBool("IsFalling", true);
+            _animator.SetBool("IsJump", false);
+        }
+
+        // landing animation
+        if (_grounded && _isLanding)
+        {
+            _isLanding = false;
+            _animator.SetBool("IsLand", false);
         }
     }
+
+
 
     #region Collisions
 
@@ -185,9 +229,11 @@ public class PlayerController : MonoBehaviour, IPlayerController
         _timeJumpWasPressed = 0;
         _bufferedJumpUsable = false;
         _coyoteUsable = false;
-        _frameVelocity.y = _stats.JumpPower; // Set the vertical velocity to the jump power.
-        Jumped?.Invoke(); // Trigger the Jumped event.
+        _frameVelocity.y = _stats.JumpPower; // Set the vertical velocity to the jump power
+        _isJumping = true;
+        Jumped?.Invoke(); // Trigger the Jumped event
     }
+
 
     #endregion
 
@@ -236,22 +282,20 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     #endregion
 
-    // Apply the computed velocity to the Rigidbody2D.
+
     private void ApplyMovement()
     {
+        _frameVelocity.x = _stats.MaxSpeed; // Always move to the right
         _rb.velocity = _frameVelocity;
-        _animator.SetBool("IsRunning", true);
     }
 
-
-    // Method to toggle free movement for testing purposes.
+    // Sandbox use
     public void TogglePlayerMovement(bool enable)
     {
         _canMove = enable;
     }
 
 #if UNITY_EDITOR
-    // Validate the scriptable object assignment in the editor.
     private void OnValidate()
     {
         if (_stats == null) Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
@@ -267,7 +311,6 @@ public struct FrameInput
     public Vector2 Move;
 }
 
-// Interface to define the player controller events and properties.
 public interface IPlayerController
 {
     public event Action<bool, float> GroundedChanged;

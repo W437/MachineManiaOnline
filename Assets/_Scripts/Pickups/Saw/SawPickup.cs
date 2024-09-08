@@ -8,7 +8,7 @@ public class SawPickup : Pickup
     {
         NetworkRunner runner = player.GetComponent<NetworkObject>().Runner;
 
-        Vector3 spawnPosition = player.transform.position + Vector3.right * SpawnOffsetX;
+        Vector3 spawnPosition = player.transform.position + Vector3.right * 4.5f;
         NetworkObject sawInstance = runner.Spawn(PickupPrefab, spawnPosition, Quaternion.identity);
         SawBehavior saw = sawInstance.GetComponent<SawBehavior>();
 

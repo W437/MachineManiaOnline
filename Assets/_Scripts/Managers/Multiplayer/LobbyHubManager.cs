@@ -37,7 +37,7 @@ public class LobbyHubManager
         PlayMessageAnimation(player, message);
     }
 
-    private void PlayDefaultEmoteAnimation(PlayerRef player, string emote)
+    void PlayDefaultEmoteAnimation(PlayerRef player, string emote)
     {
         var emoteText = InitializeText(player, emote, 63, true);
         if (emoteText != null)
@@ -46,7 +46,7 @@ public class LobbyHubManager
         }
     }
 
-    private void PlayCustomEmoteAnimation(PlayerRef player, string emote)
+    void PlayCustomEmoteAnimation(PlayerRef player, string emote)
     {
         var emoteText = InitializeText(player, emote, 55, true);
         if (emoteText != null)
@@ -55,7 +55,7 @@ public class LobbyHubManager
         }
     }
 
-    private void PlayMessageAnimation(PlayerRef player, string message)
+    void PlayMessageAnimation(PlayerRef player, string message)
     {
         var messageText = InitializeText(player, message, 28, false);
         if (messageText != null)
@@ -68,7 +68,7 @@ public class LobbyHubManager
         }
     }
 
-    private TextMeshProUGUI InitializeText(PlayerRef player, string content, float fontSize, bool startWithScaleZero)
+    TextMeshProUGUI InitializeText(PlayerRef player, string content, float fontSize, bool startWithScaleZero)
     {
         int playerIndex = PublicLobbyManager.Instance.FindPlayerPosition(player);
         if (playerIndex >= 0 && playerIndex < PublicLobbyManager.Instance.playerPosition.Length)
@@ -100,7 +100,7 @@ public class LobbyHubManager
         return null;
     }
 
-    private void AnimateEmoteText(TextMeshProUGUI textComponent, Action onComplete)
+    void AnimateEmoteText(TextMeshProUGUI textComponent, Action onComplete)
     {
         // after
         LeanTween.delayedCall(MESSAGE_DISPLAY_TIME, () =>
@@ -114,20 +114,20 @@ public class LobbyHubManager
         });
     }
 
-    private void ResetEmoteText(TextMeshProUGUI textComponent)
+    void ResetEmoteText(TextMeshProUGUI textComponent)
     {
         textComponent.gameObject.SetActive(false);
         textComponent.transform.localScale = Vector3.one;
         isMessageCooldown = false;
     }
 
-    private void FadeOutText(TextMeshProUGUI textComponent, Action onComplete)
+    void FadeOutText(TextMeshProUGUI textComponent, Action onComplete)
     {
         LeanTween.alphaText(textComponent.rectTransform, 0f, 0.5f)
             .setOnComplete(() => onComplete?.Invoke());
     }
 
-    private void ResetMessageText(TextMeshProUGUI textComponent)
+    void ResetMessageText(TextMeshProUGUI textComponent)
     {
         textComponent.gameObject.SetActive(false);
         textComponent.transform.localScale = Vector3.one;

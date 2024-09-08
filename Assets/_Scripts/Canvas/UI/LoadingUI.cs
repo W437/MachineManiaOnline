@@ -36,7 +36,7 @@ public class LoadingUI : MonoBehaviour
     string _currentLoadingMessage;
     ButtonHandler buttonHandler;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -51,44 +51,13 @@ public class LoadingUI : MonoBehaviour
         _imageTransitionEffect = loadingPanel.GetComponentInChildren<UITransitionEffect>();
     }
 
-    private void Start()
+    void Start()
     {
         if (buttonHandler == null)
         {
             buttonHandler = gameObject.AddComponent<ButtonHandler>();
         }
         buttonHandler.AddButtonEventTrigger(continueButton, OnContinue, new ButtonConfig(yOffset: -10f, returnTime: 0.05f, rotationLock: true));
-    }
-
-
-    private void OnContinue(Button button)
-    {
-        string playerName = usernameInput.text;
-
-        if (string.IsNullOrEmpty(playerName) || playerName.Length > 10 || playerName.Contains(" "))
-        {
-            NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Warning, "Name must be non-empty, shorter than 10 characters, and contain no spaces.");
-            return;
-        }
-
-        Debug.Log($"{playerName} - {PlayerData.Instance != null}");
-        PlayerData.Instance.PlayerName = playerName;
-
-        SaveSystem.SetFirstLaunchComplete();
-
-        PlayerData.Instance.SaveStats();
-
-
-        LeanTween.value(1, 0, 0.5f).setOnUpdate(value => _imageTransitionEffect.effectFactor = value)
-            .setOnComplete(() => { loadingScreen.SetActive(false); });
-
-        if (_loadingDotsCoroutine != null)
-        {
-            StopCoroutine(_loadingDotsCoroutine);
-            _loadingDotsCoroutine = null;
-        }
-
-        AudioManager.Instance.SetCutoffFrequency(1000, 5000);
     }
 
     public void SetProgress(float progress)
@@ -153,19 +122,7 @@ public class LoadingUI : MonoBehaviour
             });
         });
     }
-
-    private IEnumerator AnimateLoadingDots()
-    {
-        int _dotCount = 0;
-
-        while (true)
-        {
-            loadingText.text = _currentLoadingMessage + new string('.', _dotCount);
-            _dotCount = (_dotCount + 1) % 4;
-            yield return new WaitForSeconds(0.5f);
-        }
-    }
-
+    
     public void SetConnectionStatus(ConnectionStatus status, string message)
     {
         Debug.Log($"Connection status: {status}, message: {message}");
@@ -176,12 +133,13 @@ public class LoadingUI : MonoBehaviour
         if (status == ConnectionStatus.Connected || (status == ConnectionStatus.Failed && GameLauncher.LoadingScreenActive))
         {
             HideLoadingScreen();
+            AudioManager.Instance.SetCutoffFrequency(15000, 1.5f);
         }
     }
 
     public void ShowLoadingScreen(string message = "Connecting")
     {
-        AudioManager.Instance.SetCutoffFrequency(22000, 1000, 0.1f);
+        AudioManager.Instance.SetCutoffFrequency(1000, 0.1f);
         loadingScreen.SetActive(true);
 
         _currentLoadingMessage = message;
@@ -189,5 +147,46 @@ public class LoadingUI : MonoBehaviour
         loadingBar.value = 0f;
 
         _loadingDotsCoroutine ??= StartCoroutine(AnimateLoadingDots());
+    }
+    
+    void OnContinue(Button button)
+    {
+        string playerName = usernameInput.text;
+
+        if (string.IsNullOrEmpty(playerName) || playerName.Length > 10 || playerName.Contains(" "))
+        {
+            NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Warning, "Name must be non-empty, shorter than 10 characters, and contain no spaces.");
+            return;
+        }
+
+        Debug.Log($"{playerName} - {PlayerData.Instance != null}");
+        PlayerData.Instance.PlayerName = playerName;
+
+        SaveSystem.SetFirstLaunchComplete();
+
+        PlayerData.Instance.SaveStats();
+
+        LeanTween.value(1, 0, 0.5f).setOnUpdate(value => _imageTransitionEffect.effectFactor = value)
+            .setOnComplete(() => { loadingScreen.SetActive(false); });
+
+        if (_loadingDotsCoroutine != null)
+        {
+            StopCoroutine(_loadingDotsCoroutine);
+            _loadingDotsCoroutine = null;
+        }
+
+        AudioManager.Instance.SetCutoffFrequency(22000, 1);
+    }
+
+    IEnumerator AnimateLoadingDots()
+    {
+        int _dotCount = 0;
+
+        while (true)
+        {
+            loadingText.text = _currentLoadingMessage + new string('.', _dotCount);
+            _dotCount = (_dotCount + 1) % 4;
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 }

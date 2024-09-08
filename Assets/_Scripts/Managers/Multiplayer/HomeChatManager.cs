@@ -8,15 +8,14 @@ public class HomeChatManager : NetworkBehaviour
 {
     public static HomeChatManager Instance;
 
-    [SerializeField] private GameObject chatMessagePrefab;
-    private List<GameObject> messages = new List<GameObject>();
-    private Dictionary<string, System.Action> specialMessages = new Dictionary<string, System.Action>();
-
-    private ButtonHandler buttonHandler;
-
     public bool chatEffectsEnabled = true;
+    [SerializeField] GameObject chatMessagePrefab;
+    List<GameObject> messages = new List<GameObject>();
+    Dictionary<string, System.Action> specialMessages = new Dictionary<string, System.Action>();
 
-    private void Awake()
+    ButtonHandler buttonHandler;
+
+    void Awake()
     {
         if (Instance == null)
         {
@@ -97,7 +96,7 @@ public class HomeChatManager : NetworkBehaviour
         LobbyUI.Instance.ChatPanel.SetActive(!LobbyUI.Instance.ChatPanel.activeSelf);
     }
 
-    private void OnSendButtonClicked(Button button)
+    void OnSendButtonClicked(Button button)
     {
         if (!string.IsNullOrEmpty(LobbyUI.Instance.MessageInputField.text))
         {
@@ -106,23 +105,12 @@ public class HomeChatManager : NetworkBehaviour
         }
     }
 
-    private void SendChatMessage(string message)
+    void SendChatMessage(string message)
     {
         RPC_SendChatMessage(message, Runner.LocalPlayer);
     }
 
-    [Rpc(sources: RpcSources.All, targets: RpcTargets.All)]
-    public void RPC_SendChatMessage(string message, PlayerRef sender)
-    {
-        AddMessageToChat(sender.PlayerId.ToString(), message);
-
-        if (specialMessages.ContainsKey(message))
-        {
-            specialMessages[message]?.Invoke();
-        }
-    }
-
-    private void AddMessageToChat(string owner, string message)
+    void AddMessageToChat(string owner, string message)
     {
         GameObject newMessage = Instantiate(chatMessagePrefab, LobbyUI.Instance.MessageContent);
         var messageText = newMessage.transform.Find("message").GetComponent<TextMeshProUGUI>();
@@ -144,7 +132,7 @@ public class HomeChatManager : NetworkBehaviour
         LobbyUI.Instance.MessageScrollView.verticalNormalizedPosition = 0f;
     }
 
-    private void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
+    void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)
     {
         RectTransform contentRectTransform = listParent.GetComponent<RectTransform>();
         float itemHeight = prefab.GetComponent<RectTransform>().rect.height;
@@ -156,7 +144,7 @@ public class HomeChatManager : NetworkBehaviour
         Canvas.ForceUpdateCanvases();
     }
 
-    private void PlayWaveAnimation()
+    void PlayWaveAnimation()
     {
         if (chatEffectsEnabled)
         {
@@ -164,11 +152,22 @@ public class HomeChatManager : NetworkBehaviour
         }
     }
 
-    private void PlayCheerAnimation()
+    void PlayCheerAnimation()
     {
         if (chatEffectsEnabled)
         {
             Debug.Log("Playing cheer animation for all clients.");
+        }
+    }
+    
+    [Rpc(sources: RpcSources.All, targets: RpcTargets.All)]
+    public void RPC_SendChatMessage(string message, PlayerRef sender)
+    {
+        AddMessageToChat(sender.PlayerId.ToString(), message);
+
+        if (specialMessages.ContainsKey(message))
+        {
+            specialMessages[message]?.Invoke();
         }
     }
 }

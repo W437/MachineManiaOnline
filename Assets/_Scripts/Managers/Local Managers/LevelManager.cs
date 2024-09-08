@@ -6,15 +6,15 @@ public class LevelManager : MonoBehaviour
     public static LevelManager Instance;
 
     [Header("Level Settings")]
-    [SerializeField] private List<GameObject> levelPrefabs; // List of level prefabs
-    [SerializeField] private Transform levelParent; // Parent transform for instantiated levels
-    [SerializeField] private float playerSpacing = 5.0f; // Distance between players at the start line
+    [SerializeField] List<GameObject> levelPrefabs;
+    [SerializeField] Transform levelParent;
+    [SerializeField] float startPositionSpacing = 5.0f;
 
-    private GameObject currentLevel;
-    private Transform startLine;
-    private Transform finishLine;
+    GameObject currentLevel;
+    Transform startLine;
+    Transform finishLine;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -64,7 +64,7 @@ public class LevelManager : MonoBehaviour
         Vector3 startPosition = startLine.position;
         for (int i = 0; i < players.Count; i++)
         {
-            players[i].position = startPosition - new Vector3(i * playerSpacing, 0, 0);
+            players[i].position = startPosition - new Vector3(i * startPositionSpacing, 0, 0);
         }
     }
 }

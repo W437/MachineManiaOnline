@@ -5,7 +5,7 @@ public class PlayerData : MonoBehaviour
 {
     public static PlayerData Instance;
 
-    // Events for stat updates
+    // Events for UI stats updates
     public event Action<int> OnHealthUpdated;
     public event Action<int> OnLevelUpdated;
     public event Action<int> OnExperienceUpdated;
@@ -20,7 +20,7 @@ public class PlayerData : MonoBehaviour
 
     public LevelSystem levelSystem;
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -40,8 +40,7 @@ public class PlayerData : MonoBehaviour
         Health = 100;
     }
 
-    // Health
-    private int health;
+    int health;
     public int Health
     {
         get => health;
@@ -52,8 +51,7 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    // Level
-    private int level;
+    int level;
     public int Level
     {
         get => level;
@@ -65,8 +63,7 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    // Experience
-    private int experience;
+    int experience;
     public int Experience
     {
         get => experience;
@@ -78,8 +75,7 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    // Gold
-    private int gold;
+    int gold;
     public int Gold
     {
         get => gold;
@@ -91,8 +87,7 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    // Diamonds
-    private int diamonds;
+    int diamonds;
     public int Diamonds
     {
         get => diamonds;
@@ -104,7 +99,7 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    private int playersOnline;
+    int playersOnline;
     public int PlayersOnline
     {
         get => playersOnline;
@@ -131,7 +126,6 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    // Save stats using SaveSystem
     public void SaveStats()
     {
         PlayerSaveData data = new PlayerSaveData
@@ -148,7 +142,6 @@ public class PlayerData : MonoBehaviour
         SaveSystem.Save(data);
     }
 
-    // Load stats using SaveSystem
     public void LoadStats()
     {
         PlayerSaveData data = SaveSystem.Load();

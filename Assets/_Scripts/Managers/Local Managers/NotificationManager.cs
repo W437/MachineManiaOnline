@@ -8,24 +8,25 @@ public class NotificationManager : MonoBehaviour
 {
     public static NotificationManager Instance;
 
-    [Header("Notification Settings")]
-    [SerializeField] private GameObject notificationPrefab;
-    [SerializeField] private Transform topCenterNotificationParent;
-    [SerializeField] private Transform inGameNotificationParent;
+    public const float DISPLAY_DURATION = 3f;
+    public const float WARNING_DURATION = 4f;
+    public const float GAME_DURATION = 2f;
+    public const float SPACING = 150;
 
-    public const float DISPLAY_NOTIFICATION_DURATION = 3f;
-    public const float WARNING_NOTIFICATION_DURATION = 4f;
-    public const float GAME_NOTIFICATION_DURATION = 2f;
+    [Header("Notification Settings")]
+    [SerializeField] GameObject notificationPrefab;
+    [SerializeField] Transform topCenterNotificationParent;
+    [SerializeField] Transform inGameNotificationParent;
 
     [Header("Notification Icons")]
-    [SerializeField] private Sprite displayIcon;
-    [SerializeField] private Sprite warningIcon;
-    [SerializeField] private Sprite inGameIcon;
+    [SerializeField] Sprite displayIcon;
+    [SerializeField] Sprite warningIcon;
+    [SerializeField] Sprite inGameIcon;
 
-    private List<GameObject> topCenterNotifications = new();
-    private List<GameObject> inGameNotifications = new();
+    List<GameObject> topCenterNotifications = new();
+    List<GameObject> inGameNotifications = new();
 
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -50,20 +51,20 @@ public class NotificationManager : MonoBehaviour
         switch (type)
         {
             case NotificationType.Display:
-                CreateNotification(topCenterNotificationParent, message, DISPLAY_NOTIFICATION_DURATION, topCenterNotifications, displayIcon);
+                CreateNotification(topCenterNotificationParent, message, DISPLAY_DURATION, topCenterNotifications, displayIcon);
                 break;
             case NotificationType.Warning:
-                CreateNotification(topCenterNotificationParent, message, WARNING_NOTIFICATION_DURATION, topCenterNotifications, warningIcon);
+                CreateNotification(topCenterNotificationParent, message, WARNING_DURATION, topCenterNotifications, warningIcon);
                 break;
             case NotificationType.InGame:
-                CreateInGameNotification(inGameNotificationParent, message, GAME_NOTIFICATION_DURATION, inGameNotifications, inGameIcon);
+                CreateInGameNotification(inGameNotificationParent, message, GAME_DURATION, inGameNotifications, inGameIcon);
                 break;
         }
 
         Debug.Log("Notification shown");
     }
 
-    private void CreateNotification(Transform parent, string message, float duration, List<GameObject> notificationsList, Sprite icon)
+    void CreateNotification(Transform parent, string message, float duration, List<GameObject> notificationsList, Sprite icon)
     {
         if (notificationsList.Count >= 3)
         {
@@ -83,24 +84,7 @@ public class NotificationManager : MonoBehaviour
         AdjustNotificationPositions(notificationsList);
     }
 
-    private IEnumerator DisplayNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
-    {
-        LeanTween.alphaCanvas(notification.CanvasGroup, 1, 0.5f);
-
-        yield return new WaitForSeconds(duration);
-
-        if (notification != null)
-        {
-            LeanTween.alphaCanvas(notification.CanvasGroup, 0, 0.5f).setOnComplete(() =>
-            {
-                notificationsList.Remove(notification.gameObject);
-                Destroy(notification.gameObject);
-                AdjustNotificationPositions(notificationsList);
-            }); 
-        }
-    }
-
-    private void CreateInGameNotification(Transform parent, string message, float duration, List<GameObject> notificationsList, Sprite icon)
+    void CreateInGameNotification(Transform parent, string message, float duration, List<GameObject> notificationsList, Sprite icon)
     {
         if (notificationsList.Count >= 3)
         {
@@ -119,7 +103,42 @@ public class NotificationManager : MonoBehaviour
         StartCoroutine(DisplayInGameNotification(notificationScript, duration, notificationsList));
     }
 
-    private IEnumerator DisplayInGameNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
+    void AdjustNotificationPositions(List<GameObject> notificationsList)
+    {
+        for (int i = 0; i < notificationsList.Count; i++)
+        {
+            GameObject notification = notificationsList[i];
+            LeanTween.moveLocalY(notification, -((notificationsList.Count - 1 - i) * SPACING), 0.3f).setEase(LeanTweenType.easeOutExpo); // Adjust Y pos
+        }
+    }
+
+    void FadeOutAndDestroy(GameObject notification)
+    {
+        if (notification != null)
+        {
+            var canvasGroup = notification.GetComponent<CanvasGroup>();
+            LeanTween.alphaCanvas(canvasGroup, 0, 0.5f).setOnComplete(() => Destroy(notification));
+        }
+    }
+    
+    IEnumerator DisplayNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
+    {
+        LeanTween.alphaCanvas(notification.CanvasGroup, 1, 0.5f);
+
+        yield return new WaitForSeconds(duration);
+
+        if (notification != null)
+        {
+            LeanTween.alphaCanvas(notification.CanvasGroup, 0, 0.5f).setOnComplete(() =>
+            {
+                notificationsList.Remove(notification.gameObject);
+                Destroy(notification.gameObject);
+                AdjustNotificationPositions(notificationsList);
+            }); 
+        }
+    }
+    
+    IEnumerator DisplayInGameNotification(MainNotification notification, float duration, List<GameObject> notificationsList)
     {
         RectTransform rectTransform = notification.GetComponent<RectTransform>();
         rectTransform.localPosition = new Vector3(0, -10, 0); // Start 10 units below the center
@@ -136,26 +155,6 @@ public class NotificationManager : MonoBehaviour
                 notificationsList.Remove(notification.gameObject);
                 Destroy(notification.gameObject);
             });
-        }
-    }
-
-    private void AdjustNotificationPositions(List<GameObject> notificationsList)
-    {
-        float _offset = 150f;
-
-        for (int i = 0; i < notificationsList.Count; i++)
-        {
-            GameObject notification = notificationsList[i];
-            LeanTween.moveLocalY(notification, -((notificationsList.Count - 1 - i) * _offset), 0.3f).setEase(LeanTweenType.easeOutExpo); // Adjust Y pos
-        }
-    }
-
-    private void FadeOutAndDestroy(GameObject notification)
-    {
-        if (notification != null)
-        {
-            var canvasGroup = notification.GetComponent<CanvasGroup>();
-            LeanTween.alphaCanvas(canvasGroup, 0, 0.5f).setOnComplete(() => Destroy(notification));
         }
     }
 }

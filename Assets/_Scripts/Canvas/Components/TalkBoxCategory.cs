@@ -3,7 +3,7 @@ using TMPro;
 
 public class TalkBoxCategory : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI categoryText;
+    [SerializeField] TextMeshProUGUI categoryText;
 
     public void Initialize(string category)
     {

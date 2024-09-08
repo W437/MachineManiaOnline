@@ -16,7 +16,7 @@ public class BombBehavior : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_Explode()
+    void RPC_Explode()
     {
         Collider2D[] hitPlayers = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
         foreach (var hit in hitPlayers)
@@ -31,7 +31,7 @@ public class BombBehavior : NetworkBehaviour
         Runner.Despawn(Object);
     }
 
-    private void OnDrawGizmosSelected()
+    void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, explosionRadius);

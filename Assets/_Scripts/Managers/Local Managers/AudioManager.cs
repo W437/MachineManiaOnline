@@ -15,35 +15,28 @@ public class AudioManager : MonoBehaviour
     public static AudioManager Instance;
 
     [Header("Audio Sources")]
-    [SerializeField] private AudioSource musicSource;
-    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] AudioSource musicSource;
+    [SerializeField] AudioSource sfxSource;
 
     [Header("Audio Mixer")]
-    [SerializeField] private AudioMixer mainMixer;
+    [SerializeField] AudioMixer mainMixer;
 
     [Header("Mixer Groups")]
-    [SerializeField] private AudioMixerGroup inGameMusicGroup;
-    [SerializeField] private AudioMixerGroup inGameSFXGroup;
-    [SerializeField] private AudioMixerGroup menuSFXGroup;
-    [SerializeField] private AudioMixerGroup masterGroup;
+    [SerializeField] AudioMixerGroup inGameMusicGroup;
+    [SerializeField] AudioMixerGroup inGameSFXGroup;
+    [SerializeField] AudioMixerGroup menuSFXGroup;
+    [SerializeField] AudioMixerGroup masterGroup;
 
     [Header("Menu SFX Clips")]
-    [SerializeField] private List<MenuSFXClip> menuSFXClips;
+    [SerializeField] List<MenuSFXClip> menuSFXClips;
+    Dictionary<MenuSFX, AudioClip> menuSFXClipMap;
 
     [Header("Music Tracks")]
-    [SerializeField] private List<AudioClip> musicTracks;
+    [SerializeField] List<AudioClip> musicTracks;
+    [SerializeField] public AudioClip yaketySax;
+    int _lastTrackIndex = -1;
 
-    private int _lastTrackIndex = -1;
-
-    public enum MenuSFX
-    {
-        Click,
-        Error
-    }
-
-    private Dictionary<MenuSFX, AudioClip> menuSFXClipMap;
-
-    private void Awake()
+    void Awake()
     {
         if (Instance == null)
         {
@@ -58,12 +51,51 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    void Start()
     {
         PlayRandomMusic();
     }
 
-    private void InitializeMenuSFXClipMap()
+    public void SetCutoffFrequency(float toValue, float duration = 1f)
+    {
+        mainMixer.GetFloat("lowpass", out float value);
+        LeanTween.value(gameObject, value, toValue, duration).setOnUpdate((float value) =>
+        {
+            mainMixer.SetFloat("lowpass", value);
+        });
+    }
+
+    public void SetVolume(string parameterName, float volume)
+    {
+        mainMixer.SetFloat(parameterName, volume);
+    }
+
+    public void PlayMenuSFX(MenuSFX sfx)
+    {
+        if (sfxSource.isPlaying) return; // Prevent overlap
+
+        if (menuSFXClipMap.TryGetValue(sfx, out AudioClip clip))
+        {
+            PlaySFX(clip, menuSFXGroup);
+        }
+    }
+
+    public void PlayGameSFX(AudioClip gameSFX)
+    {
+        if (sfxSource.isPlaying)
+        {
+            sfxSource.Stop();
+        }
+
+        PlaySFX(gameSFX, inGameSFXGroup);
+    }
+
+    public void PlaySpecificSoundtrack(AudioClip track)
+    {
+        StartCoroutine(FadeInMusic(track));
+    }
+
+    void InitializeMenuSFXClipMap()
     {
         menuSFXClipMap = new Dictionary<MenuSFX, AudioClip>();
         foreach (var menuSFXClip in menuSFXClips)
@@ -75,21 +107,13 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private void AssignAudioMixerGroups()
+    void AssignAudioMixerGroups()
     {
         musicSource.outputAudioMixerGroup = inGameMusicGroup;
         sfxSource.outputAudioMixerGroup = inGameSFXGroup;
     }
 
-    public void PlayMenuSFX(MenuSFX sfx)
-    {
-        if (menuSFXClipMap.TryGetValue(sfx, out AudioClip clip))
-        {
-            PlaySFX(clip, menuSFXGroup);
-        }
-    }
-
-    private void PlaySFX(AudioClip clip, AudioMixerGroup group = null)
+    void PlaySFX(AudioClip clip, AudioMixerGroup group = null)
     {
         if (sfxSource != null && clip != null)
         {
@@ -98,7 +122,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private void PlayRandomMusic()
+    public void PlayRandomMusic()
     {
         int randomIndex;
         do
@@ -112,7 +136,7 @@ public class AudioManager : MonoBehaviour
         StartCoroutine(FadeInMusic(track));
     }
 
-    private IEnumerator FadeInMusic(AudioClip newTrack)
+    IEnumerator FadeInMusic(AudioClip newTrack)
     {
         if (musicSource.isPlaying)
         {
@@ -123,7 +147,7 @@ public class AudioManager : MonoBehaviour
         musicSource.Play();
         musicSource.volume = 0f;
 
-        float fadeDuration = 2f;
+        float fadeDuration = 0.5f;
         float timer = 0f;
 
         while (timer < fadeDuration)
@@ -137,7 +161,7 @@ public class AudioManager : MonoBehaviour
         StartCoroutine(PlayNextTrackWithFade());
     }
 
-    private IEnumerator FadeOutMusic()
+    IEnumerator FadeOutMusic()
     {
         float fadeDuration = 2f;
         float timer = 0f;
@@ -153,7 +177,7 @@ public class AudioManager : MonoBehaviour
         musicSource.Stop();
     }
 
-    private IEnumerator PlayNextTrackWithFade()
+    IEnumerator PlayNextTrackWithFade()
     {
         while (musicSource.isPlaying)
         {
@@ -167,16 +191,10 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void SetCutoffFrequency(float fromValue, float toValue, float duration = 1f)
+    public enum MenuSFX
     {
-        LeanTween.value(gameObject, fromValue, toValue, duration).setOnUpdate((float value) =>
-        {
-            mainMixer.SetFloat("lowpass", value);
-        });
-    }
-
-    public void SetVolume(string parameterName, float volume)
-    {
-        mainMixer.SetFloat(parameterName, volume);
+        Click,
+        Error,
+        InGameSFXOne
     }
 }

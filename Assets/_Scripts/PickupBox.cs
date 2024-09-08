@@ -1,43 +1,48 @@
 using Fusion;
 using UnityEngine;
+using static Unity.Collections.Unicode;
 
 public class PickupBox : MonoBehaviour
 {
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
-      
+        // Check if the collision object has a "Player" tag
         if (collision.gameObject.CompareTag("Player"))
         {
-            var runner = collision.gameObject.GetComponent<NetworkObject>();
-            if (!runner.HasInputAuthority)
+            // Get the player's NetworkObject
+            var playerNetworkObject = collision.gameObject.GetComponent<NetworkObject>();
+
+            // Ensures the local player has InputAuthority before picking up the item
+            if (!playerNetworkObject.HasInputAuthority)
+            {
+                Debug.Log("Not input authority (Shared Mode)");
+                return;
+            }
+
+            var playerPickupSystem = collision.gameObject.GetComponent<PickupSystem>();
+
+            if (playerPickupSystem == null)
+            {
+                Debug.LogError("PickupSystem not found on the player!");
+                return; 
+            }
+
+            if (playerPickupSystem.GetCurrentPickup() != null)
             {
                 return;
-            }       
-    
-
-            //var playerPickupSystem = collision.gameObject.GetComponent<PickupSystem>();
-            if (!runner.transform.gameObject.TryGetComponent(out PickupSystem playerPickupSystem))
-            {
-                Debug.Log("Failed to get PickUpSystem");
-                
             }
-            
-            if (playerPickupSystem != null)
-            {
-                if (playerPickupSystem.GetCurrentPickup() != null) return;
 
-                Pickup randomPickup = PickupManager.Instance.GetRandomPickup(playerPickupSystem.PlayerRank, playerPickupSystem.TotalPlayers);
-                if (randomPickup != null)
-                {
-                    playerPickupSystem.PickupItem(randomPickup);
-                    PlayPickupAnimation();
-                }
+            Pickup randomPickup = PickupManager.Instance.GetRandomPickup(playerPickupSystem.PlayerRank, playerPickupSystem.TotalPlayers);
+
+            if (randomPickup != null)
+            {
+                playerPickupSystem.PickupItem(randomPickup);
+                PlayPickupAnimation();
             }
-           
         }
     }
 
-    private void PlayPickupAnimation()
+    void PlayPickupAnimation()
     {
         Vector3 originalScale = transform.localScale;
         Vector3 popOutScale = originalScale * 1.1f;

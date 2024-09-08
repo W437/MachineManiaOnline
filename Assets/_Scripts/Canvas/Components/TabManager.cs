@@ -16,9 +16,9 @@ public class TabManager : MonoBehaviour
     public Color activeTextColor = Color.white; // Hex FFFFFF
     public Color inactiveTextColor = new Color(0.071f, 0.212f, 0.369f); // Hex 12365E
 
-    private int currentTabIndex = 0;
+    int currentTabIndex = 0;
 
-    private ButtonHandler buttonHandler;
+    ButtonHandler buttonHandler;
 
     void Start()
     {
@@ -26,7 +26,7 @@ public class TabManager : MonoBehaviour
         InitializeTabs();
     }
 
-    private void InitializeTabs()
+    void InitializeTabs()
     {
         var config = new ButtonConfig(
             rotationLock: true,
@@ -49,7 +49,7 @@ public class TabManager : MonoBehaviour
         UpdateContentVisibility();
     }
 
-    private void OnTabSelected(int index)
+    void OnTabSelected(int index)
     {
         if (index == currentTabIndex) return;
 
@@ -60,7 +60,7 @@ public class TabManager : MonoBehaviour
         UpdateContentVisibility();
     }
 
-    private void UpdateContentVisibility()
+    void UpdateContentVisibility()
     {
         for (int i = 0; i < contentContainers.Length; i++)
         {
@@ -68,7 +68,7 @@ public class TabManager : MonoBehaviour
         }
     }
 
-    private void SetTabColor(int index, bool isActive)
+    void SetTabColor(int index, bool isActive)
     {
         Button button = null;
         switch (index)

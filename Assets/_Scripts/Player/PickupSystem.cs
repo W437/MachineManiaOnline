@@ -3,19 +3,28 @@ using UnityEngine;
 
 public class PickupSystem : NetworkBehaviour
 {
-    private Pickup currentPickup;
-    private PlayerController player;
+    Pickup currentPickup;
+    PlayerController player;
 
     public int PlayerRank { get; set; }
     public int TotalPlayers { get; set; }
 
-    private void Awake()
+    void Awake()
     {
         player = GetComponent<PlayerController>();
+    }
+    
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && currentPickup != null && player.CanMove)
+        {
+            UsePickup();
+        }
     }
 
     public override void Spawned()
     {
+        Debug.Log("PickupSystem spawned");
     }
 
     public void PickupItem(Pickup pickup)
@@ -39,27 +48,20 @@ public class PickupSystem : NetworkBehaviour
         }
     }
 
-    private void UpdateUISlotSprite(Pickup pickup)
+    void UpdateUISlotSprite(Pickup pickup)
     {
         if (GameUI.Instance != null)
         {
-            GameUI.Instance.SetSlotSprite(pickup.GetSprite());
+            Debug.Log("PickupSprite: " + pickup.GetPickupSprite());
+            GameUI.Instance.SetSlotSprite(pickup.GetPickupSprite());
         }
     }
 
-    private void ClearUISlotSprite()
+    void ClearUISlotSprite()
     {
         if (GameUI.Instance != null)
         {
             GameUI.Instance.ClearSlotSprite();
-        }
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftShift) && currentPickup != null && player.CanMove)
-        {
-            UsePickup();
         }
     }
 }

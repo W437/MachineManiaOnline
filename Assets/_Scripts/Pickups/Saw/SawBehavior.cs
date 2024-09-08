@@ -26,7 +26,7 @@ public class SawBehavior : NetworkBehaviour
         movementDirection = transform.right;
         currentForce = initialForce;
         originalScale = transform.localScale;
-        transform.localScale = Vector3.zero; // Ensure we start from a scale of zero for proper tweening
+        transform.localScale = Vector3.zero;
     }
 
     public void Initialize()
@@ -80,11 +80,11 @@ public class SawBehavior : NetworkBehaviour
         {
             StartCoroutine(SawHitEffect(collision.gameObject));
         }
-       
-        
     }
+
     private IEnumerator SawHitEffect(GameObject transform)
     {
+        AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.InGameSFXOne);
         DisablePlayerMovement(transform, false);
         Debug.Log("Player has controls disabled");
         yield return new WaitForSeconds(deathTimer);

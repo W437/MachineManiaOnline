@@ -11,27 +11,17 @@ public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
 
-    [SerializeField] private NetworkPrefabRef net_PublicLobbyManagerPrefab;
-    [SerializeField] private NetworkPrefabRef net_PrivateLobbyManagerPrefab;
-    [SerializeField] private NetworkPrefabRef net_ChatManagerPrefab;
-    [SerializeField] private NetworkPrefabRef net_GameManagerPrefab;
-    [SerializeField] private NetworkPrefabRef net_PlayerPrefab;
-    [SerializeField] private GameObject cameraPrefab;
+    [SerializeField] NetworkPrefabRef net_PublicLobbyManagerPrefab;
+    [SerializeField] NetworkPrefabRef net_PrivateLobbyManagerPrefab;
+    [SerializeField] NetworkPrefabRef net_ChatManagerPrefab;
+    [SerializeField] NetworkPrefabRef net_GameManagerPrefab;
+    [SerializeField] NetworkPrefabRef net_PlayerPrefab;
+    [SerializeField] GameObject cameraPrefab;
 
-    private NetworkRunner _runner;
-    private NetInputHandler _inputHandler;
+    NetworkRunner _runner;
+    //NetInputHandler _inputHandler;
 
-    public enum ConnectionStatus
-    {
-        Disconnected,
-        Connecting,
-        Failed,
-        Connected,
-        Loading,
-        Loaded
-    }
-
-    private void Awake()
+    void Awake()
     { 
         if (Instance == null)
         {
@@ -82,12 +72,12 @@ public class FusionLauncher : MonoBehaviour
             _runner.name = name;
             _runner.ProvideInput = true;
 
-            var inputHandler = FindObjectOfType<NetInputHandler>();
+/*            var inputHandler = FindObjectOfType<NetInputHandler>();
 
             if (inputHandler != null)
             {
                 _runner.AddCallbacks(inputHandler);
-            }
+            }*/
 
             var startGameArgs = new StartGameArgs
             {
@@ -191,5 +181,15 @@ public class FusionLauncher : MonoBehaviour
     public NetworkRunner Runner()
     {
         return _runner;
+    }
+
+    public enum ConnectionStatus
+    {
+        Disconnected,
+        Connecting,
+        Failed,
+        Connected,
+        Loading,
+        Loaded
     }
 }
