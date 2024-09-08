@@ -57602,9 +57602,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allPickupProbabilities:
   - pickup: {fileID: 11400000, guid: 7e7d98d73b9e02046a431a7284aa0166, type: 2}
-    baseProbability: 70
+    baseProbability: 0
   - pickup: {fileID: 11400000, guid: e439fd76e64809743bd5710facc0a6d5, type: 2}
-    baseProbability: 80
+    baseProbability: 0
   - pickup: {fileID: 11400000, guid: 3abbc30e4dadaf347a636218ef104eff, type: 2}
     baseProbability: 70
   - pickup: {fileID: 11400000, guid: c48a1d1b4bfbc454a98fed2b0e6091e7, type: 2}
@@ -57614,9 +57614,9 @@ MonoBehaviour:
   - pickup: {fileID: 11400000, guid: 3abbc30e4dadaf347a636218ef104eff, type: 2}
     baseProbability: 75
   - pickup: {fileID: 11400000, guid: cd00618f187be6442b661f34f60f5bfa, type: 2}
-    baseProbability: 60
+    baseProbability: 0
   - pickup: {fileID: 11400000, guid: 7393c06c4698ce04c8b0e4d651d68dc2, type: 2}
-    baseProbability: 60
+    baseProbability: 0
   - pickup: {fileID: 11400000, guid: 0b193f9629279f34fba2b3864049266d, type: 2}
     baseProbability: 60
 --- !u!4 &1887013965
