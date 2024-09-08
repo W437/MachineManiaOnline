@@ -98,7 +98,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private void HandleAnimations()
     {
-        // player is grounded
+
+
+        // If grounded and not falling
         if (_grounded && _frameVelocity.y <= 0)
         {
             if (_isFalling)
@@ -112,42 +114,53 @@ public class PlayerController : MonoBehaviour, IPlayerController
             if (_frameVelocity.x > 0)
             {
                 // Player is running
-                _isRunning = true;
-                _isIdle = false;
-                _animator.SetBool("IsRunning", true);
-                _animator.SetBool("IsIdle", false);
+                if (!_isRunning)
+                {
+                    _isRunning = true;
+                    _isIdle = false;
+                    _animator.SetBool("IsRunning", true);
+                    _animator.SetBool("IsIdle", false);
+                }
             }
             else
             {
                 // Player is idle
-                _isRunning = false;
-                _isIdle = true;
-                _animator.SetBool("IsRunning", false);
-                _animator.SetBool("IsIdle", true);
+                if (!_isIdle)
+                {
+                    _isRunning = false;
+                    _isIdle = true;
+                    _animator.SetBool("IsRunning", false);
+                    _animator.SetBool("IsIdle", true);
+                }
             }
         }
 
-        // player is jumping
+        // If player is jumping
         if (_isJumping)
         {
             _animator.SetBool("IsJump", true);
             _isJumping = false;
         }
 
+        // Handle falling animation
         if (_rb.velocity.y < 0 && !_grounded)
         {
-            _isFalling = true;
-            _animator.SetBool("IsFalling", true);
-            _animator.SetBool("IsJump", false);
+            if (!_isFalling)
+            {
+                _isFalling = true;
+                _animator.SetBool("IsFalling", true);
+                _animator.SetBool("IsJump", false);
+            }
         }
 
-        // landing animation
+        // Handle landing animation
         if (_grounded && _isLanding)
         {
             _isLanding = false;
             _animator.SetBool("IsLand", false);
         }
     }
+
 
 
 
