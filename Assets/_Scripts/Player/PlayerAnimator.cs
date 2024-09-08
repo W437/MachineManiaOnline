@@ -1,4 +1,5 @@
 using UnityEngine;
+using Fusion;
 
 /// <summary>
 /// VERY primitive animator example.
@@ -32,10 +33,14 @@ public class PlayerAnimator : MonoBehaviour
     private bool _grounded;
     private ParticleSystem.MinMaxGradient _currentGradient;
 
+    private NetworkObject networkObject;
+    
+
     private void Awake()
     {
         _source = GetComponent<AudioSource>();
         _player = GetComponentInParent<IPlayerController>();
+        networkObject = GetComponentInParent<NetworkObject>();
     }
 
     private void OnEnable()
@@ -56,8 +61,12 @@ public class PlayerAnimator : MonoBehaviour
 
     private void Update()
     {
+       
         if (_player == null) return;
-
+        if (!networkObject.HasStateAuthority)
+        {
+            return;
+        }
         DetectGroundColor();
 
         HandleSpriteFlip();

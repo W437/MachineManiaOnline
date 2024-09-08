@@ -104,6 +104,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
         {
             // Stop all movement if not allowed to move.
             _rb.velocity = Vector2.zero;
+            
         }
     }
 
@@ -200,12 +201,16 @@ public class PlayerController : MonoBehaviour, IPlayerController
         {
             var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
+            _animator.SetBool("IsRunning", false);
+            _animator.SetBool("IsIdle", true);
         }
         // Accelerate towards the input direction.
         else
         {
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
-            Debug.Log(_frameVelocity.x);
+            _animator.SetBool("IsRunning", true);
+            _animator.SetBool("IsIdle", false);
+
         }
     }
     public void ChangeSpeedAndAcceleration(float speedMultiplier,float accelertionMulitplier)
@@ -240,7 +245,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private void ApplyMovement()
     {
         _rb.velocity = _frameVelocity;
-        _animator.SetBool("IsRunning", true);
+       
     }
 
 
