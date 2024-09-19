@@ -7,4 +7,5 @@ public class MainNotification : MonoBehaviour
     public TextMeshProUGUI MessageText;
     public CanvasGroup CanvasGroup;
     public Image IconImage;
+    public GameObject IconParent;
 }

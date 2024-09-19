@@ -24,7 +24,7 @@ public class PickupSystem : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log("PickupSystem spawned");
+
     }
 
     public void PickupItem(Pickup pickup)

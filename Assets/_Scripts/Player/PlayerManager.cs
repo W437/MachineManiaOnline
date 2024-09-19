@@ -66,23 +66,16 @@ public class PlayerManager : NetworkBehaviour
         RpcOnPlayerKilled();
     }
 
-    public void Respawn()
-    {
-        if (IsAlive) return; 
-        IsAlive = true;
-
-        transform.position = respawnPosition + new Vector3(0, 2.0f, 0);
-
-        StartCoroutine(BlinkAndRespawn());
-    }
     public bool CanInteract()
     {
         return Time.time - lastMessageTime >= HUB_MSG_COOLDOWN_DURATION;
     }
+    
     public void UpdateCooldown()
     {
         lastMessageTime = Time.time;
     }
+    
     public void AddScore(int points)
     {
         if (HasStateAuthority)
@@ -104,19 +97,6 @@ public class PlayerManager : NetworkBehaviour
         set => _isReadyInt = value ? _isReadyInt + 1 : -(_isReadyInt + 1);
     }
 
-    IEnumerator BlinkAndRespawn()
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            spriteRenderer.enabled = false;
-            yield return new WaitForSeconds(0.25f);
-            spriteRenderer.enabled = true;
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        GetComponent<PlayerController>().CanMove = true;
-    }
-
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RpcOnPlayerKilled()
     {
@@ -124,16 +104,8 @@ public class PlayerManager : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void RpcOnPlayerRespawned()
-    {
-        spriteRenderer.enabled = true;
-        StartCoroutine(BlinkAndRespawn());
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RpcUpdateScore(int newScore)
     {
         // Update the player's score UI or other logic
     }
-
 }

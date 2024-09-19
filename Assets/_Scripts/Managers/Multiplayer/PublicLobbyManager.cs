@@ -33,6 +33,8 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     [Networked] private bool net_isTimerRunning { get; set; }
     [Networked] private float net_remainingTime { get; set; }
 
+
+
     void Awake()
     {
         if (Instance == null)
@@ -46,6 +48,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
 
         InitializeLobbyPositions();
+        PublicLobbyUI.Instance.ConnectToLobby();
         _gameScene = SceneRef.FromIndex(1);
         _hubManager = new LobbyHubManager();
     }
@@ -63,9 +66,9 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         Runner.AddCallbacks(this);
         if (HasStateAuthority)
         {
-            ManiaNews = new ManiaNews(LobbyUI.Instance.maniaNewsParent, 3.5f);
+            ManiaNews = new ManiaNews(PublicLobbyUI.Instance.maniaNewsParent, 3.5f);
             ManiaNews.OnNewsChanged += OnNewsChanged;
-            RpcSetIsSpawned();
+            net_isSpawned = true;
             SelectRandomNews();
         }
     }
@@ -128,12 +131,12 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     
     void InitializeLobbyPositions()
     {
-        if (LobbyUI.Instance != null)
+        if (PublicLobbyUI.Instance != null)
         {
             playerPosition = new PublicLobbyPosition[MAX_PLAYERS];
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
-                Transform slotTransform = LobbyUI.Instance.PlayerSlotsParent.GetChild(i);
+                Transform slotTransform = PublicLobbyUI.Instance.PlayerSlotsParent.GetChild(i);
                 playerPosition[i] = new PublicLobbyPosition
                 {
                     Position = slotTransform,
@@ -162,7 +165,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     void UpdateTimerUI()
     {
         int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
-        LobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
+        PublicLobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
 
         // Broadcast the updated time to all clients
         RpcUpdateTimer(net_remainingTime);
@@ -170,8 +173,8 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     void ShowConnectingOverlay()
     {
-        LobbyUI.Instance.ConnectingOverlay.SetActive(true);
-        LobbyUI.Instance.ConnectingText.text = "Joining Game";
+        PublicLobbyUI.Instance.ConnectingOverlay.SetActive(true);
+        PublicLobbyUI.Instance.ConnectingText.text = "Joining Game";
     }
 
     void StartGame()
@@ -278,14 +281,8 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             net_remainingTime = newTime;
             int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
-            LobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
+            PublicLobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
         }
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void RpcSetIsSpawned()
-    {
-        net_isSpawned = true;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

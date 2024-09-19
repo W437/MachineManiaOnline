@@ -31,9 +31,9 @@ public class TabManager : MonoBehaviour
         var config = new ButtonConfig(
             rotationLock: true,
             customAnimation: true,
-            returnTime: 0.1f,
+            returnTime: 0f,
             yOffset: 0,
-            rotation: new Vector3(30, 0, 0)
+            rotation: new Vector3(40, 0, 0)
         );
 
         buttonHandler.AddButtonEventTrigger(generalButton, (button) => OnTabSelected(0), config);

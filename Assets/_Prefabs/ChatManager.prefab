@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8277241943146937139}
   - component: {fileID: 1259428933435664312}
   - component: {fileID: 3624414200203399642}
+  - component: {fileID: 8614615750799674980}
   m_Layer: 0
   m_Name: ChatManager
   m_TagString: Untagged
@@ -27,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 7045806500645167158}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 22.049034, y: 16.98947, z: 171.19691}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -45,9 +46,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11b6406b76895fe42a040b5e1018ecc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatMessagePrefab: {fileID: 3588865336957506395, guid: 18fc9619ea7d2734caa3bd9f69622db5, type: 3}
-  messages: []
   chatEffectsEnabled: 1
+  chatMessagePrefab: {fileID: 3588865336957506395, guid: 18fc9619ea7d2734caa3bd9f69622db5, type: 3}
 --- !u!114 &3624414200203399642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,3 +66,15 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1259428933435664312}
+--- !u!114 &8614615750799674980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7045806500645167158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14ab722f110460a44b4044064c079335, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -68,6 +69,7 @@ public class ButtonHandler : MonoBehaviour
 
         SetTogglePosition(switchButton, false);
     }
+
     public void AddSliderEventTrigger(Slider slider, float growFactor = 1.5f, float animationTime = 0.1f)
     {
         EventTrigger trigger = slider.handleRect.gameObject.GetComponent<EventTrigger>();
@@ -264,7 +266,6 @@ public class ButtonHandler : MonoBehaviour
             }
             else if (!config.ActivateOnPress)
             {
-                // Delay the callback to ensure animation completion
                 LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutBounce).setOnComplete(() =>
                 {
                     LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
@@ -316,6 +317,12 @@ public class ButtonHandler : MonoBehaviour
         bool currentState = switchStates[switchButton];
         switchStates[switchButton] = !currentState;
         SetTogglePosition(switchButton, switchStates[switchButton]);
+    }
+
+    public void SetSwitchState(Button switchButton, bool state)
+    {
+        switchStates[switchButton] = state;
+        SetTogglePosition(switchButton, state);
     }
 
     void SetTogglePosition(Button switchButton, bool isOn)
@@ -391,20 +398,20 @@ public class ButtonHandler : MonoBehaviour
     {
         LeanTween.scale(slider.handleRect.gameObject, originalHandleScales[slider], animationTime).setEase(LeanTweenType.easeOutExpo);
     }
-    
+
     IEnumerator SwitchCooldown(Button switchButton)
     {
         switchCooldowns[switchButton] = true;
         yield return new WaitForSeconds(0.5f);
         switchCooldowns[switchButton] = false;
     }
-    
+
     IEnumerator InvokeCallbackAfterDelay(Button button, float delay)
     {
         yield return new WaitForSeconds(delay);
         buttonCallbacks[button]?.Invoke(button);
     }
-    
+
     IEnumerator ButtonCooldown(Button button)
     {
         buttonCooldowns[button] = true;
@@ -431,7 +438,7 @@ public class ButtonConfig
     public bool CooldownEnabled { get; set; } // Enable or disable cooldown
 
     // kONSTRUCTOR
-    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0.133f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
+    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
     {
         YOffset = yOffset;
         ShrinkScale = shrinkScale;

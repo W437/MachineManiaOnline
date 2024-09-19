@@ -11,8 +11,13 @@ using UnityEngine.UI;
 public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
     public static PrivateLobbyManager Instance;
+
+    public PrivateLobbyPosition[] PrivateLobbyPositions { get; private set; }
+
     PrivateLobbyPosition[] lobbyPositionMarkers;
     Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
+
+
 
     void Awake()
     {
@@ -27,26 +32,33 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    void Start()
+    {
+        InitializeLobbyPositions();
+    }
+
     void InitializeLobbyPositions()
     {
-        if (HomeUI.Instance != null)
+        if (HomeUI.Instance.PrivateLobbyPositionsParent != null)
         {
-            lobbyPositionMarkers = HomeUI.Instance.PrivateLobbyPositions;
+            int childCount = HomeUI.Instance.PrivateLobbyPositionsParent.childCount;
+            PrivateLobbyPositions = new PrivateLobbyPosition[childCount];
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform child = HomeUI.Instance.PrivateLobbyPositionsParent.GetChild(i);
+                PrivateLobbyPositions[i] = new PrivateLobbyPosition(child);
+            }
         }
     }
 
     public override void Spawned()
     {
+        Debug.Log("Adding callbacks");
+        Runner.AddCallbacks(this);
+
         if (HasStateAuthority)
         {
-            InitializeLobbyPositions();
-            Runner.AddCallbacks(this);
-
-            // handle local player spawning
-            if (Runner.IsSharedModeMasterClient)
-            {
-                OnPlayerJoined(Runner, Runner.LocalPlayer);
-            }
+            OnPlayerJoined(Runner, Runner.LocalPlayer);
         }
     }
 
@@ -80,10 +92,11 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void RpcSetPlayerPosition(PlayerRef player, int positionIndex)
+    void SetPlayerPos(PlayerRef player, int positionIndex)
     {
-        if (lobbyPositionMarkers != null && positionIndex < lobbyPositionMarkers.Length)
+        Debug.Log($"INSIDE: {lobbyPositionMarkers}, {lobbyPositionMarkers.Length} player {positionIndex}");
+
+        if (positionIndex < lobbyPositionMarkers.Length)
         {
             Vector3 fixedYPos;
             Vector3 scale;
@@ -116,19 +129,11 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
                 var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
                 playerObjects[player] = playerObject;
-                Debug.Log($"Spawned {playerObject}");
                 //playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
 
                 playerObject.transform.localScale = scale;
-
-                Rigidbody2D rb = playerObject.GetComponent<Rigidbody2D>();
-                if (rb != null)
-                {
-                    rb.bodyType = RigidbodyType2D.Static;
-                }
-
-                var sg = playerObject.GetComponent<SortingGroup>();
-                sg.sortingOrder = 2;
+                playerObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
+                playerObject.GetComponent<SortingGroup>().sortingOrder = 2;
 
                 lobbyPositionMarkers[positionIndex].IsOccupied = true;
 
@@ -178,10 +183,10 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         int positionIndex = GetNextAvailablePosition(player);
 
-        if (positionIndex != -1 && !playerObjects.ContainsKey(player))
+        if (positionIndex != -1)
         {
-            Debug.Log($"Setting pos for {player} at {positionIndex}");
-            RpcSetPlayerPosition(player, positionIndex);
+            Debug.Log($"Player Joined {player} at {positionIndex}");
+            SetPlayerPos(player, positionIndex);
         }
     }
 

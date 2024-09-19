@@ -194,6 +194,9 @@ public class AudioManager : MonoBehaviour
     public enum MenuSFX
     {
         Click,
+        Info,
+        Warning,
+        Success,
         Error,
         InGameSFXOne
     }

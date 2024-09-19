@@ -12,7 +12,8 @@ public class HomeChatManager : NetworkBehaviour
     [SerializeField] GameObject chatMessagePrefab;
     List<GameObject> messages = new List<GameObject>();
     Dictionary<string, System.Action> specialMessages = new Dictionary<string, System.Action>();
-
+    Vector2 chatOriginalPosition;
+    Vector2 chatOffScreenPosition;
     ButtonHandler buttonHandler;
 
     void Awake()
@@ -30,18 +31,22 @@ public class HomeChatManager : NetworkBehaviour
 
     void Start()
     {
-        LobbyUI.Instance.ButtonHandler.AddButtonEventTrigger(LobbyUI.Instance.SendMessageButton, OnSendButtonClicked, new ButtonConfig(yOffset: -4f, animationTime: 0.15f, returnTime: 0.15f, realTimeUpdate: true));
-        LobbyUI.Instance.BGExitButton.onClick.AddListener(ToggleChat);
-        LobbyUI.Instance.ChatExitButton.onClick.AddListener(HideChat);
-        LobbyUI.Instance.ChatPanel.SetActive(false);
+        HomeUI.Instance.ButtonHandler.AddButtonEventTrigger(HomeUI.Instance.SendMessageButton, OnSendButtonClicked, new ButtonConfig(yOffset: -4f, animationTime: 0.15f, returnTime: 0.15f, realTimeUpdate: true));
+        HomeUI.Instance.BGExitButton.onClick.AddListener(ToggleChat);
+        HomeUI.Instance.ChatExitButton.onClick.AddListener(HideChat);
+        HomeUI.Instance.ChatPanel.SetActive(false);
 
         specialMessages["/wave"] = PlayWaveAnimation;
         specialMessages["/cheer"] = PlayCheerAnimation;
+
+        RectTransform chatContainer = HomeUI.Instance.ChatContainer;
+        chatOriginalPosition = chatContainer.anchoredPosition;
+        chatOffScreenPosition = new Vector2(chatOriginalPosition.x, chatOriginalPosition.y + 900f);
     }
 
     public void ToggleChat()
     {
-        if (LobbyUI.Instance.ChatVisible)
+        if (HomeUI.Instance.ChatVisible)
         {
             HideChat();
         }
@@ -53,55 +58,58 @@ public class HomeChatManager : NetworkBehaviour
 
     public void ShowChat()
     {
-        LobbyUI.Instance.ChatVisible = true;
+        HomeUI.Instance.ChatVisible = true;
+        HomeUI.Instance.ChatPanel.SetActive(true);
 
-        LobbyUI.Instance.ChatPanel.SetActive(true);
-
-        CanvasGroup bgCanvasGroup = LobbyUI.Instance.ChatBG.GetComponent<CanvasGroup>();
-        CanvasGroup chatCanvasGroup = LobbyUI.Instance.ChatContainer.GetComponent<CanvasGroup>();
+        CanvasGroup bgCanvasGroup = HomeUI.Instance.ChatBG.GetComponent<CanvasGroup>();
+        CanvasGroup chatCanvasGroup = HomeUI.Instance.ChatContainer.GetComponent<CanvasGroup>();
 
         bgCanvasGroup.alpha = 0f;
         chatCanvasGroup.alpha = 0f;
 
-        LeanTween.alphaCanvas(bgCanvasGroup, 1f, LobbyUI.Instance.FadeDuration);
-        LeanTween.alphaCanvas(chatCanvasGroup, 1f, LobbyUI.Instance.FadeDuration);
+        LeanTween.alphaCanvas(bgCanvasGroup, 1f, HomeUI.Instance.FadeDuration);
+        LeanTween.alphaCanvas(chatCanvasGroup, 1f, HomeUI.Instance.FadeDuration);
 
-        Vector2 originalPosition = LobbyUI.Instance.ChatContainer.position;
+        RectTransform chatContainer = HomeUI.Instance.ChatContainer;
+        chatContainer.anchoredPosition = chatOffScreenPosition;
 
-        LobbyUI.Instance.ChatContainer.anchoredPosition = new Vector3(0, 300, 0);
-
-        LeanTween.move(LobbyUI.Instance.ChatContainer, originalPosition, LobbyUI.Instance.SlideDuration).setEase(LeanTweenType.easeOutQuart);
+        LeanTween.move(chatContainer, chatOriginalPosition, HomeUI.Instance.SlideDuration)
+            .setEase(LeanTweenType.easeOutQuart);
     }
 
     public void HideChat()
     {
-        LobbyUI.Instance.ChatVisible = false;
-         
-        CanvasGroup bgCanvasGroup = LobbyUI.Instance.ChatBG.GetComponent<CanvasGroup>();
-        CanvasGroup chatCanvasGroup = LobbyUI.Instance.ChatContainer.GetComponent<CanvasGroup>();
+        HomeUI.Instance.ChatVisible = false;
 
-        LeanTween.alphaCanvas(bgCanvasGroup, 0f, LobbyUI.Instance.FadeDuration);
-        LeanTween.alphaCanvas(chatCanvasGroup, 0f, LobbyUI.Instance.FadeDuration);
+        CanvasGroup bgCanvasGroup = HomeUI.Instance.ChatBG.GetComponent<CanvasGroup>();
+        CanvasGroup chatCanvasGroup = HomeUI.Instance.ChatContainer.GetComponent<CanvasGroup>();
 
-        Vector2 originalPosition = LobbyUI.Instance.ChatContainer.anchoredPosition;
-        LeanTween.move(LobbyUI.Instance.ChatContainer, new Vector2(originalPosition.x, originalPosition.y + 900f), LobbyUI.Instance.SlideDuration).setEase(LeanTweenType.easeOutQuart)
+        LeanTween.alphaCanvas(bgCanvasGroup, 0f, HomeUI.Instance.FadeDuration);
+        LeanTween.alphaCanvas(chatCanvasGroup, 0f, HomeUI.Instance.FadeDuration);
+
+        RectTransform chatContainer = HomeUI.Instance.ChatContainer;
+        LeanTween.move(chatContainer, chatOffScreenPosition, HomeUI.Instance.SlideDuration)
+            .setEase(LeanTweenType.easeInQuart)
             .setOnComplete(() =>
             {
-                LobbyUI.Instance.ChatPanel.SetActive(false);
+                chatContainer.anchoredPosition = chatOriginalPosition;
+
+                HomeUI.Instance.ChatPanel.SetActive(false);
             });
     }
 
     public void ToggleChatPanel()
     {
-        LobbyUI.Instance.ChatPanel.SetActive(!LobbyUI.Instance.ChatPanel.activeSelf);
+        HomeUI.Instance.ChatPanel.SetActive(!HomeUI.Instance.ChatPanel.activeSelf);
     }
 
     void OnSendButtonClicked(Button button)
     {
-        if (!string.IsNullOrEmpty(LobbyUI.Instance.MessageInputField.text))
+        Debug.Log(button);
+        if (!string.IsNullOrEmpty(HomeUI.Instance.MessageInputField.text))
         {
-            SendChatMessage(LobbyUI.Instance.MessageInputField.text);
-            LobbyUI.Instance.MessageInputField.text = string.Empty;
+            SendChatMessage(HomeUI.Instance.MessageInputField.text);
+            HomeUI.Instance.MessageInputField.text = string.Empty;
         }
     }
 
@@ -112,7 +120,7 @@ public class HomeChatManager : NetworkBehaviour
 
     void AddMessageToChat(string owner, string message)
     {
-        GameObject newMessage = Instantiate(chatMessagePrefab, LobbyUI.Instance.MessageContent);
+        GameObject newMessage = Instantiate(chatMessagePrefab, HomeUI.Instance.MessageContent);
         var messageText = newMessage.transform.Find("message").GetComponent<TextMeshProUGUI>();
         var ownerText = newMessage.transform.Find("owner").GetComponent<TextMeshProUGUI>();
 
@@ -121,15 +129,15 @@ public class HomeChatManager : NetworkBehaviour
 
         messages.Add(newMessage);
 
-        UpdateContentHeight(LobbyUI.Instance.MessageContent, chatMessagePrefab, LobbyUI.Instance.MessageScrollView);
+        UpdateContentHeight(HomeUI.Instance.MessageContent, chatMessagePrefab, HomeUI.Instance.MessageScrollView);
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(LobbyUI.Instance.MessageContent.GetComponent<RectTransform>());
+        LayoutRebuilder.ForceRebuildLayoutImmediate(HomeUI.Instance.MessageContent.GetComponent<RectTransform>());
 
         newMessage.transform.localScale = new Vector3(1, 0, 1);
         LeanTween.scaleY(newMessage, 1, 0.3f).setEase(LeanTweenType.easeOutQuart);
 
         Canvas.ForceUpdateCanvases();
-        LobbyUI.Instance.MessageScrollView.verticalNormalizedPosition = 0f;
+        HomeUI.Instance.MessageScrollView.verticalNormalizedPosition = 0f;
     }
 
     void UpdateContentHeight(Transform listParent, GameObject prefab, ScrollRect scrollRect)

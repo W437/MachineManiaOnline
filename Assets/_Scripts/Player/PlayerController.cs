@@ -1,3 +1,4 @@
+using Fusion;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 /// This script provides basic movement, jumping, and collision handling for a 2D character.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
-public class PlayerController : MonoBehaviour, IPlayerController
+public class PlayerController : NetworkBehaviour, IPlayerController
 {
    
     [SerializeField] private ScriptableStats _stats;
@@ -21,7 +22,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private bool _cachedQueryStartInColliders;
 
     // Gameplay properties.
-    [SerializeField] private bool _canMove = true;
+    private bool _canMove = true;
     public bool CanMove { get { return _canMove; } set { _canMove = value; } }
     private bool _canMoveFreely = true; 
     public float FinishTime { get; set; }
@@ -79,6 +80,27 @@ public class PlayerController : MonoBehaviour, IPlayerController
         }
     }
 
+    public void Respawn(Vector3 position)
+    {
+        gameObject.SetActive(true);
+
+        transform.position = position;
+        transform.rotation = Quaternion.identity;
+
+        _rb.velocity = Vector3.zero;
+
+        CanMove = true;
+    }
+
+    public void Die()
+    {
+        CanMove = false;
+
+        _rb.velocity = Vector3.zero;
+
+        gameObject.SetActive(false);
+    }
+
     private void GatherInput()
     {
         _frameInput = new FrameInput
@@ -98,8 +120,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private void HandleAnimations()
     {
-
-
         // If grounded and not falling
         if (_grounded && _frameVelocity.y <= 0)
         {
@@ -218,7 +238,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     // Whether coyote time can be used.
     private bool CanUseCoyote => _coyoteUsable && !_grounded && _time < _frameLeftGrounded + _stats.CoyoteTime;
 
-    private void HandleJump()
+    public void HandleJump()
     {
         // End the jump early if the jump button is released.
         if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.velocity.y > 0) _endedJumpEarly = true;

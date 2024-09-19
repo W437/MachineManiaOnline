@@ -10,11 +10,9 @@ using Cinemachine;
 public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
-
-    [SerializeField] NetworkPrefabRef net_PublicLobbyManagerPrefab;
-    [SerializeField] NetworkPrefabRef net_PrivateLobbyManagerPrefab;
     [SerializeField] NetworkPrefabRef net_ChatManagerPrefab;
     [SerializeField] NetworkPrefabRef net_GameManagerPrefab;
+    [SerializeField] NetworkPrefabRef net_PrivateLobbyPrefab;
     [SerializeField] NetworkPrefabRef net_PlayerPrefab;
     [SerializeField] GameObject cameraPrefab;
 
@@ -72,13 +70,6 @@ public class FusionLauncher : MonoBehaviour
             _runner.name = name;
             _runner.ProvideInput = true;
 
-/*            var inputHandler = FindObjectOfType<NetInputHandler>();
-
-            if (inputHandler != null)
-            {
-                _runner.AddCallbacks(inputHandler);
-            }*/
-
             var startGameArgs = new StartGameArgs
             {
                 GameMode = GameMode.Shared,
@@ -95,7 +86,14 @@ public class FusionLauncher : MonoBehaviour
                 if (result.Ok)
                 {
                     LoadingUI.Instance.SetConnectionStatus(ConnectionStatus.Connected, "Connected to network");
-                    await WaitForRunnerToBeReadyAsync(sessionType);
+
+                    var privateLobby = Runner().Spawn(net_PrivateLobbyPrefab, Vector3.zero, Quaternion.identity, Runner().LocalPlayer);
+                    var chatManager = Runner().Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, Runner().LocalPlayer);
+
+                    //Runner().SetPlayerObject(Runner().LocalPlayer, privateLobby);
+                    //Runner().SetPlayerObject(Runner().LocalPlayer, chatManager);
+
+                    // await WaitForRunnerToBeReadyAsync(sessionType);
                 }
                 else
                 {
@@ -109,7 +107,13 @@ public class FusionLauncher : MonoBehaviour
 
                 if (result.Ok)
                 {
-                    await WaitForRunnerToBeReadyAsync(sessionType);
+                    if(SessionType.Private == sessionType)
+                    {
+                        Debug.Log("Starting chat manager...");
+                        Runner().Spawn(net_PrivateLobbyPrefab, Vector3.zero, Quaternion.identity, Runner().LocalPlayer);
+                        Runner().Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, Runner().LocalPlayer);
+                    }
+//                    await WaitForRunnerToBeReadyAsync(sessionType);
                 }
                 else
                 {
@@ -119,24 +123,12 @@ public class FusionLauncher : MonoBehaviour
         }
     }
 
+    // what the heck is this?
     private async Task WaitForRunnerToBeReadyAsync(SessionType sessionType)
     {
         while (!_runner.IsRunning)
         {
             await Task.Yield();
-        }
-
-
-        // REVERTED BACK TO SPAWNING MANAGER ON ALL CLIENTS FOR EASE OF USE
-        if (sessionType == SessionType.Public && PublicLobbyManager.Instance == null && net_PublicLobbyManagerPrefab != null)
-        {
-            //if(_runner.IsSharedModeMasterClient)
-                _runner.Spawn(net_PublicLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-        }
-        else if (sessionType == SessionType.Private && PrivateLobbyManager.Instance == null && net_PrivateLobbyManagerPrefab != null)
-        {
-                _runner.Spawn(net_PrivateLobbyManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
-                _runner.Spawn(net_ChatManagerPrefab, Vector3.zero, Quaternion.identity, _runner.LocalPlayer);
         }
     }
 
@@ -158,7 +150,7 @@ public class FusionLauncher : MonoBehaviour
                 LoadingUI.Instance.SetLoadingMessage("Loading Assets");
                 await LoadAssetsWithProgress();
                 LoadingUI.Instance.SetLoadingMessage("Finalizing");
-                await Task.Delay(500);
+                await Task.Delay(200);
             }
         }
 
@@ -173,7 +165,7 @@ public class FusionLauncher : MonoBehaviour
         float totalSteps = 33f;
         for (int i = 1; i <= totalSteps; i++)
         {
-            await Task.Delay(13);
+            await Task.Delay(5);
             LoadingUI.Instance.SetProgress(i / totalSteps);
         }
     }

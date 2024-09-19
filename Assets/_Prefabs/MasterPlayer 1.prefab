@@ -5129,6 +5129,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7835155397552032863}
+  - {fileID: 7672122624965089462}
   - {fileID: 8402468643347810779}
   - {fileID: 976219052919833584}
 --- !u!114 &7835155397552032863
@@ -5168,7 +5169,6 @@ MonoBehaviour:
   _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
   _animator: {fileID: 0}
   PlayerParts: []
-  _canMove: 1
 --- !u!114 &3132460068256410123
 MonoBehaviour:
   m_ObjectHideFlags: 0

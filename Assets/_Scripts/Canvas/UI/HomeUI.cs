@@ -1,6 +1,11 @@
+using Fusion;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static Unity.Collections.Unicode;
 
 public class HomeUI : MonoBehaviour
 {
@@ -10,7 +15,13 @@ public class HomeUI : MonoBehaviour
     [SerializeField] Button[] buttons;
     [SerializeField] Button playButton;
     [SerializeField] Button modeSelectButton;
+    public Button menuButton;
 
+    [Header("Menu")]
+    public GameObject menuBar;
+    public Button[] menuButtons;
+    public GameObject settingsPanel;
+    private bool menuBarIsOpen = false;
 
     [Header("Player Stats")]
     [SerializeField] TextMeshProUGUI playerLevelText;
@@ -38,11 +49,26 @@ public class HomeUI : MonoBehaviour
     [SerializeField] int initialPlayerCount = 7817;
     
     [Header("Private Lobby")]
-    public Transform PrivateLobbyPositionsParent;
     [SerializeField] TextMeshProUGUI sessionNameText;
-    public PrivateLobbyPosition[] PrivateLobbyPositions { get; private set; }
+    public Transform PrivateLobbyPositionsParent;
+
+    [Header("Private Lobby Chat")]
+    public GameObject ChatPanel;
+    public ScrollRect MessageScrollView;
+    public TMP_InputField MessageInputField;
+    public Transform MessageContent;
+    public Button SendMessageButton;
+    public bool ChatVisible = false;
+    public GameObject ChatBG;
+    public RectTransform ChatContainer;
+    public float FadeDuration = 0.25f;
+    public float SlideDuration = 0.5f;
+    public Button BGExitButton;
+    public Button ChatExitButton;
+
 
     ButtonHandler buttonHandler;
+    public ButtonHandler ButtonHandler { get { return buttonHandler; } }
 
     void Awake()
     {
@@ -80,7 +106,63 @@ public class HomeUI : MonoBehaviour
 
         InvokeRepeating("AnimatePlayNowText", 0f, 7f);
 
-        // Buttono listeners
+        // init values
+        originalAlpha = customSessionPanelBG.color.a;
+        menuBar.transform.localScale = new Vector3(1, 0, 1);
+
+        foreach (Button button in menuButtons)
+        {
+            button.gameObject.SetActive(false);
+        }
+
+        AddButtonEventTriggers();
+
+        // Load player data
+        playerName.text = PlayerData.Instance.PlayerName;
+    }
+
+    void Update()
+    {
+        if (menuBarIsOpen)
+        {
+            if (Input.touchCount > 0)
+            {
+                // Handle touch input
+                Touch touch = Input.GetTouch(0);
+                if (touch.phase == TouchPhase.Began)
+                {
+                    if (!IsPointerOverUIElement(touch.position))
+                    {
+                        CloseMenuBar();
+                    }
+                }
+            }
+            else if (Input.GetMouseButtonDown(0))
+            {
+                // Handle mouse input
+                if (!IsPointerOverUIElement(Input.mousePosition))
+                {
+                    CloseMenuBar();
+                }
+            }
+        }
+
+        if(FusionLauncher.Instance.Runner() != null)
+        {
+            if(FusionLauncher.Instance.Runner() !.IsRunning)
+            {
+                playButton.interactable = false;
+            }
+            else
+            {
+                playButton.interactable = true;
+            }
+        }
+    }
+
+    void AddButtonEventTriggers()
+    {
+        // Main Buttono listeners
         foreach (var button in buttons)
         {
             buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
@@ -92,28 +174,117 @@ public class HomeUI : MonoBehaviour
         buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
         buttonHandler.AddButtonEventTrigger(btnExitCustomSession, OnExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
 
-        // init values
-        originalAlpha = customSessionPanelBG.color.a;
+        // Menu
+        buttonHandler.AddButtonEventTrigger(menuButton, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true, returnTime: 0));
 
-        // private lobby
-        InitializeLobbyPositions();
-
-        // Load player data
-        playerName.text = PlayerData.Instance.PlayerName;
+        // menubar buttonos
+        foreach (Button button in menuButtons)
+        {
+            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
+        }
     }
 
-    void InitializeLobbyPositions()
+    void ToggleMenuBar()
     {
-        if (PrivateLobbyPositionsParent != null)
+        if (menuBarIsOpen)
         {
-            int childCount = PrivateLobbyPositionsParent.childCount;
-            PrivateLobbyPositions = new PrivateLobbyPosition[childCount];
-            for (int i = 0; i < childCount; i++)
+            CloseMenuBar();
+        }
+        else
+        {
+            OpenMenuBar();
+        }
+    }
+
+    void OpenMenuBar()
+    {
+        menuBarIsOpen = true;
+
+        foreach (Button button in menuButtons)
+        {
+            button.gameObject.SetActive(true);
+            button.transform.localScale = Vector3.zero;
+            button.interactable = false;
+        }
+
+        menuBar.transform.localScale = Vector3.zero;
+
+        LeanTween.scale(menuBar, Vector3.one, 0.2f).setEase(LeanTweenType.easeOutCubic);
+        foreach (Button button in menuButtons)
+        {
+            LeanTween.scale(button.gameObject, Vector3.one, 0.2f).setEase(LeanTweenType.easeOutCubic);
+        }
+
+        LeanTween.delayedCall(0.2f, () =>
+        {
+            foreach (Button button in menuButtons)
             {
-                Transform child = PrivateLobbyPositionsParent.GetChild(i);
-                PrivateLobbyPositions[i] = new PrivateLobbyPosition(child);
+                button.interactable = true;
+            }
+        });
+    }
+
+    void CloseMenuBar()
+    {
+        if (!menuBarIsOpen)
+            return;
+
+        foreach (Button button in menuButtons)
+        {
+            button.interactable = false;
+        }
+
+        LeanTween.scale(menuBar, Vector3.zero, 0.2f).setEase(LeanTweenType.easeInCubic);
+        foreach (Button button in menuButtons)
+        {
+            LeanTween.scale(button.gameObject, Vector3.zero, 0.2f).setEase(LeanTweenType.easeInCubic);
+        }
+
+        LeanTween.delayedCall(0.2f, () =>
+        {
+            foreach (Button button in menuButtons)
+            {
+                button.gameObject.SetActive(false);
+            }
+            menuBarIsOpen = false;
+        });
+    }
+
+    bool IsPointerOverUIElement(Vector2 screenPosition)
+    {
+        PointerEventData eventData = new PointerEventData(EventSystem.current)
+        {
+            position = screenPosition
+        };
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        foreach (RaycastResult result in results)
+        {
+            // Check if the pointer is over the menu bar, its children, or the menu button
+            if (result.gameObject == menuBar || result.gameObject.transform.IsChildOf(menuBar.transform) ||
+                result.gameObject == menuButton.gameObject || result.gameObject.transform.IsChildOf(menuButton.transform))
+            {
+                return true;
             }
         }
+        return false;
+    }
+
+    void ShowSettingsPanel()
+    {
+        settingsPanel.SetActive(true);
+        CloseMenuBar();
+    }
+
+    public void CloseSettingsPanel()
+    {
+        settingsPanel.SetActive(false);
+    }
+
+    void ShowNewsfeedPanel()
+    {
+        CloseMenuBar();
     }
 
     void OnPlayButtonClick(Button button)
@@ -123,16 +294,14 @@ public class HomeUI : MonoBehaviour
         {
             case ModeSelectUI.GameMode.Custom:
                 ToggleCustomSessionPanel();
-            break;
+                break;
 
             case ModeSelectUI.GameMode.FFA:
-                LobbyUI.Instance.ConnectToLobby();
-                GameLauncher.Instance.Launch("FFASession", false, SessionType.Public, 6);
-            break;
+                FusionLauncher.Instance.Runner().LoadScene(SceneRef.FromIndex(2), LoadSceneMode.Single);
+                break;
 
             case ModeSelectUI.GameMode.TVT:
-                LobbyUI.Instance.ConnectToLobby();
-                GameLauncher.Instance.Launch("TVTSession", false);
+
             break;
 
             default:
@@ -143,43 +312,54 @@ public class HomeUI : MonoBehaviour
 
     void OnButtonReleased(Button button)
     {
+        if (menuBarIsOpen && button.name != "[Button] Menu")
+        {
+            CloseMenuBar();
+        }
+
         switch (button.name)
         {
             case "[Button] Menu":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Menu clicked");
+                ToggleMenuBar();
 
             break;
 
             case "[Button] Chat":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Chat Clicked");
                 HomeChatManager.Instance.ShowChat();
 
             break;
 
             case "[Button] Mania Pass":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "SP Clicked");
 
             break;
 
             case "[Button] Shop":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Shop Clicked");
 
             break;
 
             case "[Button] Mode":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Mode Clicked");
 
             break;
 
             case "[Button] Play":
 
-                NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Display, "Searching session..");
 
+            break;
+
+            case "[Button] Settings":
+                ShowSettingsPanel();
+                break;
+
+            case "[Button] Newsfeed":
+                ShowNewsfeedPanel();
+                break;
+
+            default:
             break;
         }
     }
@@ -222,12 +402,12 @@ public class HomeUI : MonoBehaviour
         }
         else
         {
-            LeanTween.scale(customSessionContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad).setOnComplete(() =>
+            LeanTween.scale(customSessionContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad);
+
+            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setOnComplete(() =>
             {
                 customSessionPanel.SetActive(false);
             });
-
-            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f);
         }
     }
 

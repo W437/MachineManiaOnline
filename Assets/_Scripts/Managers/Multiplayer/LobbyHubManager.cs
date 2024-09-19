@@ -73,7 +73,7 @@ public class LobbyHubManager
         int playerIndex = PublicLobbyManager.Instance.FindPlayerPosition(player);
         if (playerIndex >= 0 && playerIndex < PublicLobbyManager.Instance.playerPosition.Length)
         {
-            Transform position = LobbyUI.Instance.PlayerSlotsParent.GetChild(playerIndex);
+            Transform position = PublicLobbyUI.Instance.PlayerSlotsParent.GetChild(playerIndex);
             var textComponent = position.Find("messageTxt").GetComponent<TextMeshProUGUI>();
 
             if (textComponent != null)

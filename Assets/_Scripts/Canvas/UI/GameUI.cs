@@ -46,11 +46,12 @@ public class GameUI : MonoBehaviour
 
     void Start()
     {
+
         buttonHandler = gameObject.AddComponent<ButtonHandler>();
 
         var gameBtnConfig = new ButtonConfig(activateOnPress: true, cooldownEnabled: false, returnTime: 0.05f, animationTime: 0.05f, rotationLock: true, realTimeUpdate: false);
 
-        buttonHandler.AddButtonEventTrigger(jumpButton, _ => { } , gameBtnConfig);
+        buttonHandler.AddButtonEventTrigger(jumpButton, _ => { }, gameBtnConfig);
         buttonHandler.AddButtonEventTrigger(slideButton, _ => { }, gameBtnConfig);
         buttonHandler.AddButtonEventTrigger(slotButton, _ => { }, gameBtnConfig);
 
