@@ -14052,6 +14052,13 @@
             can be used to control whether these guards are visible in the hierarchy or not.
             </summary>
         </member>
+        <member name="F:Fusion.NetworkProjectConfig.AllowClientServerModesInWebGL">
+            <summary>
+            Allow the use of Client-Server modes in WebGL builds. This is not recommended, as it can lead to degraded performance.
+            Client-Server modes are not supported in WebGL builds by default, this setting allows its usage despite the limitations.
+            Read more about the limitations of WebGL builds in the Fusion documentation at https://doc.photonengine.com/fusion/v2/fusion-intro.
+            </summary>
+        </member>
         <member name="F:Fusion.NetworkProjectConfig.PrefabTable">
             <summary>
             Reference to the <see cref="T:Fusion.NetworkPrefabTable"/> instance for this <see cref="T:Fusion.NetworkProjectConfig"/>.

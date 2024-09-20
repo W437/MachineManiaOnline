@@ -1,3 +1,22 @@
+# 2.0.3
+
+## Stable
+
+### Build 858 (Sep 10, 2024)
+
+**What's New**
+
+- Flag to enable ClientServer Modes in WebGL builds
+
+**Bug Fixes**
+
+- Fixed: `FusionAddressablePrefablsPreloader.Start` return type changed from `Task` to `void`
+- Fixed: Warning in FusionAddressablePrefabsPreloader
+- Fixed: TaskManager Delay for WebGL Builds
+- Fixed: Destroyed Objects on Host Migration
+- Fixed: NetworkRunner.TryFindBehaviour Out Of Range Exception
+- Fixed: Internal Protocol Message Validation Check
+
 # 2.0.2
 
 ## Stable

@@ -31,7 +31,7 @@ public class HomeChatManager : NetworkBehaviour
 
     void Start()
     {
-        HomeUI.Instance.ButtonHandler.AddButtonEventTrigger(HomeUI.Instance.SendMessageButton, OnSendButtonClicked, new ButtonConfig(yOffset: -4f, animationTime: 0.15f, returnTime: 0.15f, realTimeUpdate: true));
+        HomeUI.Instance.ButtonHandler.AddButtonEventTrigger(HomeUI.Instance.SendMessageButton, OnSendButtonClicked, new ButtonConfig(yOffset: -4f, animationTime: 0.15f, returnTime: 0.15f));
         HomeUI.Instance.BGExitButton.onClick.AddListener(ToggleChat);
         HomeUI.Instance.ChatExitButton.onClick.AddListener(HideChat);
         HomeUI.Instance.ChatPanel.SetActive(false);

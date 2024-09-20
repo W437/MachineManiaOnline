@@ -50,7 +50,16 @@ public class HomeUI : MonoBehaviour
     
     [Header("Private Lobby")]
     [SerializeField] TextMeshProUGUI sessionNameText;
-    public Transform PrivateLobbyPositionsParent;
+    public Transform PositionsParent;
+    public PrivateLobbyPosition[] lobbyPositionMarkers;
+    [SerializeField] Button[] inviteButtons;
+    [SerializeField] GameObject invitePanel;
+    [SerializeField] GameObject inviteContainer;
+    [SerializeField] Image inviteBGOverlay;
+    [SerializeField] Button inviteOkButton;
+    [SerializeField] Button inviteExitButton;
+    [SerializeField] Button inviteSessionCopyButton;
+    [SerializeField] TextMeshProUGUI invitePanelSessionText;
 
     [Header("Private Lobby Chat")]
     public GameObject ChatPanel;
@@ -91,17 +100,17 @@ public class HomeUI : MonoBehaviour
 
         currentPlayerCount = 0;
         targetPlayerCount = initialPlayerCount;
-        UpdatePlayersOnline(currentPlayerCount);
+        updatePlayersOnline(currentPlayerCount);
 
         // Players online sim
         LeanTween.value(gameObject, 0, initialPlayerCount, 3f)
-            .setOnUpdate((float value) => { UpdatePlayersOnline((int)value); })
+            .setOnUpdate((float value) => { updatePlayersOnline((int)value); })
             .setEase(LeanTweenType.easeInOutSine).setOnComplete(() =>
             {
                 currentPlayerCount = initialPlayerCount;
                 targetPlayerCount = currentPlayerCount;
 
-                AnimatePlayersOnline();
+                animatePlayersOnline();
             });
 
         InvokeRepeating("AnimatePlayNowText", 0f, 7f);
@@ -115,7 +124,7 @@ public class HomeUI : MonoBehaviour
             button.gameObject.SetActive(false);
         }
 
-        AddButtonEventTriggers();
+        addButtonEventTriggers();
 
         // Load player data
         playerName.text = PlayerData.Instance.PlayerName;
@@ -131,18 +140,18 @@ public class HomeUI : MonoBehaviour
                 Touch touch = Input.GetTouch(0);
                 if (touch.phase == TouchPhase.Began)
                 {
-                    if (!IsPointerOverUIElement(touch.position))
+                    if (!isPointerOverUIElement(touch.position))
                     {
-                        CloseMenuBar();
+                        closeMenuBar();
                     }
                 }
             }
             else if (Input.GetMouseButtonDown(0))
             {
                 // Handle mouse input
-                if (!IsPointerOverUIElement(Input.mousePosition))
+                if (!isPointerOverUIElement(Input.mousePosition))
                 {
-                    CloseMenuBar();
+                    closeMenuBar();
                 }
             }
         }
@@ -160,43 +169,53 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    void AddButtonEventTriggers()
+    void addButtonEventTriggers()
     {
         // Main Buttono listeners
         foreach (var button in buttons)
         {
-            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
+            buttonHandler.AddButtonEventTrigger(button, onButtonReleased, new ButtonConfig(customAnimation: true));
         }
+
+        // private lobby invite
+        foreach (var button in inviteButtons)
+        {
+            buttonHandler.AddButtonEventTrigger(button, toggleInvitePanel, new ButtonConfig(yOffset: 10f, callbackDelay: 0.1f));
+        }
+
+        buttonHandler.AddButtonEventTrigger(inviteExitButton, toggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
+        buttonHandler.AddButtonEventTrigger(inviteOkButton, toggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
+        buttonHandler.AddButtonEventTrigger(inviteSessionCopyButton, CopySessionTextToClipboard, new ButtonConfig(customAnimation: false, yOffset: 0));
 
         // override
         buttonHandler.AddButtonEventTrigger(playButton, OnPlayButtonClick, new ButtonConfig(yOffset: -12f, callbackDelay: 0.1f, rotationLock: true));
         buttonHandler.AddButtonEventTrigger(modeSelectButton, ModeSelectUI.Instance.OnModeButtonClicked, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true, returnTime: 0.1f));
-        buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
-        buttonHandler.AddButtonEventTrigger(btnExitCustomSession, OnExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
+        buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, onCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(btnExitCustomSession, onExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
 
         // Menu
-        buttonHandler.AddButtonEventTrigger(menuButton, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true, returnTime: 0));
+        buttonHandler.AddButtonEventTrigger(menuButton, onButtonReleased, new ButtonConfig(customAnimation: true, returnTime: 0));
 
         // menubar buttonos
         foreach (Button button in menuButtons)
         {
-            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true, realTimeUpdate: true));
+            buttonHandler.AddButtonEventTrigger(button, onButtonReleased, new ButtonConfig(customAnimation: true));
         }
     }
 
-    void ToggleMenuBar()
+    void toggleMenuBar()
     {
         if (menuBarIsOpen)
         {
-            CloseMenuBar();
+            closeMenuBar();
         }
         else
         {
-            OpenMenuBar();
+            openMenuBar();
         }
     }
 
-    void OpenMenuBar()
+    void openMenuBar()
     {
         menuBarIsOpen = true;
 
@@ -224,7 +243,7 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    void CloseMenuBar()
+    void closeMenuBar()
     {
         if (!menuBarIsOpen)
             return;
@@ -250,7 +269,7 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    bool IsPointerOverUIElement(Vector2 screenPosition)
+    bool isPointerOverUIElement(Vector2 screenPosition)
     {
         PointerEventData eventData = new PointerEventData(EventSystem.current)
         {
@@ -271,10 +290,10 @@ public class HomeUI : MonoBehaviour
         return false;
     }
 
-    void ShowSettingsPanel()
+    void showSettingsPanel()
     {
         settingsPanel.SetActive(true);
-        CloseMenuBar();
+        closeMenuBar();
     }
 
     public void CloseSettingsPanel()
@@ -284,7 +303,7 @@ public class HomeUI : MonoBehaviour
 
     void ShowNewsfeedPanel()
     {
-        CloseMenuBar();
+        closeMenuBar();
     }
 
     void OnPlayButtonClick(Button button)
@@ -293,11 +312,11 @@ public class HomeUI : MonoBehaviour
         switch (selectedMode)
         {
             case ModeSelectUI.GameMode.Custom:
-                ToggleCustomSessionPanel();
+                toggleCustomSessionPanel();
                 break;
 
             case ModeSelectUI.GameMode.FFA:
-                FusionLauncher.Instance.Runner().LoadScene(SceneRef.FromIndex(2), LoadSceneMode.Single);
+                FusionLauncher.Instance.Runner().LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
                 break;
 
             case ModeSelectUI.GameMode.TVT:
@@ -310,18 +329,59 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    void OnButtonReleased(Button button)
+    void toggleInvitePanel(Button button)
+    {
+        bool isActive = invitePanel.activeSelf;
+
+        if (!isActive)
+        {
+            invitePanel.SetActive(true);
+            invitePanelSessionText.text = FusionLauncher.Instance.CurrentSessionName;
+            inviteContainer.transform.localScale = Vector3.zero;
+            LeanTween.scale(inviteContainer, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
+
+            LeanTween.value(inviteBGOverlay.gameObject, 0, originalAlpha, 0.25f).setOnUpdate((float val) =>
+            {
+                Color newColor = inviteBGOverlay.color;
+                newColor.a = val;
+                inviteBGOverlay.color = newColor;
+            });
+        }
+        else
+        {
+            LeanTween.scale(inviteContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad);
+
+            LeanTween.value(inviteBGOverlay.gameObject, originalAlpha, 0, 0.25f).setOnUpdate((float val) =>
+            {
+                Color newColor = inviteBGOverlay.color;
+                newColor.a = val;
+                inviteBGOverlay.color = newColor;
+            }).setOnComplete(() =>
+            {
+                invitePanel.SetActive(false);
+            });
+        }
+    }
+
+    void CopySessionTextToClipboard(Button button)
+    {
+        GUIUtility.systemCopyBuffer = invitePanelSessionText.text;
+        NotificationManager.Instance.ShowNotification(NotificationManager.NotificationType.Success, "Session copied to clipboard!");
+        Debug.Log("Clicked to copy");
+    }
+
+    void onButtonReleased(Button button)
     {
         if (menuBarIsOpen && button.name != "[Button] Menu")
         {
-            CloseMenuBar();
+            closeMenuBar();
         }
 
         switch (button.name)
         {
             case "[Button] Menu":
 
-                ToggleMenuBar();
+                toggleMenuBar();
 
             break;
 
@@ -352,7 +412,7 @@ public class HomeUI : MonoBehaviour
             break;
 
             case "[Button] Settings":
-                ShowSettingsPanel();
+                showSettingsPanel();
                 break;
 
             case "[Button] Newsfeed":
@@ -364,7 +424,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    void OnCreateCustomSession(Button button)
+    void onCreateCustomSession(Button button)
     {
         string sessionName = inputSessionName.text;
         string sessionPassword = inputSessionPassword.text;
@@ -379,15 +439,15 @@ public class HomeUI : MonoBehaviour
         bool withPassword = !string.IsNullOrEmpty(sessionPassword);
 
         GameLauncher.Instance.Launch(sessionName, false, SessionType.Private, maxPlayers);
-        ToggleCustomSessionPanel();
+        toggleCustomSessionPanel();
     }
 
-    void OnExitCustomSessionPanel(Button button)
+    void onExitCustomSessionPanel(Button button)
     {
-        ToggleCustomSessionPanel();
+        toggleCustomSessionPanel();
     }
 
-    public void ToggleCustomSessionPanel()
+    void toggleCustomSessionPanel()
     {
         bool isOpening = !customSessionPanel.activeSelf;
         customSessionPanel.SetActive(true);
@@ -398,58 +458,48 @@ public class HomeUI : MonoBehaviour
 
             LeanTween.scale(customSessionContainer, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
 
-            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f);
+            LeanTween.value(customSessionPanelBG.gameObject, updateBGAlpha, 0, originalAlpha, 0.25f);
         }
         else
         {
             LeanTween.scale(customSessionContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad);
 
-            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setOnComplete(() =>
+            LeanTween.value(customSessionPanelBG.gameObject, updateBGAlpha, originalAlpha, 0, 0.25f).setOnComplete(() =>
             {
                 customSessionPanel.SetActive(false);
             });
         }
     }
 
-    void UpdateBGAlpha(float alpha)
+    void updateBGAlpha(float alpha)
     {
         Color color = customSessionPanelBG.color;
         color.a = alpha;
         customSessionPanelBG.color = color;
     }
 
-    public void DisablePlayButton()
-    {
-        playButton.interactable = false;
-    }
-
-    public void EnablePlayButton()
-    {
-        playButton.interactable = true;
-    }
-
-    void UpdatePlayerLevel(int newLevel)
+    void updatePlayerLevel(int newLevel)
     {
         playerLevelText.text = $"Level: {newLevel}";
     }
 
-    void UpdateGold(int newGold)
+    void updateGold(int newGold)
     {
         goldText.text = $"Gold: {newGold}";
     }
 
-    void UpdateDiamonds(int newDiamonds)
+    void updateDiamonds(int newDiamonds)
     {
         diamondsText.text = $"Diamonds: {newDiamonds}";
     }
 
-    void UpdatePlayersOnline(int newPlayersOnline)
+    void updatePlayersOnline(int newPlayersOnline)
     {
         string playersOnlineColored = $"<color=#6E6404>{newPlayersOnline}</color> PLAYERS ONLINE!";
         playersOnlineText.text = playersOnlineColored;
     }
 
-    void AnimatePlayersOnline()
+    void animatePlayersOnline()
     {
         float delay = Random.Range(1, 4) * 2;
 
@@ -466,16 +516,16 @@ public class HomeUI : MonoBehaviour
 
         LeanTween.value(gameObject, currentPlayerCount, targetPlayerCount, delay).setOnUpdate((float value) =>
         {
-            UpdatePlayersOnline((int)value);
+            updatePlayersOnline((int)value);
         }).setEase(LeanTweenType.easeInOutSine).setOnComplete(() =>
         {
             currentPlayerCount = targetPlayerCount;
 
-            AnimatePlayersOnline();
+            animatePlayersOnline();
         });
     }
 
-    void AnimatePlayNowText()
+    void animatePlayNowText()
     {
         float originalSize = playNowText.fontSize;
         float targetSize = originalSize * 1.1f;
@@ -492,9 +542,9 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    public void SetSessionNameUI(string sessionName)
+    public void SetSessionNameUI()
     {
-        sessionNameText.text = $"<color=#59B4F7>session:</color> {sessionName}";
+        sessionNameText.text = $"<color=#59B4F7>session:</color> {FusionLauncher.Instance.CurrentSessionName}";
     }
 
     void OnDestroy()

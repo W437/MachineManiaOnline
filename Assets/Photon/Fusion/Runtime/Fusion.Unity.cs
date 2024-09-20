@@ -1974,6 +1974,10 @@ namespace Fusion {
 #region FusionUnityExtensions.cs
 
 namespace Fusion {
+#if UNITY_2022_1_OR_NEWER && !UNITY_2022_2_OR_NEWER
+  using UnityEngine;
+#endif
+
   /// <summary>
   /// Provides backwards compatibility for Unity API.
   /// </summary>

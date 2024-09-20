@@ -10,6 +10,7 @@ using Cinemachine;
 public class FusionLauncher : MonoBehaviour
 {
     public static FusionLauncher Instance;
+    public string CurrentSessionName;
     [SerializeField] NetworkPrefabRef net_ChatManagerPrefab;
     [SerializeField] NetworkPrefabRef net_GameManagerPrefab;
     [SerializeField] NetworkPrefabRef net_PrivateLobbyPrefab;
@@ -49,7 +50,8 @@ public class FusionLauncher : MonoBehaviour
 
     public async Task InitializeNetworkAsync(string sessionName, bool isInitialStart = false, SessionType sessionType = SessionType.Public, int maxPlayers = 6)
     {
-        LoadingUI.Instance.PlayerUniqueID.text = sessionName;
+        CurrentSessionName = sessionName;
+        LoadingUI.Instance.PlayerUniqueID.text = CurrentSessionName;
 
         if (isInitialStart)
         {

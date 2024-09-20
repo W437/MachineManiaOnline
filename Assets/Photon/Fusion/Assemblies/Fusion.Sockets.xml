@@ -1076,6 +1076,16 @@
             Stores the Current Fusion Serialization Version
             </summary>
         </member>
+        <member name="P:Fusion.Protocol.Message.IsValid">
+            <summary>
+            Signal if this Message is Valid or not
+            </summary>
+        </member>
+        <member name="P:Fusion.Protocol.Message.HasValidVersion">
+            <summary>
+            Signal if this Message has a valid Protocol Version and Fusion Serialization Version
+            </summary>
+        </member>
         <member name="P:Fusion.Protocol.Message.CustomData">
             <summary>
             Custom data send along side any Protocol Message

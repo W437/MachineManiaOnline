@@ -7,6 +7,7 @@ using Fusion.Addons.Physics;
 using System.Xml.Schema;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using TMPro;
 
 public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 {
@@ -14,8 +15,11 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public PrivateLobbyPosition[] PrivateLobbyPositions { get; private set; }
 
-    PrivateLobbyPosition[] lobbyPositionMarkers;
-    Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
+    public Transform positionsParent;
+    private Transform[] positionMarkers;
+
+    private Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
+    private Dictionary<PlayerRef, int> playerPositions = new Dictionary<PlayerRef, int>();
 
 
 
@@ -30,31 +34,33 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             Destroy(gameObject);
         }
+
+        InitializePositionMarkers();
     }
 
-    void Start()
+    void InitializePositionMarkers()
     {
-        InitializeLobbyPositions();
-    }
-
-    void InitializeLobbyPositions()
-    {
-        if (HomeUI.Instance.PrivateLobbyPositionsParent != null)
+        positionsParent = HomeUI.Instance.PositionsParent;
+        if (positionsParent != null)
         {
-            int childCount = HomeUI.Instance.PrivateLobbyPositionsParent.childCount;
-            PrivateLobbyPositions = new PrivateLobbyPosition[childCount];
+            int childCount = positionsParent.childCount;
+            positionMarkers = new Transform[childCount];
             for (int i = 0; i < childCount; i++)
             {
-                Transform child = HomeUI.Instance.PrivateLobbyPositionsParent.GetChild(i);
-                PrivateLobbyPositions[i] = new PrivateLobbyPosition(child);
+                positionMarkers[i] = positionsParent.GetChild(i);
             }
+        }
+        else
+        {
+            Debug.LogError("PositionsParent is not assigned!");
         }
     }
 
     public override void Spawned()
     {
-        Debug.Log("Adding callbacks");
+        //Debug.Log("Adding callbacks");
         Runner.AddCallbacks(this);
+
 
         if (HasStateAuthority)
         {
@@ -92,101 +98,122 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    void SetPlayerPos(PlayerRef player, int positionIndex)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcPositionPlayer(PlayerRef player, int positionIndex)
     {
-        Debug.Log($"INSIDE: {lobbyPositionMarkers}, {lobbyPositionMarkers.Length} player {positionIndex}");
-
-        if (positionIndex < lobbyPositionMarkers.Length)
+        if (positionIndex < positionMarkers.Length)
         {
-            Vector3 fixedYPos;
-            Vector3 scale;
-
-            switch (positionIndex)
-            {
-                case 0:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.75f, 0);
-                    scale = new Vector3(0.85f, 0.85f, 0.85f);
-                break;
-                case 1:
-                case 2:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 0.50f, 0);
-                    scale = new Vector3(0.75f, 0.75f, 0.75f);
-                break;
-                case 3:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position - new Vector3(0, 1f, 0);
-                    scale = new Vector3(0.68f, 0.68f, 0.68f);
-                break;
-                default:
-                    fixedYPos = lobbyPositionMarkers[positionIndex].Position.position;
-                    scale = new Vector3(0.85f, 0.85f, 0.85f);
-                break;
-            }
+            Transform positionMarker = positionMarkers[positionIndex];
+            Vector3 position = positionMarker.position + new Vector3(0, -.8f, 0);
+            Vector3 scale = GetScaleForPosition(positionIndex);
 
             if (!playerObjects.ContainsKey(player))
             {
                 NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
-                Debug.Log($"Position for {player} at index {positionIndex} pos {lobbyPositionMarkers[positionIndex].Position.position}");
-
-                var playerObject = Runner.Spawn(playerPrefab, fixedYPos, Quaternion.identity, player);
+                var playerObject = Runner.Spawn(playerPrefab, position, Quaternion.identity, player);
                 playerObjects[player] = playerObject;
-                //playerObject.transform.SetParent(lobbyPositionMarkers[positionIndex].Position);
 
                 playerObject.transform.localScale = scale;
                 playerObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
-                playerObject.GetComponent<SortingGroup>().sortingOrder = 2;
 
-                lobbyPositionMarkers[positionIndex].IsOccupied = true;
-
-
-                Transform childTransform = lobbyPositionMarkers[positionIndex].Position.transform.Find("platformImg");
-                if (childTransform != null)
+                // Platform color
+                Transform platformImg = positionMarker.Find("platformImg");
+                if (platformImg != null)
                 {
-                    Image imageComponent = childTransform.GetComponent<Image>();
-                    if (imageComponent != null)
+                    Image platformImageComponent = platformImg.GetComponent<Image>();
+                    if (platformImageComponent != null)
                     {
-                        imageComponent.color = ColorHelper.HexToColor("ffffff");
+                        platformImageComponent.color = ColorHelper.HexToColor("ffffff");
                     }
                 }
+
+                // Platform color
+                Transform inviteBtn = positionMarker.Find("InviteButton");
+                if (inviteBtn != null)
+                {
+                    inviteBtn.gameObject.SetActive(false);
+                }
+
+                // Player name
+                PlayerManager playerManager = playerObject.GetComponent<PlayerManager>();
+                Transform playerName = positionMarker.Find("PlayerName/NameTxt");
+                if (playerName != null)
+                {
+                    TextMeshProUGUI playerNameText = playerName.GetComponent<TextMeshProUGUI>();
+                    if (playerNameText != null && playerManager != null)
+                    {
+                        playerNameText.text = playerManager.PlayerName;
+                    }
+                }
+
+                // Stop movement
+                PlayerController playerController = playerObject.GetComponent<PlayerController>();
+                if (playerController != null)
+                {
+                    playerController.CanMove = false;
+                }
+
+                playerPositions[player] = positionIndex;
             }
             else
             {
-                // Update players positions except local player
                 if (player != Runner.LocalPlayer)
                 {
-                    playerObjects[player].transform.position = lobbyPositionMarkers[positionIndex].Position.position;
+                    playerObjects[player].transform.position = position;
                 }
             }
         }
     }
-    
-    int GetNextAvailablePosition(PlayerRef player)
-    {
-        // Assign the master client to position 1, always
-        if (player == Runner.LocalPlayer && Runner.IsSharedModeMasterClient)
-        {
-            return 0;
-        }
 
-        // Find the first available position starting from pos2
-        for (int i = 1; i < lobbyPositionMarkers.Length; i++)
+    private Vector3 GetScaleForPosition(int positionIndex)
+    {
+        switch (positionIndex)
         {
-            if (!lobbyPositionMarkers[i].IsOccupied)
+            case 0: return new Vector3(0.85f, 0.85f, 0.85f);
+            case 1: case 2: return new Vector3(0.75f, 0.75f, 0.75f);
+            case 3: return new Vector3(0.68f, 0.68f, 0.68f);
+            default: return new Vector3(0.85f, 0.85f, 0.85f);
+        }
+    }
+
+    private int GetNextAvailablePosition()
+    {
+        for (int i = 0; i < positionMarkers.Length; i++)
+        {
+            if (!playerPositions.ContainsValue(i)) 
             {
                 return i;
             }
         }
         return -1;
     }
-    
+
+    private void ReturnAllPlayersToPrivateLobbies()
+    {
+        foreach (var playerRef in playerObjects.Keys)
+        {
+            if (playerRef != Runner.LocalPlayer)
+            {
+                GameLauncher.Instance.StartInitialGameSession();
+            }
+        }
+        Runner.Shutdown();
+    }
+
+
     /// Callbacks
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        int positionIndex = GetNextAvailablePosition(player);
+        int positionIndex = GetNextAvailablePosition();
 
         if (positionIndex != -1)
         {
-            Debug.Log($"Player Joined {player} at {positionIndex}");
-            SetPlayerPos(player, positionIndex);
+            Debug.Log($"Player Joined {player} at position {positionIndex}");
+            RpcPositionPlayer(player, positionIndex);
+        }
+        else
+        {
+            Debug.LogWarning("No available positions for the player");
         }
     }
 
@@ -197,25 +224,41 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             var playerObject = playerObjects[player];
             if (playerObject != null)
             {
+                int positionIndex = playerPositions[player];
+                Transform positionMarker = positionMarkers[positionIndex];
+                Transform platformImg = positionMarker.Find("platformImg");
+                if (platformImg != null)
+                {
+                    Image platformImageComponent = platformImg.GetComponent<Image>();
+                    if (platformImageComponent != null)
+                    {
+                        platformImageComponent.color = ColorHelper.HexToColor("6C6C6C");
+                    }
+                }
+
+                Transform playerName = positionMarker.Find("PlayerName");
+                if (playerName != null)
+                {
+                    playerName.gameObject.SetActive(false);
+                }
+
                 runner.Despawn(playerObject);
             }
-            // Find and free the position occupied by this player
-            foreach (var kvp in lobbyPositionMarkers)
-            {
-                if (playerObject.transform.position == kvp.Position.position)
-                {
-                    kvp.IsOccupied = false;
-                    kvp.Position.transform.GetComponentInChildren<SpriteRenderer>().color = ColorHelper.HexToColor("585858");
-                    break;
-                }
-            }
+
             playerObjects.Remove(player);
+            playerPositions.Remove(player);
+        }
+
+        // If State Authority leaves, return all players to their private lobbies
+        if (HasStateAuthority && player == Runner.LocalPlayer)
+        {
+            ReturnAllPlayersToPrivateLobbies();
         }
     }
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        OnPlayerLeft(runner, runner.LocalPlayer);
+        //OnPlayerLeft(runner, runner.LocalPlayer);
     }
 
     #region unused callbacks

@@ -2710,7 +2710,7 @@ namespace Fusion.Editor {
       return attributes?.Length > 0;
     }
     
-    private static IEnumerable<BuildTargetGroup> ValidBuildTargetGroups {
+    internal static IEnumerable<BuildTargetGroup> ValidBuildTargetGroups {
       get {
         foreach (var name in System.Enum.GetNames(typeof(BuildTargetGroup))) {
           if (IsEnumValueObsolete<BuildTargetGroup>(name))
@@ -4331,12 +4331,12 @@ namespace Fusion.Editor {
       return LayoutHelpPrefix(editor, property.propertyPath, help);
     }
     
-    internal static Rect LayoutHelpPrefix(Editor editor, MemberInfo memberInfo) {
+    internal static Rect LayoutHelpPrefix(ScriptableObject editor, MemberInfo memberInfo) {
       var help = FusionCodeDoc.FindEntry(memberInfo);
       return LayoutHelpPrefix(editor, memberInfo.Name, help);
     }
     
-    internal static Rect LayoutHelpPrefix(Editor editor, string path, GUIContent help) {
+    internal static Rect LayoutHelpPrefix(ScriptableObject editor, string path, GUIContent help) {
       var rect = EditorGUILayout.GetControlRect(true);
       
       if (help == null) {
@@ -13040,6 +13040,11 @@ namespace Fusion.Editor {
   }
 
   public static class AnimatorControllerTools {
+    /// <summary>
+    /// To ensure triggers are synced consistently, 1 bit is used for true/false and 3 more are used
+    /// to differentiate the state (these are incremented with every change to the underlying bool).
+    /// </summary>
+    const int BITS_PER_BOOL = 4;
 
     //// Attach methods to Fusion.Runtime NetworkedAnimator
     //[InitializeOnLoadMethod]
@@ -13277,7 +13282,7 @@ namespace Fusion.Editor {
       int syncedLayerCount    = includeLyrs ? layerCount : 1;
       int stateWordCount      = includeStat ? 2 * syncedLayerCount : 0;
       int weightWordCount     = (includeWght && layerCount > 0) ? (layerCount - 1) : 0;
-      int paramBoolsWordCount = (paramBoolCount                               + 31) >> 5;
+      int paramBoolsWordCount = (paramBoolCount * BITS_PER_BOOL + 31) >> 5;
       int words               = param32Count + paramBoolsWordCount + stateWordCount + weightWordCount;
 
       return (param32Count, paramBoolCount, layerCount, words);

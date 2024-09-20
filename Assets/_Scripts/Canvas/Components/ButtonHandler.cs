@@ -39,10 +39,6 @@ public class ButtonHandler : MonoBehaviour
         pointerUpEntry.callback.AddListener((eventData) => { OnButtonReleased(button, button.transform, eventData as PointerEventData); });
         trigger.triggers.Add(pointerUpEntry);
 
-        EventTrigger.Entry dragEntry = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
-        dragEntry.callback.AddListener((eventData) => { OnButtonDragged(button, button.transform, eventData as PointerEventData); });
-        trigger.triggers.Add(dragEntry);
-
         originalYPositions[button] = button.transform.localPosition.y;
         buttonConfigs[button] = config ?? new ButtonConfig();
         buttonCallbacks[button] = onButtonReleased;
@@ -121,8 +117,6 @@ public class ButtonHandler : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Click);
 
-        LeanTween.cancel(button.gameObject); // Cancel any ongoing animations
-        LeanTween.cancel(button.transform.parent.gameObject); // Cancel parent animations too
         buttonTransform.localScale = Vector3.one;
         button.transform.parent.transform.localScale = Vector3.one;
 
@@ -136,26 +130,26 @@ public class ButtonHandler : MonoBehaviour
         RectTransform buttonRectTransform = buttonTransform as RectTransform;
         Vector2 normalizedPoint = (_localPoint - (Vector2)buttonRectTransform.rect.center) / (buttonRectTransform.rect.size / 2);
 
-        if (!config.RotationLock)
-        {
-            Vector3 targetPosition = parentOriginalPositions[button] + (Vector3)(normalizedPoint * config.PinchMoveDistance);
-            LeanTween.moveLocal(parentTransform.gameObject, targetPosition, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
-        }
+        LeanTween.cancel(button.gameObject); // Cancel any ongoing animations
+        LeanTween.cancel(button.transform.parent.gameObject); // Cancel parent animations too
 
         if (!config.Toggle || !buttonToggledStates[button])
         {
             LeanTween.moveLocalY(button.gameObject, originalYPositions[button] + config.YOffset, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
+        }
 
-            if (config.ShrinkScale != 1)
-            {
-                LeanTween.scale(button.gameObject, _originalScale * config.ShrinkScale, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
-            }
+        if (config.ShrinkScale != 1)
+        {
+            LeanTween.scale(button.gameObject, _originalScale * config.ShrinkScale, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
+        }
 
-            if (config.CustomAnimation)
-            {
-                ApplyCustomAnimation(button, parentTransform, normalizedPoint, config.AnimationTime);
-            }
+        if (config.CustomAnimation)
+        {
+            ApplyCustomAnimation(button, parentTransform, normalizedPoint, config.AnimationTime);
+        }
 
+        if (!config.RotationLock)
+        {
             LeanTween.rotate(parentTransform.gameObject, config.Rotation, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
         }
 
@@ -169,6 +163,12 @@ public class ButtonHandler : MonoBehaviour
         {
             buttonCallbacks[button]?.Invoke(button);
         }
+
+        if (!config.RotationLock)
+        {
+            Vector3 targetPosition = parentOriginalPositions[button] + (Vector3)(normalizedPoint);
+            LeanTween.moveLocal(parentTransform.gameObject, targetPosition, config.AnimationTime).setEase(LeanTweenType.easeInExpo);
+        }
     }
 
     void AnimateButtonPress(Button button)
@@ -178,55 +178,6 @@ public class ButtonHandler : MonoBehaviour
         {
             LeanTween.scale(button.gameObject, _originalScale, 0.05f).setEase(LeanTweenType.easeInExpo);
         });
-    }
-
-    void OnButtonDragged(Button button, Transform buttonTransform, PointerEventData eventData)
-    {
-        if (buttonCooldowns[button]) return;
-        var config = buttonConfigs[button];
-        Transform parentTransform = button.transform.parent;
-
-        Vector2 localPoint;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(buttonTransform as RectTransform, eventData.position, eventData.pressEventCamera, out localPoint);
-
-        RectTransform buttonRectTransform = buttonTransform as RectTransform;
-        Vector2 normalizedPoint = (localPoint - (Vector2)buttonRectTransform.rect.center) / (buttonRectTransform.rect.size / 2);
-
-        Vector3 targetPosition = parentOriginalPositions[button] + (Vector3)(normalizedPoint * config.PinchMoveDistance);
-
-        if (config.RealTimeUpdate && Vector2.Distance(eventData.position, initialPressPositions[button]) <= config.ThresholdDistance)
-        {
-            withinThreshold[button] = true;
-
-            LeanTween.value(parentTransform.gameObject, parentTransform.localPosition, targetPosition, config.AnimationTime)
-                .setEase(LeanTweenType.linear)
-                .setOnUpdate((Vector3 pos) => {
-                    parentTransform.localPosition = pos;
-                });
-
-            if (config.CustomAnimation)
-            {
-                float rotationDirection = normalizedPoint.x >= 0 ? 1 : -1;
-                float maxRotation = 1f;
-                float targetRotation = normalizedPoint.x * maxRotation;
-
-                LeanTween.rotateZ(parentTransform.gameObject, targetRotation, config.AnimationTime).setEase(LeanTweenType.linear);
-            }
-        }
-        else if (withinThreshold[button])
-        {
-            LeanTween.moveLocal(parentTransform.gameObject, parentOriginalPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutSine);
-            LeanTween.moveLocalY(button.gameObject, originalYPositions[button], config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            LeanTween.scale(button.gameObject, _originalScale, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-
-            if (config.CustomAnimation)
-            {
-                LeanTween.scale(parentTransform.gameObject, Vector3.one, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-                LeanTween.rotate(parentTransform.gameObject, _originalRotation, config.ReturnTime).setEase(LeanTweenType.easeOutExpo);
-            }
-
-            withinThreshold[button] = false;
-        }
     }
 
     void ApplyCustomAnimation(Button button, Transform parentTransform, Vector2 normalizedPoint, float animationTime)
@@ -430,15 +381,13 @@ public class ButtonConfig
     public float ThresholdDistance { get; set; } // Max distance for a drag to still register as a click
     public float CallbackDelay { get; set; } // Delay before the callback is invoked after release
     public bool CustomAnimation { get; set; } // Enables or disables custom animations on button interactions
-    public bool RealTimeUpdate { get; set; } // If true, updates button state in real-time during drag
     public bool RotationLock { get; set; } // Prevents rotation (of parent) during interaction
-    public float PinchMoveDistance { get; set; } // Distance the parent can move when pinched
     public Vector3 Rotation { get; set; }
     public bool ActivateOnPress { get; set; } // Determines if the action should occur on press
     public bool CooldownEnabled { get; set; } // Enable or disable cooldown
 
     // kONSTRUCTOR
-    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool realTimeUpdate = false, bool rotationLock = false, float pinchMoveDistance = 2f, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
+    public ButtonConfig(float yOffset = -7f, float shrinkScale = 1f, float animationTime = 0.1f, float returnTime = 0f, bool toggle = false, float thresholdDistance = 1100f, float callbackDelay = 0f, bool customAnimation = false, bool rotationLock = false, Vector3 rotation = default(Vector3), bool activateOnPress = false, bool cooldownEnabled = true)
     {
         YOffset = yOffset;
         ShrinkScale = shrinkScale;
@@ -448,9 +397,7 @@ public class ButtonConfig
         ThresholdDistance = thresholdDistance;
         CallbackDelay = callbackDelay;
         CustomAnimation = customAnimation;
-        RealTimeUpdate = realTimeUpdate;
         RotationLock = rotationLock;
-        PinchMoveDistance = pinchMoveDistance;
         Rotation = rotation;
         ActivateOnPress = activateOnPress;
         CooldownEnabled = cooldownEnabled;

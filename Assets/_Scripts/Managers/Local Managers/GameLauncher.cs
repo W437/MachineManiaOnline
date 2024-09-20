@@ -63,12 +63,11 @@ public class GameLauncher : MonoBehaviour
 
         launcher = Instantiate(LauncherPrefab).GetComponent<FusionLauncher>();
         launcher.name = "[Session]" + sessionName;
-        launcher.InitializeNetworkAsync(sessionName, isInitialStart, sessionType, maxPlayers);
+        _ = launcher.InitializeNetworkAsync(sessionName, isInitialStart, sessionType, maxPlayers);
 
         if (HomeUI.Instance != null)
-            HomeUI.Instance.SetSessionNameUI(sessionName);
+            HomeUI.Instance.SetSessionNameUI();
     }
-
 }
 
 public enum SessionType
