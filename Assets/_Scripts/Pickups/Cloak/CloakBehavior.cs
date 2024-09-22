@@ -1,12 +1,20 @@
 ﻿using Fusion;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class CloakBehavior : NetworkBehaviour
 {
     public float cloakDuration = 10f;
     PlayerController player;
     NetworkObject networkObject;
+    [SerializeField] ParticleSystem pickupEffectPrefab;
+    [SerializeField] AudioClip pickupSound;
+    
 
+    private void Awake()
+    {
+       
+    }
     public void Initialize()
     {
         Debug.Log("Initializing Cloak");
@@ -52,12 +60,36 @@ public class CloakBehavior : NetworkBehaviour
         if (networkObject.HasInputAuthority)
         {
             Debug.Log("Has Input");
-            // local player
+            if (pickupEffectPrefab != null)
+            {
+                ParticleSystem effectInstance = Instantiate(pickupEffectPrefab, transform.position, Quaternion.identity);
+                
+                effectInstance.Play();
+                AudioManager.Instance.PlayGameSFX(pickupSound);
+                // Optionally, destroy the effect after its duration
+                Destroy(effectInstance.gameObject, effectInstance.main.duration);
+            }
+            else
+            {
+                Debug.LogError("No particle effect prefab assigned!");
+            }
             SetSpriteOpacity(0.5f);
         }
         else
         {
-            //all other players
+            if (pickupEffectPrefab != null)
+            {
+                ParticleSystem effectInstance = Instantiate(pickupEffectPrefab, transform.position, Quaternion.identity);
+
+                effectInstance.Play();
+                AudioManager.Instance.PlayGameSFX(pickupSound);
+                // Optionally, destroy the effect after its duration
+                Destroy(effectInstance.gameObject, effectInstance.main.duration);
+            }
+            else
+            {
+                Debug.LogError("No particle effect prefab assigned!");
+            }
             SetSpriteOpacity(0f);
         }
 
@@ -84,6 +116,19 @@ public class CloakBehavior : NetworkBehaviour
             return;
         }
 
+        if (pickupEffectPrefab != null)
+        {
+            ParticleSystem effectInstance = Instantiate(pickupEffectPrefab, transform.position, Quaternion.identity);
+
+            effectInstance.Play();
+            AudioManager.Instance.PlayGameSFX(pickupSound);
+            // Optionally, destroy the effect after its duration
+            Destroy(effectInstance.gameObject, effectInstance.main.duration);
+        }
+        else
+        {
+            Debug.LogError("No particle effect prefab assigned!");
+        }
         SetSpriteOpacity(1f);
     }
 

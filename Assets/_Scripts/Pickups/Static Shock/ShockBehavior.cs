@@ -8,8 +8,15 @@ public class ShockBehavior : NetworkBehaviour
 
     private PlayerController player;
     private NetworkObject networkObject;
+    [SerializeField] private AudioClip pickupSound;
     private float deathDuration=3;
+    private AudioSource _audioSource;
 
+    private void Awake()
+    {
+        _audioSource = GetComponent<AudioSource>();
+
+    }
 
     public void Init()
    {
@@ -49,16 +56,16 @@ public class ShockBehavior : NetworkBehaviour
             Debug.LogError("PlayerController component is missing on the player object.");
             return;
         }
-
+        AudioManager.Instance.PlayGameSFX(pickupSound);
         if (networkObject.HasInputAuthority)
         {
             Debug.Log("You are not supposed to be zapped");
             Debug.Log(networkObject.Runner.LocalPlayer);
 
+
         }
         else
         {
-            
             NetworkObject newP = Runner.GetPlayerObject(networkObject.Runner.LocalPlayer);
             if (newP.TryGetComponent(out PlayerController pc))
             {
@@ -70,9 +77,17 @@ public class ShockBehavior : NetworkBehaviour
     }
     private IEnumerator Zap(PlayerController playerController)
     {
-        
+
+        if (playerController.IsShielded)
+        {
+            Debug.Log("Shielded not damaged");
+            
+            yield return null;
+        }
+       
         playerController.TogglePlayerMovement(false);
         yield return new WaitForSeconds(deathDuration);
         playerController.TogglePlayerMovement(true);
+
     }
 }

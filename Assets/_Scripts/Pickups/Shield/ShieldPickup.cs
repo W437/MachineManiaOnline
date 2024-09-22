@@ -13,22 +13,10 @@ public class ShieldPickup : Pickup
         if (runner != null)
         {
             // Spawn the shield pickup object
-            NetworkObject shieldObject = runner.Spawn(PickupPrefab, player.transform.position, Quaternion.identity, player.GetComponent<NetworkObject>().InputAuthority);
+           ShieldBehavior sh = player.GetComponent<ShieldBehavior>();
+            sh.Initialize();
 
-            InitializeShield(shieldObject);
-        }
-    }
-
-    private void InitializeShield(NetworkObject shieldObject)
-    {
-        ShieldBehavior shield = shieldObject.GetComponent<ShieldBehavior>();
-        if (shield != null)
-        {
-            shield.Initialize();
-        }
-        else
-        {
-            Debug.LogError("ShieldBehavior component not found on the spawned shield object.");
+            
         }
     }
 }

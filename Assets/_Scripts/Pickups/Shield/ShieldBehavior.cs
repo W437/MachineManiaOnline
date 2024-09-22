@@ -1,39 +1,94 @@
 ﻿using Fusion;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class ShieldBehavior : NetworkBehaviour
 {
-    public float duration = 10f;
+    public float duration = 5f;
     private PlayerController player;
     private NetworkObject networkObject;
+    [SerializeField] ParticleSystem shieldEffect;
+    ParticleSystem effectInstance;
+    [SerializeField]AudioClip AudioClip;
+
 
     public void Initialize()
     {
-        player = GetComponentInParent<PlayerController>();
-        networkObject = player.GetComponent<NetworkObject>();
-        if (player != null && networkObject != null)
+
+        Debug.Log("Initializing Shield");
+
+        player = GetComponent<PlayerController>();
+        if (player == null)
         {
-            RPC_ActivateShield(networkObject.InputAuthority);
+            Debug.LogError("PlayerController component is missing on the GameObject.");
+            return;
         }
+
+        networkObject = GetComponent<NetworkObject>();
+        if (networkObject == null)
+        {
+            Debug.LogError("NetworkObject component is missing on the GameObject.");
+            return;
+        }
+        RPC_ActivateShield(networkObject);
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ActivateShield(PlayerRef playerRef)
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    private void RPC_ActivateShield(NetworkObject net)
     {
-        player = Runner.GetPlayerObject(playerRef).GetComponent<PlayerController>();
-        //player.isInvincible = true;
+        var playerObject = Runner.GetPlayerObject(net.InputAuthority);
+        if (playerObject == null)
+        {
+            Debug.LogError("Runner.GetPlayerObject returned null.");
+            return;
+        }
 
+        player = playerObject.GetComponent<PlayerController>();
+        if (player == null)
+        {
+            Debug.LogError("PlayerController component is missing on the player object.");
+            return;
+        }
+
+        Debug.Log("About to be shielded");
+        effectInstance = Instantiate(shieldEffect, player.transform);
+       
+        AudioManager.Instance.PlayGameSFX(AudioClip);
+        player.IsShielded = true;
+        shieldEffect.Play();
         LeanTween.delayedCall(duration, () =>
         {
-            RPC_DeactivateShield(playerRef);
+            RPC_DeactivateSpeedBoost(net);
         });
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_DeactivateShield(PlayerRef playerRef)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    private void RPC_DeactivateSpeedBoost(NetworkObject net )
     {
-        player = Runner.GetPlayerObject(playerRef).GetComponent<PlayerController>();
-        //player.isInvincible = false;
-        Runner.Despawn(GetComponent<NetworkObject>());
+        var playerObject = Runner.GetPlayerObject(net.InputAuthority);
+        if (playerObject == null)
+        {
+            Debug.LogError("Runner.GetPlayerObject returned null.");
+            return;
+        }
+
+        player = playerObject.GetComponent<PlayerController>();
+        if (player == null)
+        {
+            Debug.LogError("PlayerController component is missing on the player object.");
+            return;
+        }
+        if (net.HasInputAuthority)
+        {
+
+            if (player.IsShielded)
+            {
+                AudioManager.Instance.StopGameSFX();
+                player.IsShielded = false;
+                Destroy(effectInstance.gameObject);
+                Debug.Log("Not Shielded anymore");
+            }
+        }
+
     }
 }
