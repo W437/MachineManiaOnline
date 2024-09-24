@@ -80,6 +80,13 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void StopGameSFX()
+    {
+        if (sfxSource.isPlaying)
+        {
+            sfxSource.Stop();
+        }
+    }
     public void PlayGameSFX(AudioClip gameSFX)
     {
         if (sfxSource.isPlaying)

@@ -5030,6 +5030,7 @@ GameObject:
   - component: {fileID: 1032004316717073286}
   - component: {fileID: 1937721012469942538}
   - component: {fileID: 4875756220674680783}
+  - component: {fileID: 4535959037682295461}
   m_Layer: 3
   m_Name: MasterPlayer
   m_TagString: Player
@@ -5140,6 +5141,7 @@ MonoBehaviour:
   - {fileID: 1032004316717073286}
   - {fileID: 1937721012469942538}
   - {fileID: 4875756220674680783}
+  - {fileID: 4535959037682295461}
 --- !u!114 &7835155397552032863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5174,6 +5176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f61c64124c8575748994f087b9dc1b8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _IsShielded: 0
   _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
   _animator: {fileID: 5252638350429244611}
   PlayerParts:
@@ -5293,6 +5296,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cloakDuration: 10
+  pickupEffectPrefab: {fileID: 3040900895422706188, guid: 5c6b36bc7b2fad64d8c729e8eea644ac, type: 3}
+  pickupSound: {fileID: 8300000, guid: 006be60a2d259e644a6e0db7a796fe97, type: 3}
 --- !u!114 &1032004316717073286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5308,6 +5313,7 @@ MonoBehaviour:
   boostMultiplier: 2
   speedMulti: 3
   duration: 5
+  audioClip: {fileID: 8300000, guid: 9e49e214acf445d49a7ee7f5514c065d, type: 3}
 --- !u!114 &1937721012469942538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5320,6 +5326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e4843353a221ac45ba0d1e3fdcf92fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pickupSound: {fileID: 8300000, guid: ee211d9a54d42f34d9fef99806582aa0, type: 3}
 --- !u!114 &4875756220674680783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5338,6 +5345,21 @@ MonoBehaviour:
   SyncSettings: 79
   StateHashes: 00000000d7c25bd709691ab4aa6884dab76f439dad9d535173361232199921fbc7326098a0e0f2732dd28d5daf6b2bbd71c06ade526039e92f6c0622
   TriggerHashes: 0000000062efc4e1
+--- !u!114 &4535959037682295461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163250703601857657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77c5d4498d1cfb044a49fb0e550176be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  duration: 3
+  shieldEffect: {fileID: 6274823811645229217, guid: 041739959a6fe6548aea3dec475b66db, type: 3}
+  AudioClip: {fileID: 8300000, guid: b8d7612c6c555734aac633127bf757b4, type: 3}
 --- !u!1 &4328776677701572124
 GameObject:
   m_ObjectHideFlags: 0

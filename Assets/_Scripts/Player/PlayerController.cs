@@ -10,7 +10,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class PlayerController : NetworkBehaviour, IPlayerController
 {
-   
+
+    [Networked] public bool IsShielded { get; set; }
     [SerializeField] private ScriptableStats _stats;
     public ScriptableStats Stats { get { return _stats; } }
     [SerializeField] private Animator _animator;

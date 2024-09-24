@@ -8,6 +8,7 @@ public class SpeedBoostBehavior : NetworkBehaviour
     public float duration = 20f;
     private PlayerController player;
     private NetworkObject networkObject;
+    [SerializeField] AudioClip audioClip;
    
 
     public void Initialize()
@@ -60,6 +61,7 @@ public class SpeedBoostBehavior : NetworkBehaviour
             //This is the local player, set their opcity to 0.5
             //Half works might be clamped 
             player.ChangeSpeedAndAcceleration(newSpeedMulit, newAccelMulti);
+            AudioManager.Instance.PlayGameSFX(audioClip);
         }
         
 
