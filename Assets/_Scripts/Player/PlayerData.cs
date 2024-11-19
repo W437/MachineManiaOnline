@@ -1,157 +1,94 @@
 using System;
 using UnityEngine;
+using static NotificationManager;
 
 public class PlayerData : MonoBehaviour
 {
     public static PlayerData Instance;
 
-    // Events for UI stats updates
-    public event Action<int> OnHealthUpdated;
-    public event Action<int> OnLevelUpdated;
-    public event Action<int> OnExperienceUpdated;
-    public event Action<int> OnGoldUpdated;
-    public event Action<int> OnDiamondsUpdated;
-    public event Action<int> OnPlayersOnlineUpdated;
-
     // SFX and Music Volume
-    public float SFXVolume { get; set; }
-    public float MusicVolume { get; set; }
+    public float SFXVolume { get; private set; }
+    public float MusicVolume { get; private set; }
     public string PlayerName { get; set; }
+    public int Health { get; private set; }
+    public int Level { get; private set; }
+    public int Experience { get; private set; }
+    public int CrownCoins { get; private set; }
+    public int Crystals { get; private set; }
+    public int PlayersOnline { get; private set; }
 
-    public LevelSystem levelSystem;
+    public event Action<NotificationType, string> OnNotification;
+
+    public event Action<string, object> OnDataChanged;
 
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadStats();
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
     }
 
-    public PlayerData(LevelSystem levelSystem)
+    public void ResetAllData()
     {
-        this.levelSystem = levelSystem;
-        Health = 100;
+        PlayerName = "";
+        Level = 1;
+        Experience = 0;
+        CrownCoins = 0;
+        Crystals = 0;
+        PlayersOnline = 0;
+
+        SaveSystem.SavePlayerData(this);
+        SaveSystem.ResetFirstLaunch();
+
+        TriggerNotification(NotificationType.Display, "Player data reset.");
+        TriggerDataChange("PlayerName", PlayerName);
+        TriggerDataChange("Level", Level);
+        TriggerDataChange("Experience", Experience);
+        TriggerDataChange("CrownCoins", CrownCoins);
+        TriggerDataChange("Crystals", Crystals);
+        TriggerDataChange("PlayersOnline", PlayersOnline);
     }
 
-    int health;
-    public int Health
+    public void ChangePlayerName(string newName)
     {
-        get => health;
-        set
+        if (string.IsNullOrEmpty(newName) || newName.Length > 10 || newName.Contains(" "))
         {
-            health = value;
-            OnHealthUpdated?.Invoke(health);
+            TriggerNotification(NotificationType.Warning, "Name must be non-empty, shorter than 10 characters, and contain no spaces.");
+            return;
         }
+
+        PlayerName = newName;
+        SaveSystem.SavePlayerData(this);
+        TriggerDataChange("PlayerName", PlayerName);
+        TriggerNotification(NotificationType.Success, $"Name changed to: {PlayerName} ");
     }
 
-    int level;
-    public int Level
+    private void TriggerNotification(NotificationType type, string message)
     {
-        get => level;
-        set
-        {
-            level = value;
-            OnLevelUpdated?.Invoke(level);
-            SaveStats();
-        }
+        OnNotification?.Invoke(type, message);
     }
 
-    int experience;
-    public int Experience
+    // Helper method to trigger data changes
+    private void TriggerDataChange(string dataField, object newValue)
     {
-        get => experience;
-        set
-        {
-            experience = value;
-            OnExperienceUpdated?.Invoke(experience);
-            SaveStats();
-        }
+        OnDataChanged?.Invoke(dataField, newValue);
     }
 
-    int gold;
-    public int Gold
+    public void UpdateStats(string playerName, int level, int experience, int crownCoins, int crystals, int playersOnline, float sfxVolume, float musicVolume)
     {
-        get => gold;
-        set
-        {
-            gold = value;
-            OnGoldUpdated?.Invoke(gold);
-            SaveStats();
-        }
-    }
-
-    int diamonds;
-    public int Diamonds
-    {
-        get => diamonds;
-        set
-        {
-            diamonds = value;
-            OnDiamondsUpdated?.Invoke(diamonds);
-            SaveStats();
-        }
-    }
-
-    int playersOnline;
-    public int PlayersOnline
-    {
-        get => playersOnline;
-        set
-        {
-            playersOnline = value;
-            OnPlayersOnlineUpdated?.Invoke(playersOnline);
-            SaveStats();
-        }
-    }
-
-    public void AddExperience(int amount)
-    {
-        Experience += amount;
-        while (Experience >= levelSystem.GetRequiredXPForLevel(Level + 1))
-        {
-            Experience -= levelSystem.GetRequiredXPForLevel(Level + 1);
-            Level++;
-            if (Level >= levelSystem.GetMaxLevel())
-            {
-                Experience = 0;
-                break;
-            }
-        }
-    }
-
-    public void SaveStats()
-    {
-        PlayerSaveData data = new PlayerSaveData
-        {
-            playerName = PlayerName,
-            level = Level,
-            experience = Experience,
-            gold = Gold,
-            diamonds = Diamonds,
-            playersOnline = PlayersOnline,
-            sfxVolume = SFXVolume,
-            musicVolume = MusicVolume
-        };
-        SaveSystem.Save(data);
-    }
-
-    public void LoadStats()
-    {
-        PlayerSaveData data = SaveSystem.Load();
-        PlayerName = data.playerName;
-        Level = data.level;
-        Experience = data.experience;
-        Gold = data.gold;
-        Diamonds = data.diamonds;
-        PlayersOnline = data.playersOnline;
-        SFXVolume = data.sfxVolume;
-        MusicVolume = data.musicVolume;
+        PlayerName = playerName;
+        Level = level;
+        Experience = experience;
+        CrownCoins = crownCoins;
+        Crystals = crystals;
+        PlayersOnline = playersOnline;
+        SFXVolume = sfxVolume;
+        MusicVolume = musicVolume;
     }
 }

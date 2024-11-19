@@ -12,11 +12,10 @@ public class NotificationManager : MonoBehaviour
     public const float WARNING_DURATION = 3f;
     public const float GAME_DURATION = 2f;
     public const float SPACING = 100;
+    private Vector3 TOP_CENTER_POSITION = new(0, 270, 0);
 
     [Header("Notification Settings")]
     [SerializeField] GameObject notificationPrefab;
-    [SerializeField] Transform topCenterNotificationParent;
-    [SerializeField] Transform inGameNotificationParent;
 
     [Header("Notification Icons")]
     [SerializeField] Sprite displayIcon;
@@ -31,12 +30,29 @@ public class NotificationManager : MonoBehaviour
     List<GameObject> topCenterNotifications = new();
     List<GameObject> inGameNotifications = new();
 
+    private void OnEnable()
+    {
+        if (PlayerData.Instance != null)
+            PlayerData.Instance.OnNotification += (type, message) => ShowNotification(type, message);
+
+        if(LoadingUI.Instance != null)
+            LoadingUI.Instance.OnNotification += (type, message) => ShowNotification(type, message);
+    }
+
+    private void OnDisable()
+    {
+        if (PlayerData.Instance != null)
+            PlayerData.Instance.OnNotification -= (type, message) => ShowNotification(type, message);
+
+        if (LoadingUI.Instance != null)
+            LoadingUI.Instance.OnNotification -= (type, message) => ShowNotification(type, message);
+    }
+
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -56,21 +72,21 @@ public class NotificationManager : MonoBehaviour
         switch (type)
         {
             case NotificationType.Display:
-                CreateNotification(topCenterNotificationParent, message, DISPLAY_DURATION, topCenterNotifications, displayIcon, displayOutlineColor);
+                CreateNotification(TOP_CENTER_POSITION, message, DISPLAY_DURATION, topCenterNotifications, displayIcon, displayOutlineColor);
                 AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Info);
                 break;
             case NotificationType.Warning:
-                CreateNotification(topCenterNotificationParent, message, WARNING_DURATION, topCenterNotifications, warningIcon, warningOutlineColor);
+                CreateNotification(TOP_CENTER_POSITION, message, WARNING_DURATION, topCenterNotifications, warningIcon, warningOutlineColor);
                 AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Warning);
                 break;
             case NotificationType.Success:
-                CreateNotification(topCenterNotificationParent, message, DISPLAY_DURATION, topCenterNotifications, successIcon, successOutlineColor);
+                CreateNotification(TOP_CENTER_POSITION, message, DISPLAY_DURATION, topCenterNotifications, successIcon, successOutlineColor);
                 AudioManager.Instance.PlayMenuSFX(AudioManager.MenuSFX.Success);
                 break;
         }
     }
 
-    void CreateNotification(Transform parent, string message, float duration, List<GameObject> notificationsList, Sprite icon, Color outlineColor)
+    void CreateNotification(Vector3 position, string message, float duration, List<GameObject> notificationsList, Sprite icon, Color outlineColor)
     {
         if (notificationsList.Count >= 3)
         {
@@ -79,7 +95,8 @@ public class NotificationManager : MonoBehaviour
             FadeOutAndDestroy(oldNotification);
         }
 
-        var notification = Instantiate(notificationPrefab, parent);
+        var notification = Instantiate(notificationPrefab);
+        notification.transform.position = position;
         var notificationScript = notification.GetComponent<MainNotification>();
 
         notificationScript.MessageText.text = message;

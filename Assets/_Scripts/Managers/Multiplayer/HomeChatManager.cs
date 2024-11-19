@@ -27,10 +27,11 @@ public class HomeChatManager : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
-    }
+     }
 
-    void Start()
+    public override void Spawned()
     {
+        Debug.Log($"ChatManager spawned. {HomeUI.Instance.SendMessageButton} ");
         HomeUI.Instance.ButtonHandler.AddButtonEventTrigger(HomeUI.Instance.SendMessageButton, OnSendButtonClicked, new ButtonConfig(yOffset: -4f, animationTime: 0.15f, returnTime: 0.15f));
         HomeUI.Instance.BGExitButton.onClick.AddListener(ToggleChat);
         HomeUI.Instance.ChatExitButton.onClick.AddListener(HideChat);
@@ -105,7 +106,6 @@ public class HomeChatManager : NetworkBehaviour
 
     void OnSendButtonClicked(Button button)
     {
-        Debug.Log(button);
         if (!string.IsNullOrEmpty(HomeUI.Instance.MessageInputField.text))
         {
             SendChatMessage(HomeUI.Instance.MessageInputField.text);

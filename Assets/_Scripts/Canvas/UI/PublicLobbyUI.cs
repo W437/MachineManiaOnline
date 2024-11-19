@@ -10,7 +10,6 @@ public class PublicLobbyUI : MonoBehaviour
     public static PublicLobbyUI Instance;
 
     [Header("Lobby")]
-    public GameObject lobbyPlatformScreen;
     public Transform maniaNewsParent;
     public Transform PlayerSlotsParent;
     public TextMeshProUGUI gameStartLobbyTimer;
@@ -48,7 +47,6 @@ public class PublicLobbyUI : MonoBehaviour
 
     public void ConnectToLobby()
     {
-        lobbyPlatformScreen.SetActive(true);
         ConnectingOverlay.SetActive(true);
         DelayedCheckIfLobbyIsSpawned();
     }
@@ -68,8 +66,10 @@ public class PublicLobbyUI : MonoBehaviour
 
     void OnLobbyReady(Button button)
     {
-        PlayerRef localPlayerRef = FusionLauncher.Instance.Runner().LocalPlayer;
-        var playerObject = FusionLauncher.Instance.Runner().GetPlayerObject(localPlayerRef);
+        var runner = NetworkManager.Instance.Runner();
+
+        PlayerRef localPlayerRef = runner.LocalPlayer;
+        var playerObject = runner.GetPlayerObject(localPlayerRef);
 
         if (localPlayerRef != null)
         {
@@ -86,8 +86,9 @@ public class PublicLobbyUI : MonoBehaviour
 
     void OnLobbyLeave(Button button)
     {
+        var game = NetworkManager.Instance;
         AudioManager.Instance.SetCutoffFrequency(7000, 1);
-        FusionLauncher.Instance.Runner().LoadScene(SceneRef.FromIndex(0), LoadSceneMode.Single);
+        //game.StartSession(game.GenerateUniqueSessionName(), SceneType.MenuScene, SessionType.Private, 4);
     }
   
     IEnumerator CheckIfLobbyIsSpawned()
@@ -107,7 +108,6 @@ public class PublicLobbyUI : MonoBehaviour
 
     IEnumerator DelayedCheckIfLobbyIsSpawned()
     {
-        // slight delay to allow everything to initialize properly
         yield return new WaitForSeconds(1.0f);
         StartCoroutine(CheckIfLobbyIsSpawned());
     }

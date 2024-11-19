@@ -1,6 +1,7 @@
 using UnityEngine;
 using Fusion;
 using Cinemachine;
+using UnityEngine.SceneManagement;
 
 public class PlayerSpawner : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class PlayerSpawner : MonoBehaviour
     {
         _runner = FindObjectOfType<NetworkRunner>();
 
+        var sceneInfo = new NetworkSceneInfo();
+        sceneInfo.AddSceneRef(SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex));
+
         if (_runner == null)
         {
             _runner = gameObject.AddComponent<NetworkRunner>();
@@ -22,7 +26,7 @@ public class PlayerSpawner : MonoBehaviour
             {
                 GameMode = GameMode.Shared,
                 SessionName = "TestSession",
-                SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+                Scene = sceneInfo
             };
 
             await _runner.StartGame(startGameArgs);

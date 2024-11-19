@@ -21,6 +21,8 @@ public class SettingsUI : MonoBehaviour
     [SerializeField] Button resetDataBtn;
     [SerializeField] Slider musicSlider;
     [SerializeField] Slider sfxSlider;
+    [SerializeField] GameObject settingsPanel;
+    [SerializeField] CanvasGroup bgOverlay;
 
     [Header("Change Name Panel")]
     [SerializeField] Button changeNameConfirmBtn;
@@ -37,8 +39,8 @@ public class SettingsUI : MonoBehaviour
     [SerializeField] Button closeResetBtnWindow;
 
     ButtonHandler buttonHandler;
-    CanvasGroup panelOverlayGroup;
     float originalAlpha = 0.5f;
+
 
     void Awake()
     {
@@ -51,13 +53,14 @@ public class SettingsUI : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
-        buttonHandler = gameObject.GetComponent<ButtonHandler>();
-        panelOverlayGroup = panelOverlayBG.GetComponent<CanvasGroup>();
     }
 
     void Start()
     {
+        // SETUP
+
+        buttonHandler = GetComponent<ButtonHandler>();
+
         buttonHandler.AddButtonEventTrigger(panelExitBtn, _ => HomeUI.Instance.CloseSettingsPanel(),
             new ButtonConfig(yOffset: 0, callbackDelay: 0.1f, rotationLock: true));
         buttonHandler.AddButtonEventTrigger(panelBackBtn, _ => HomeUI.Instance.CloseSettingsPanel(),
@@ -111,7 +114,7 @@ public class SettingsUI : MonoBehaviour
             UpdateBGAlpha(0);
             changeNamePanel.transform.localScale = Vector3.zero;
             LeanTween.scale(changeNamePanel, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
-            LeanTween.value(panelOverlayGroup.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f).setEase(LeanTweenType.easeOutQuad);
+            LeanTween.value(bgOverlay.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f).setEase(LeanTweenType.easeOutQuad);
         }
         else
         {
@@ -120,7 +123,7 @@ public class SettingsUI : MonoBehaviour
                 changeNamePanel.SetActive(false);
                 panelOverlayBG.SetActive(false);
             });
-            LeanTween.value(panelOverlayGroup.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setEase(LeanTweenType.easeInQuad);
+            LeanTween.value(bgOverlay.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setEase(LeanTweenType.easeInQuad);
         }
     }
 
@@ -133,7 +136,7 @@ public class SettingsUI : MonoBehaviour
             UpdateBGAlpha(0);
             resetPanel.transform.localScale = Vector3.zero;
             LeanTween.scale(resetPanel, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
-            LeanTween.value(panelOverlayGroup.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f).setEase(LeanTweenType.easeOutQuad);
+            LeanTween.value(bgOverlay.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f).setEase(LeanTweenType.easeOutQuad);
         }
         else
         {
@@ -142,13 +145,13 @@ public class SettingsUI : MonoBehaviour
                 resetPanel.SetActive(false);
                 panelOverlayBG.SetActive(false);
             });
-            LeanTween.value(panelOverlayGroup.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setEase(LeanTweenType.easeInQuad);
+            LeanTween.value(bgOverlay.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setEase(LeanTweenType.easeInQuad);
         }
     }
 
     void UpdateBGAlpha(float alpha)
     {
-        panelOverlayGroup.alpha = alpha;
+        bgOverlay.alpha = alpha;
     }
 
     void OnChangeNameClicked()

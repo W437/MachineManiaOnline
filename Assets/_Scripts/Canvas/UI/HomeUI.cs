@@ -1,4 +1,5 @@
 using Fusion;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -6,30 +7,32 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static Unity.Collections.Unicode;
+using Random = UnityEngine.Random;
 
 public class HomeUI : MonoBehaviour
 {
     public static HomeUI Instance;
+    public ButtonHandler ButtonHandler { get { return buttonHandler; } }
 
     [Header("Buttons")]
     [SerializeField] Button[] buttons;
     [SerializeField] Button playButton;
     [SerializeField] Button modeSelectButton;
-    public Button menuButton;
+    [SerializeField] Button menuButton;
 
     [Header("Menu")]
     public GameObject menuBar;
     public Button[] menuButtons;
     public GameObject settingsPanel;
-    private bool menuBarIsOpen = false;
+    bool menuBarIsOpen = false;
 
     [Header("Player Stats")]
     [SerializeField] TextMeshProUGUI playerLevelText;
-    [SerializeField] TextMeshProUGUI goldText;
-    [SerializeField] TextMeshProUGUI diamondsText;
+    [SerializeField] TextMeshProUGUI crownCoinsText;
+    [SerializeField] TextMeshProUGUI crystalsText;
     [SerializeField] TextMeshProUGUI playersOnlineText;
     [SerializeField] TextMeshProUGUI playNowText;
-    [SerializeField] TextMeshProUGUI playerName;
+    [SerializeField] TextMeshProUGUI playerNameText;
 
     [Header("Custom Session")]
     [SerializeField] TMP_InputField inputSessionName;
@@ -42,12 +45,13 @@ public class HomeUI : MonoBehaviour
     [SerializeField] Image customSessionPanelBG;
     float originalAlpha;
 
+
     [Header("Players Online Settings")]
     [SerializeField] float joinLeaveRatio = 1.0f;
     [SerializeField] int currentPlayerCount;
     [SerializeField] int targetPlayerCount;
     [SerializeField] int initialPlayerCount = 7817;
-    
+
     [Header("Private Lobby")]
     [SerializeField] TextMeshProUGUI sessionNameText;
     public Transform PositionsParent;
@@ -60,6 +64,11 @@ public class HomeUI : MonoBehaviour
     [SerializeField] Button inviteExitButton;
     [SerializeField] Button inviteSessionCopyButton;
     [SerializeField] TextMeshProUGUI invitePanelSessionText;
+
+    [Header("Mode Select")]
+    [SerializeField] TextMeshProUGUI modeText;
+    [SerializeField] TextMeshProUGUI modeInfoText;
+    [SerializeField] GameMode currentMode;
 
     [Header("Private Lobby Chat")]
     public GameObject ChatPanel;
@@ -75,9 +84,8 @@ public class HomeUI : MonoBehaviour
     public Button BGExitButton;
     public Button ChatExitButton;
 
-
+    bool _isSetup = false;
     ButtonHandler buttonHandler;
-    public ButtonHandler ButtonHandler { get { return buttonHandler; } }
 
     void Awake()
     {
@@ -96,21 +104,21 @@ public class HomeUI : MonoBehaviour
 
     void Start()
     {
-        buttonHandler = gameObject.AddComponent<ButtonHandler>();
+        buttonHandler = GetComponent<ButtonHandler>();
 
         currentPlayerCount = 0;
         targetPlayerCount = initialPlayerCount;
-        updatePlayersOnline(currentPlayerCount);
+        UpdatePlayersOnline(currentPlayerCount);
 
         // Players online sim
         LeanTween.value(gameObject, 0, initialPlayerCount, 3f)
-            .setOnUpdate((float value) => { updatePlayersOnline((int)value); })
+            .setOnUpdate((float value) => { UpdatePlayersOnline((int)value); })
             .setEase(LeanTweenType.easeInOutSine).setOnComplete(() =>
             {
                 currentPlayerCount = initialPlayerCount;
                 targetPlayerCount = currentPlayerCount;
 
-                animatePlayersOnline();
+                AnimatePlayersOnline();
             });
 
         InvokeRepeating("AnimatePlayNowText", 0f, 7f);
@@ -124,14 +132,16 @@ public class HomeUI : MonoBehaviour
             button.gameObject.SetActive(false);
         }
 
-        addButtonEventTriggers();
+        AddButtonEventTriggers();
 
         // Load player data
-        playerName.text = PlayerData.Instance.PlayerName;
+        playerNameText.text = PlayerData.Instance.PlayerName;
     }
 
     void Update()
     {
+        var network = NetworkManager.Instance;
+
         if (menuBarIsOpen)
         {
             if (Input.touchCount > 0)
@@ -140,25 +150,25 @@ public class HomeUI : MonoBehaviour
                 Touch touch = Input.GetTouch(0);
                 if (touch.phase == TouchPhase.Began)
                 {
-                    if (!isPointerOverUIElement(touch.position))
+                    if (!IsPointerOverUIElement(touch.position))
                     {
-                        closeMenuBar();
+                        CloseMenuBar();
                     }
                 }
             }
             else if (Input.GetMouseButtonDown(0))
             {
                 // Handle mouse input
-                if (!isPointerOverUIElement(Input.mousePosition))
+                if (!IsPointerOverUIElement(Input.mousePosition))
                 {
-                    closeMenuBar();
+                    CloseMenuBar();
                 }
             }
         }
 
-        if(FusionLauncher.Instance.Runner() != null)
+        if (network.Runner() != null)
         {
-            if(FusionLauncher.Instance.Runner() !.IsRunning)
+            if (network.Runner()!.IsRunning)
             {
                 playButton.interactable = false;
             }
@@ -169,53 +179,94 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    void addButtonEventTriggers()
+    private void OnEnable()
+    {
+        if (_isSetup == false) return;
+
+        if (PlayerData.Instance != null)
+            PlayerData.Instance.OnDataChanged += HandleDataChange;
+
+        if(NetworkManager.Instance != null)
+            NetworkManager.Instance.OnSessionChanged += (session) => sessionNameText.text = session;
+    }
+
+    private void OnDisable()
+    {
+        if (_isSetup == false) return;
+
+        if (PlayerData.Instance != null)
+            PlayerData.Instance.OnDataChanged -= HandleDataChange;
+
+        if (NetworkManager.Instance != null)
+            NetworkManager.Instance.OnSessionChanged -= (session) => sessionNameText.text = session;
+    }
+
+    private void HandleDataChange(string dataField, object newValue)
+    {
+        switch (dataField)
+        {
+            case "PlayerName":
+                playerNameText.text = (string)newValue;
+                break;
+            case "CrownCoins":
+                crownCoinsText.text = (string)newValue;
+                break;
+            case "Level":
+                playerLevelText.text = (string)newValue;
+                break;
+            case "Experience":
+                //
+                break;
+        }
+    }
+
+    void AddButtonEventTriggers()
     {
         // Main Buttono listeners
         foreach (var button in buttons)
         {
-            buttonHandler.AddButtonEventTrigger(button, onButtonReleased, new ButtonConfig(customAnimation: true));
+            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true));
         }
 
         // private lobby invite
         foreach (var button in inviteButtons)
         {
-            buttonHandler.AddButtonEventTrigger(button, toggleInvitePanel, new ButtonConfig(yOffset: 10f, callbackDelay: 0.1f));
+            buttonHandler.AddButtonEventTrigger(button, ToggleInvitePanel, new ButtonConfig(yOffset: 10f, callbackDelay: 0.1f));
         }
 
-        buttonHandler.AddButtonEventTrigger(inviteExitButton, toggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
-        buttonHandler.AddButtonEventTrigger(inviteOkButton, toggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
+        buttonHandler.AddButtonEventTrigger(inviteExitButton, ToggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
+        buttonHandler.AddButtonEventTrigger(inviteOkButton, ToggleInvitePanel, new ButtonConfig(customAnimation: false, yOffset: 0));
         buttonHandler.AddButtonEventTrigger(inviteSessionCopyButton, CopySessionTextToClipboard, new ButtonConfig(customAnimation: false, yOffset: 0));
 
         // override
         buttonHandler.AddButtonEventTrigger(playButton, OnPlayButtonClick, new ButtonConfig(yOffset: -12f, callbackDelay: 0.1f, rotationLock: true));
-        buttonHandler.AddButtonEventTrigger(modeSelectButton, ModeSelectUI.Instance.OnModeButtonClicked, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true, returnTime: 0.1f));
-        buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, onCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
-        buttonHandler.AddButtonEventTrigger(btnExitCustomSession, onExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
+        buttonHandler.AddButtonEventTrigger(modeSelectButton, OnModeButtonClicked, new ButtonConfig(yOffset: 0, shrinkScale: 0.95f, rotationLock: true, returnTime: 0.1f));
+        buttonHandler.AddButtonEventTrigger(btnCreateCustomSession, OnCreateCustomSession, new ButtonConfig(callbackDelay: 0.1f, rotationLock: true));
+        buttonHandler.AddButtonEventTrigger(btnExitCustomSession, OnExitCustomSessionPanel, new ButtonConfig(yOffset: -1));
 
         // Menu
-        buttonHandler.AddButtonEventTrigger(menuButton, onButtonReleased, new ButtonConfig(customAnimation: true, returnTime: 0));
+        buttonHandler.AddButtonEventTrigger(menuButton, OnButtonReleased, new ButtonConfig(customAnimation: true, returnTime: 0));
 
         // menubar buttonos
         foreach (Button button in menuButtons)
         {
-            buttonHandler.AddButtonEventTrigger(button, onButtonReleased, new ButtonConfig(customAnimation: true));
+            buttonHandler.AddButtonEventTrigger(button, OnButtonReleased, new ButtonConfig(customAnimation: true));
         }
     }
 
-    void toggleMenuBar()
+    void ToggleMenuBar()
     {
         if (menuBarIsOpen)
         {
-            closeMenuBar();
+            CloseMenuBar();
         }
         else
         {
-            openMenuBar();
+            OpenMenuBar();
         }
     }
 
-    void openMenuBar()
+    void OpenMenuBar()
     {
         menuBarIsOpen = true;
 
@@ -243,7 +294,7 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    void closeMenuBar()
+    void CloseMenuBar()
     {
         if (!menuBarIsOpen)
             return;
@@ -269,7 +320,7 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    bool isPointerOverUIElement(Vector2 screenPosition)
+    bool IsPointerOverUIElement(Vector2 screenPosition)
     {
         PointerEventData eventData = new PointerEventData(EventSystem.current)
         {
@@ -290,10 +341,71 @@ public class HomeUI : MonoBehaviour
         return false;
     }
 
-    void showSettingsPanel()
+    // Mode Select UI
+
+
+    public void OnModeButtonClicked(Button button)
+    {
+        CycleMode();
+        UpdateModeText();
+        SetGameMode(currentMode);
+    }
+
+    public GameMode CurrentGameMode { get; private set; }
+
+    public readonly GameMode[] gameModes =
+    {
+        GameMode.FFA,
+        GameMode.TVT,
+        GameMode.Custom
+    };
+
+    public void SetGameMode(GameMode mode)
+    {
+        CurrentGameMode = mode;
+    }
+
+    public enum GameMode
+    {
+        FFA,    // Free For All
+        TVT,    // Team vs Team
+        Custom  // PvP or custom setting
+    }
+
+    public GameMode GetGameMode()
+    {
+        return currentMode;
+    }
+
+    void CycleMode()
+    {
+        int nextIndex = (Array.IndexOf(gameModes, currentMode) + 1) % gameModes.Length;
+        currentMode = gameModes[nextIndex];
+    }
+
+    void UpdateModeText()
+    {
+        switch (currentMode)
+        {
+            case GameMode.FFA:
+                modeText.text = "Free for All";
+                modeInfoText.text = "6 players mania match";
+                break;
+            case GameMode.TVT:
+                modeText.text = "Team vs Team";
+                modeInfoText.text = "3 vs 3 team battle";
+                break;
+            case GameMode.Custom:
+                modeText.text = "Custom";
+                modeInfoText.text = "PvP or custom setting";
+                break;
+        }
+    }
+
+    void ShowSettingsPanel()
     {
         settingsPanel.SetActive(true);
-        closeMenuBar();
+        CloseMenuBar();
     }
 
     public void CloseSettingsPanel()
@@ -303,40 +415,43 @@ public class HomeUI : MonoBehaviour
 
     void ShowNewsfeedPanel()
     {
-        closeMenuBar();
+        CloseMenuBar();
     }
 
     void OnPlayButtonClick(Button button)
     {
-        var selectedMode = ModeSelectUI.Instance.CurrentGameMode;
+        var game = NetworkManager.Instance;
+        var selectedMode = CurrentGameMode;
+
         switch (selectedMode)
         {
-            case ModeSelectUI.GameMode.Custom:
-                toggleCustomSessionPanel();
-                break;
-
-            case ModeSelectUI.GameMode.FFA:
-                FusionLauncher.Instance.Runner().LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
-                break;
-
-            case ModeSelectUI.GameMode.TVT:
+            case GameMode.Custom:
+                ToggleCustomSessionPanel();
+            break;
+            
+            case GameMode.FFA:
+                //game.StartSession("FFASession", SceneType.PublicLobbyScene, SessionType.Public, 6);
+            break;
+            
+            case GameMode.TVT:
 
             break;
-
+            
             default:
                 Debug.Log("Unknown game mode selected.");
             break;
         }
     }
 
-    void toggleInvitePanel(Button button)
+    void ToggleInvitePanel(Button button)
     {
         bool isActive = invitePanel.activeSelf;
+        //var session = NetworkManager.Instance.CurrentSessionName;
 
         if (!isActive)
         {
             invitePanel.SetActive(true);
-            invitePanelSessionText.text = FusionLauncher.Instance.CurrentSessionName;
+            //invitePanelSessionText.text = session;
             inviteContainer.transform.localScale = Vector3.zero;
             LeanTween.scale(inviteContainer, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
 
@@ -370,18 +485,18 @@ public class HomeUI : MonoBehaviour
         Debug.Log("Clicked to copy");
     }
 
-    void onButtonReleased(Button button)
+    void OnButtonReleased(Button button)
     {
         if (menuBarIsOpen && button.name != "[Button] Menu")
         {
-            closeMenuBar();
+            CloseMenuBar();
         }
 
         switch (button.name)
         {
             case "[Button] Menu":
 
-                toggleMenuBar();
+                ToggleMenuBar();
 
             break;
 
@@ -412,7 +527,7 @@ public class HomeUI : MonoBehaviour
             break;
 
             case "[Button] Settings":
-                showSettingsPanel();
+                ShowSettingsPanel();
                 break;
 
             case "[Button] Newsfeed":
@@ -424,7 +539,7 @@ public class HomeUI : MonoBehaviour
         }
     }
 
-    void onCreateCustomSession(Button button)
+    void OnCreateCustomSession(Button button)
     {
         string sessionName = inputSessionName.text;
         string sessionPassword = inputSessionPassword.text;
@@ -436,18 +551,18 @@ public class HomeUI : MonoBehaviour
             return;
         }
 
-        bool withPassword = !string.IsNullOrEmpty(sessionPassword);
+        //bool withPassword = !string.IsNullOrEmpty(sessionPassword);
 
-        GameLauncher.Instance.Launch(sessionName, false, SessionType.Private, maxPlayers);
-        toggleCustomSessionPanel();
+        //NetworkManager.Instance.StartSession(sessionName, null, SessionType.Private, maxPlayers);
+        ToggleCustomSessionPanel();
     }
 
-    void onExitCustomSessionPanel(Button button)
+    void OnExitCustomSessionPanel(Button button)
     {
-        toggleCustomSessionPanel();
+        ToggleCustomSessionPanel();
     }
 
-    void toggleCustomSessionPanel()
+    void ToggleCustomSessionPanel()
     {
         bool isOpening = !customSessionPanel.activeSelf;
         customSessionPanel.SetActive(true);
@@ -458,48 +573,48 @@ public class HomeUI : MonoBehaviour
 
             LeanTween.scale(customSessionContainer, Vector3.one, 0.15f).setEase(LeanTweenType.easeOutQuad);
 
-            LeanTween.value(customSessionPanelBG.gameObject, updateBGAlpha, 0, originalAlpha, 0.25f);
+            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, 0, originalAlpha, 0.25f);
         }
         else
         {
             LeanTween.scale(customSessionContainer, Vector3.zero, 0.15f).setEase(LeanTweenType.easeInQuad);
 
-            LeanTween.value(customSessionPanelBG.gameObject, updateBGAlpha, originalAlpha, 0, 0.25f).setOnComplete(() =>
+            LeanTween.value(customSessionPanelBG.gameObject, UpdateBGAlpha, originalAlpha, 0, 0.25f).setOnComplete(() =>
             {
                 customSessionPanel.SetActive(false);
             });
         }
     }
 
-    void updateBGAlpha(float alpha)
+    void UpdateBGAlpha(float alpha)
     {
         Color color = customSessionPanelBG.color;
         color.a = alpha;
         customSessionPanelBG.color = color;
     }
 
-    void updatePlayerLevel(int newLevel)
+    private void UpdatePlayerLevel(int newLevel)
     {
         playerLevelText.text = $"Level: {newLevel}";
     }
 
-    void updateGold(int newGold)
+    void UpdateGold(int newGold)
     {
-        goldText.text = $"Gold: {newGold}";
+        crownCoinsText.text = $"Gold: {newGold}";
     }
 
-    void updateDiamonds(int newDiamonds)
+    void UpdateDiamonds(int newDiamonds)
     {
-        diamondsText.text = $"Diamonds: {newDiamonds}";
+        crystalsText.text = $"Diamonds: {newDiamonds}";
     }
 
-    void updatePlayersOnline(int newPlayersOnline)
+    void UpdatePlayersOnline(int newPlayersOnline)
     {
         string playersOnlineColored = $"<color=#6E6404>{newPlayersOnline}</color> PLAYERS ONLINE!";
         playersOnlineText.text = playersOnlineColored;
     }
 
-    void animatePlayersOnline()
+    void AnimatePlayersOnline()
     {
         float delay = Random.Range(1, 4) * 2;
 
@@ -516,16 +631,16 @@ public class HomeUI : MonoBehaviour
 
         LeanTween.value(gameObject, currentPlayerCount, targetPlayerCount, delay).setOnUpdate((float value) =>
         {
-            updatePlayersOnline((int)value);
+            UpdatePlayersOnline((int)value);
         }).setEase(LeanTweenType.easeInOutSine).setOnComplete(() =>
         {
             currentPlayerCount = targetPlayerCount;
 
-            animatePlayersOnline();
+            AnimatePlayersOnline();
         });
     }
 
-    void animatePlayNowText()
+    void AnimatePlayNowText()
     {
         float originalSize = playNowText.fontSize;
         float targetSize = originalSize * 1.1f;
@@ -542,19 +657,11 @@ public class HomeUI : MonoBehaviour
         });
     }
 
-    public void SetSessionNameUI()
+    public void UpdateStatsUI(string playerName, int level, int gold, int diamonds)
     {
-        sessionNameText.text = $"<color=#59B4F7>session:</color> {FusionLauncher.Instance.CurrentSessionName}";
-    }
-
-    void OnDestroy()
-    {
-        // Unsubscribe from events
-/*        PlayerStats playerStats = ServiceLocator.GetPlayerStats();
-
-        playerStats.OnLevelUpdated -= UpdatePlayerLevel;
-        playerStats.OnGoldUpdated -= UpdateGold;
-        playerStats.OnDiamondsUpdated -= UpdateDiamonds;
-        playerStats.OnPlayersOnlineUpdated -= UpdatePlayersOnline;*/
+        playerNameText.text = playerName;
+        playerLevelText.text = $"{level}";
+        crownCoinsText.text = $"{gold}";
+        crystalsText.text = $"{diamonds}";
     }
 }

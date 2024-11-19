@@ -15,6 +15,13 @@ public class PlayerManager : NetworkBehaviour
     [Networked] int _isAliveInt { get; set; }
     [Networked] int _isReadyInt { get; set; }
 
+    // Game stats
+    [Networked] public string FinishTime { get; set; }
+    [Networked] public int DeathCount { get; set; }
+    [Networked] public int FinishCount { get; set; }
+    [Networked] public int GamesStartedCount { get; set; }
+
+
     SpriteRenderer spriteRenderer;
     Vector3 respawnPosition;
 
@@ -41,8 +48,8 @@ public class PlayerManager : NetworkBehaviour
         {
             PlayerName = playerData.PlayerName;
             Level = playerData.Level;
-            Gold = playerData.Gold;
-            Diamonds = playerData.Diamonds;
+            Gold = playerData.CrownCoins;
+            Diamonds = playerData.Crystals;
 
             Debug.Log($"Player {PlayerName} has been spawned with: Level: {Level} " +
                       $"Gold: {Gold}, Diamonds: {Diamonds}");
@@ -52,6 +59,13 @@ public class PlayerManager : NetworkBehaviour
             Debug.LogError("PlayerData instance is null.");
         }
     }
+
+    public void AttachPlayerCamera()
+    {
+        var cameraInstance = Instantiate(GameManager.Instance.playerCamera);
+        cameraInstance.Follow = this.transform;
+    }
+
 
     public void Kill()
     {

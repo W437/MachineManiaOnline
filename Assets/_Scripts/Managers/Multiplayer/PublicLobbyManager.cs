@@ -23,7 +23,7 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     public ManiaNews ManiaNews;
     public PublicLobbyPosition[] playerPosition;
     public Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
-
+    private NetworkPrefabRef playerPrefab;
     const int MAX_PLAYERS = 6;
     const int LOBBY_TIMER_START = 25;
     static LobbyHubManager _hubManager;
@@ -49,13 +49,13 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
         InitializeLobbyPositions();
         PublicLobbyUI.Instance.ConnectToLobby();
-        _gameScene = SceneRef.FromIndex(1);
+        _gameScene = SceneRef.FromIndex(2);
         _hubManager = new LobbyHubManager();
     }
 
     void Update()
     {
-        if (net_isSpawned && HasStateAuthority)
+        if (HasStateAuthority)
         {
             UpdateLobbyTimer();
         }
@@ -71,6 +71,24 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             net_isSpawned = true;
             SelectRandomNews();
         }
+
+        PublicLobbyUI.Instance.HideConnectingOverlay();
+    }
+    void InitializeLobbyPositions()
+    {
+        if (PublicLobbyUI.Instance != null)
+        {
+            playerPosition = new PublicLobbyPosition[MAX_PLAYERS];
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                Transform slotTransform = PublicLobbyUI.Instance.PlayerSlotsParent.GetChild(i);
+                playerPosition[i] = new PublicLobbyPosition
+                {
+                    Position = slotTransform,
+                    IsOccupied = false
+                };
+            }
+        }
     }
 
     public void StartLobbyTimer()
@@ -79,6 +97,22 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             net_remainingTime = LOBBY_TIMER_START;
             net_isTimerRunning = true;
+            UpdateTimerUI();
+        }
+    }
+
+    void UpdateLobbyTimer()
+    {
+        if (net_isTimerRunning)
+        {
+            net_remainingTime -= Time.deltaTime;
+            if (net_remainingTime <= 0)
+            {
+                net_remainingTime = 0;
+                StopLobbyTimer();
+                StartGame();
+            }
+            UpdateTimerUI();
         }
     }
 
@@ -128,47 +162,13 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
         return false;
     }
-    
-    void InitializeLobbyPositions()
-    {
-        if (PublicLobbyUI.Instance != null)
-        {
-            playerPosition = new PublicLobbyPosition[MAX_PLAYERS];
-            for (int i = 0; i < MAX_PLAYERS; i++)
-            {
-                Transform slotTransform = PublicLobbyUI.Instance.PlayerSlotsParent.GetChild(i);
-                playerPosition[i] = new PublicLobbyPosition
-                {
-                    Position = slotTransform,
-                    IsOccupied = false
-                };
-            }
-        }
-    }
 
-    void UpdateLobbyTimer()
-    {
-        if (net_isTimerRunning)
-        {
-            net_remainingTime -= Time.deltaTime;
-            if (net_remainingTime <= 0)
-            {
-                net_remainingTime = 0;
-                StopLobbyTimer();
-                ShowConnectingOverlay();
-                StartGame();
-            }
-            UpdateTimerUI();
-        }
-    }
+
 
     void UpdateTimerUI()
     {
         int remainingSeconds = Mathf.CeilToInt(net_remainingTime);
         PublicLobbyUI.Instance.gameStartLobbyTimer.text = remainingSeconds.ToString() + "s";
-
-        // Broadcast the updated time to all clients
-        RpcUpdateTimer(net_remainingTime);
     }
 
     void ShowConnectingOverlay()
@@ -211,18 +211,17 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     {
         if (playerPosition != null && positionIndex < playerPosition.Length)
         {
-            NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
             Vector3 spawnPos = playerPosition[positionIndex].Position.position - new Vector3(0, 50f, 0);
 
             var playerObject = Runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
-            playerObjects.Add(player, playerObject);
+            playerObjects[player] = playerObject;
             Runner.SetPlayerObject(player, playerObject);
 
             RpcPositionPlayer(player, positionIndex);
         }
         else
         {
-            Debug.LogError("Lobby position markers are null or index is out of range.");
+            Debug.LogError("Lobby positions are null or index is out of range.");
         }
     }
 
@@ -293,7 +292,6 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             if (Runner.IsRunning)
             {
                 Runner.LoadScene(_gameScene, LoadSceneMode.Single);
-                Runner.Spawn(FusionLauncher.Instance.GetGameManagerNetPrefab());
                 Destroy(gameObject);
             }
         }
@@ -356,11 +354,11 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RpcPositionPlayer(PlayerRef player, int posIndex)
     {
         if (playerObjects.TryGetValue(player, out var playerObj))
-        { 
+        {
             var parentTransform = playerPosition[posIndex].Position;
             playerObj.transform.SetParent(parentTransform);
 
@@ -376,6 +374,8 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
             playerPosition[posIndex].IsOccupied = true;
             playerPosition[posIndex].PlayerRef = player;
+
+            // Update player UI with name and status
             UpdatePlayerUI(playerPosition[posIndex].Position, player);
         }
     }
@@ -434,45 +434,22 @@ public class PublicLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
             int posIndex = GetNextAvailablePosition(player);
             if (posIndex != -1 && !playerObjects.ContainsKey(player))
             {
-                Debug.Log($"Player {player} doesn't exist, spawning him");
+                Debug.Log($"Spawning Player {player} at position {posIndex}");
                 SpawnPlayer(player, posIndex);
             }
-            if(Runner.IsSharedModeMasterClient)
-                StartLobbyTimer();
-        }
-        else
-        {
-            Debug.Log($"Player joined. {player}");
         }
     }
-    
+
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         if (playerObjects.ContainsKey(player))
         {
             var playerObject = playerObjects[player];
-
             if (playerObject != null)
             {
-                runner.Despawn(playerObject);
-
-                for (int i = 0; i < playerPosition.Length; i++)
-                {
-                    if (playerObject.transform.position == playerPosition[i].Position.position)
-                    {
-                        playerPosition[i].IsOccupied = false;
-                        ClearUI(i);
-                        break;
-                    }
-                }
+                Runner.Despawn(playerObject);
             }
-
             playerObjects.Remove(player);
-        }
-
-        if (player.IsMasterClient)
-        {
-            InitiateMasterClientTransfer();
         }
     }
 

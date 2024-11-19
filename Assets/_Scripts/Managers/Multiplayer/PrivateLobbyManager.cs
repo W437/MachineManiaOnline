@@ -8,20 +8,20 @@ using System.Xml.Schema;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
-public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
+public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks, INetworkObjectInitializer
 {
     public static PrivateLobbyManager Instance;
+    [SerializeField] NetworkPrefabRef playerPrefab;
 
-    public PrivateLobbyPosition[] PrivateLobbyPositions { get; private set; }
+    private PrivateLobbyPosition[] PrivateLobbyPositions { get; set; }
 
-    public Transform positionsParent;
-    private Transform[] positionMarkers;
+    private Transform positionsParent;
+    Transform[] positionMarkers;
 
-    private Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
-    private Dictionary<PlayerRef, int> playerPositions = new Dictionary<PlayerRef, int>();
-
-
+    Dictionary<PlayerRef, NetworkObject> playerObjects = new Dictionary<PlayerRef, NetworkObject>();
+    Dictionary<PlayerRef, int> playerPositions = new Dictionary<PlayerRef, int>();
 
     void Awake()
     {
@@ -34,8 +34,12 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             Destroy(gameObject);
         }
+    }
 
-        InitializePositionMarkers();
+    void Start()
+    {
+        //Debug.Log($"{SceneType.LaunchScene.ToString()}")
+        //SceneManager.LoadScene(SceneType.LaunchScene.ToString());
     }
 
     void InitializePositionMarkers()
@@ -58,7 +62,10 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public override void Spawned()
     {
-        //Debug.Log("Adding callbacks");
+        base.Spawned();
+
+        Debug.Log($"[!!!!!!] Private Lobby Spawned {this}");
+        InitializePositionMarkers();
         Runner.AddCallbacks(this);
 
 
@@ -109,7 +116,6 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
 
             if (!playerObjects.ContainsKey(player))
             {
-                NetworkPrefabRef playerPrefab = FusionLauncher.Instance.GetPlayerNetPrefab();
                 var playerObject = Runner.Spawn(playerPrefab, position, Quaternion.identity, player);
                 playerObjects[player] = playerObject;
 
@@ -194,7 +200,7 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
         {
             if (playerRef != Runner.LocalPlayer)
             {
-                GameLauncher.Instance.StartInitialGameSession();
+                //NetworkManager.Instance.StartInitialGameSession();
             }
         }
         Runner.Shutdown();
@@ -278,5 +284,10 @@ public class PrivateLobbyManager : NetworkBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+
+    public void InitializeNetworkState(NetworkObject networkObject)
+    {
+       Debug.Log    ("InitializeNetworkState"); 
+    }
     #endregion
 }
